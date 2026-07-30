@@ -129,31 +129,63 @@ summary:focus-visible {
   gap: 10px;
 }
 
+.header-share-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .share-control {
   position: relative;
 }
 
+.x-share-trigger,
 .share-trigger {
   display: inline-flex;
   min-height: 46px;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 0 14px;
-  border: 1px solid rgba(255, 90, 100, 0.42);
   border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(135deg, #b93640, #8f2831);
-  box-shadow: 0 8px 24px rgba(185, 54, 64, 0.2);
   cursor: pointer;
   font-size: 13px;
   font-weight: 800;
+  text-decoration: none;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.x-share-trigger {
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  color: #0b0b0d;
+  background: #f4f4f5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.x-share-trigger:hover {
+  border-color: #fff;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.34);
+  transform: translateY(-1px);
+}
+
+.x-share-mark {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.share-trigger {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.055);
 }
 
 .share-trigger:hover,
 .share-trigger[aria-expanded="true"] {
-  border-color: rgba(255, 142, 149, 0.78);
-  box-shadow: 0 10px 30px rgba(185, 54, 64, 0.34);
+  border-color: rgba(255, 90, 100, 0.58);
+  background: var(--accent-soft);
+  box-shadow: 0 10px 30px rgba(185, 54, 64, 0.18);
   transform: translateY(-1px);
 }
 
@@ -236,13 +268,6 @@ summary:focus-visible {
   border-radius: 10px;
   color: var(--accent-strong);
   background: var(--accent-soft);
-}
-
-.share-menu-icon-x {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 14px;
-  font-weight: 850;
 }
 
 .share-menu-item > span:nth-child(2) {
@@ -1719,13 +1744,18 @@ summary:focus-visible {
     display: none;
   }
 
+  .header-share-actions {
+    gap: 4px;
+  }
+
+  .x-share-trigger,
   .share-trigger {
     min-width: 44px;
     min-height: 44px;
-    justify-content: center;
     padding: 0 11px;
   }
 
+  .x-share-label,
   .share-trigger > span {
     display: none;
   }

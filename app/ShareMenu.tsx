@@ -85,62 +85,64 @@ export default function ShareMenu() {
   }
 
   return (
-    <div className="share-control" ref={rootRef}>
-      <button
-        ref={triggerRef}
-        className="share-trigger"
-        type="button"
-        aria-label="共有メニューを開く"
-        aria-expanded={open}
-        aria-controls={menuId}
-        onClick={() => {
-          setMessage("");
-          setOpen((current) => !current);
-        }}
+    <div className="header-share-actions">
+      <a
+        className="x-share-trigger"
+        href={X_SHARE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="XでVAMPIR 日課ナビを共有する（外部サイト）"
       >
-        <ShareIcon />
-        <span>共有</span>
-      </button>
+        <span className="x-share-mark" aria-hidden="true">X</span>
+        <span className="x-share-label">で共有</span>
+      </a>
 
-      <div className="share-menu" id={menuId} hidden={!open}>
-        <div className="share-menu-heading">
-          <strong>このツールを共有</strong>
-          <small>使っている仲間へすぐ送れます</small>
+      <div className="share-control" ref={rootRef}>
+        <button
+          ref={triggerRef}
+          className="share-trigger"
+          type="button"
+          aria-label="その他の共有メニューを開く"
+          aria-expanded={open}
+          aria-controls={menuId}
+          onClick={() => {
+            setMessage("");
+            setOpen((current) => !current);
+          }}
+        >
+          <ShareIcon />
+          <span>その他共有</span>
+        </button>
+
+        <div className="share-menu" id={menuId} hidden={!open}>
+          <div className="share-menu-heading">
+            <strong>その他の共有</strong>
+            <small>アプリで送るか、URLをコピーできます</small>
+          </div>
+          <button
+            className="share-menu-item"
+            type="button"
+            onClick={shareFromDevice}
+          >
+            <span className="share-menu-icon"><ShareIcon /></span>
+            <span><strong>端末で共有</strong><small>未対応の場合はURLをコピー</small></span>
+            <span className="share-menu-arrow" aria-hidden="true">›</span>
+          </button>
+          <button
+            className="share-menu-item"
+            type="button"
+            onClick={copyUrl}
+          >
+            <span className="share-menu-icon"><CopyIcon /></span>
+            <span><strong>URLをコピー</strong><small>{SHARE_URL}</small></span>
+            <span className="share-menu-arrow" aria-hidden="true">›</span>
+          </button>
+          {message ? (
+            <small className="share-menu-status" role="status" aria-live="polite">
+              {message}
+            </small>
+          ) : null}
         </div>
-        <a
-          className="share-menu-item"
-          href={X_SHARE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => setOpen(false)}
-        >
-          <span className="share-menu-icon share-menu-icon-x" aria-hidden="true">X</span>
-          <span><strong>Xで共有</strong><small>紹介文とURLを入力済みで開く</small></span>
-          <span className="share-menu-arrow" aria-hidden="true">↗</span>
-        </a>
-        <button
-          className="share-menu-item"
-          type="button"
-          onClick={shareFromDevice}
-        >
-          <span className="share-menu-icon"><ShareIcon /></span>
-          <span><strong>端末で共有</strong><small>未対応の場合はURLをコピー</small></span>
-          <span className="share-menu-arrow" aria-hidden="true">›</span>
-        </button>
-        <button
-          className="share-menu-item"
-          type="button"
-          onClick={copyUrl}
-        >
-          <span className="share-menu-icon"><CopyIcon /></span>
-          <span><strong>URLをコピー</strong><small>{SHARE_URL}</small></span>
-          <span className="share-menu-arrow" aria-hidden="true">›</span>
-        </button>
-        {message ? (
-          <small className="share-menu-status" role="status" aria-live="polite">
-            {message}
-          </small>
-        ) : null}
       </div>
     </div>
   );
