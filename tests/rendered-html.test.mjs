@@ -41,6 +41,7 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /og\.png\?v=20260730-2/);
   assert.match(html, /favicon\.png\?v=20260730-1/);
   assert.match(html, /manifest\.webmanifest/);
+  assert.match(html, /https:\/\/vampir\.cilabworks\.com\//);
   assert.match(html, /情報源を見る/);
   assert.match(html, /お気に入り/);
   assert.match(html, /このツールを応援する/);
@@ -55,6 +56,8 @@ test("renders finished Japanese site metadata", async () => {
     /<a\b[^>]*class="support-banner support-banner-ofuse"[^>]*href="https:\/\/ofuse\.me\/d2c3aa65"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>/i,
   );
   assert.match(html, /すべての機能を無料で利用できます/);
+  assert.match(html, /運営・プライバシー方針/);
+  assert.match(html, /https:\/\/github\.com\/Ranats\/vampir-support-hub\/issues/);
   assert.match(html, /https:\/\/twitter\.com\/intent\/tweet\?/);
   assert.match(html, /https%3A%2F%2Fvampir\.cilabworks\.com%2F/);
   assert.match(html, /class="header-share-actions"/);

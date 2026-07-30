@@ -1273,6 +1273,17 @@ export default function Home() {
               </div>
               <small className="support-note">支援の有無にかかわらず、すべての機能を無料で利用できます。</small>
             </section>
+            <nav className="site-footer-meta" aria-label="運営情報">
+              <a href="/policy">運営・プライバシー方針</a>
+              <a
+                href="https://github.com/Ranats/vampir-support-hub/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="不具合・要望をGitHub Issuesで開く（新しいタブ）"
+              >
+                不具合・要望
+              </a>
+            </nav>
           </div>
           <details>
             <summary>情報源と確認日</summary>

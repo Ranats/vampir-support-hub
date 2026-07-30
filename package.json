@@ -10,7 +10,7 @@
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vite",
     "build": "bash scripts/build-verified.sh",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/progress-cycle.test.mjs tests/today-tasks.test.mjs tests/routine-customization.test.mjs tests/notification-settings.test.mjs tests/personal-backup.test.mjs tests/pwa-assets.test.mjs tests/storage-transaction.test.mjs",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/seo-foundation.test.mjs tests/progress-cycle.test.mjs tests/today-tasks.test.mjs tests/routine-customization.test.mjs tests/notification-settings.test.mjs tests/personal-backup.test.mjs tests/pwa-assets.test.mjs tests/storage-transaction.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"

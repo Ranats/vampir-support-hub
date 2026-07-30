@@ -2,6 +2,9 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 
+const LEGACY_HOST = "vampir-support-hub.codarrr.chatgpt.site";
+const CANONICAL_HOST = "vampir.cilabworks.com";
+
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
@@ -28,6 +31,12 @@ interface ExecutionContext {
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.hostname === LEGACY_HOST) {
+      url.protocol = "https:";
+      url.host = CANONICAL_HOST;
+      return Response.redirect(url, 308);
+    }
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];

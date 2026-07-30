@@ -1078,6 +1078,124 @@ summary:focus-visible {
   background: linear-gradient(135deg, rgba(157, 107, 255, 0.12), rgba(255, 255, 255, 0.025));
 }
 
+.site-footer-meta {
+  margin-top: 16px;
+}
+
+.policy-shell {
+  min-height: 100vh;
+}
+
+.policy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 72px;
+  padding: 10px max(22px, calc((100vw - 860px) / 2));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 11, 13, 0.9);
+  backdrop-filter: blur(18px);
+}
+
+.policy-back {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.policy-back:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.policy-main {
+  width: min(860px, calc(100% - 44px));
+  margin: 0 auto;
+  padding: 72px 0 40px;
+}
+
+.policy-heading {
+  max-width: 720px;
+}
+
+.policy-heading h1 {
+  margin: 10px 0 0;
+  font-family: Georgia, "Yu Mincho", serif;
+  font-size: clamp(34px, 6vw, 52px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.policy-heading p {
+  margin: 16px 0 0;
+  color: var(--muted);
+}
+
+.policy-heading time {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.policy-sections {
+  display: grid;
+  gap: 16px;
+  margin-top: 42px;
+}
+
+.policy-card {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgba(20, 20, 24, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.policy-card h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.policy-card p,
+.policy-card li {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.policy-card p {
+  margin: 12px 0 0;
+}
+
+.policy-card ul {
+  margin: 12px 0 0;
+  padding-left: 1.35em;
+}
+
+.policy-card a,
+.policy-footer a {
+  color: var(--text);
+  text-underline-offset: 4px;
+}
+
+.policy-footer {
+  width: min(860px, calc(100% - 44px));
+  margin: 0 auto;
+  padding: 24px 0 52px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .settings-backdrop {
   position: fixed;
   z-index: 80;
@@ -1717,6 +1835,27 @@ summary:focus-visible {
 
   .support-links {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .policy-header {
+    padding-inline: 16px;
+  }
+
+  .policy-header .brand small {
+    display: none;
+  }
+
+  .policy-main,
+  .policy-footer {
+    width: min(100% - 32px, 860px);
+  }
+
+  .policy-main {
+    padding-top: 48px;
+  }
+
+  .policy-card {
+    padding: 20px;
   }
 
   .site-header {
