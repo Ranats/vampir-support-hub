@@ -91,10 +91,10 @@ export default function ShareMenu() {
         href={X_SHARE_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="XでVAMPIR 日課ナビを共有する（外部サイト）"
+        aria-label="XでVAMPIR 日課ナビをシェアする（外部サイト）"
       >
-        <span className="x-share-mark" aria-hidden="true">X</span>
-        <span className="x-share-label">で共有</span>
+        <span className="x-share-mark" aria-hidden="true">𝕏</span>
+        <span className="x-share-label">でシェア</span>
       </a>
 
       <div className="share-control" ref={rootRef}>

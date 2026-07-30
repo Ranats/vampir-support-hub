@@ -65,7 +65,9 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /その他の共有メニューを開く/);
   assert.match(html, /class="share-menu"/);
   assert.doesNotMatch(html, /role="menu(?:item)?"/);
-  assert.match(html, /aria-label="XでVAMPIR 日課ナビを共有する（外部サイト）"/);
+  assert.match(html, /aria-label="XでVAMPIR 日課ナビをシェアする（外部サイト）"/);
+  assert.match(html, /class="x-share-mark"[^>]*>𝕏<\/span>/);
+  assert.match(html, /class="x-share-label">でシェア<\/span>/);
   assert.match(html, /その他の共有/);
   assert.match(html, /URLをコピー/);
   assert.doesNotMatch(html, /class="share-panel"/);
