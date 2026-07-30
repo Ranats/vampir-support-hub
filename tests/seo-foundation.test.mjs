@@ -65,6 +65,12 @@ test("publishes the operation and privacy policy", async () => {
   assert.match(html, /運営・プライバシー方針/);
   assert.match(html, /ゲームアカウントへの接続や、ゲーム情報の自動取得は行いません/);
   assert.match(html, /通知の重複防止記録/);
+  assert.match(html, /個人用クラン予定、クラン共有ポータルの閲覧・管理キー/);
+  assert.match(html, /個人用クラン予定の曜日・時刻は、共有ポータル作成フォームの初期値として使用します/);
+  assert.match(html, /個人用リマインダー、完了状況、レベル、通知設定、ゲームアカウント情報は共有しません/);
+  assert.match(html, /閲覧・管理操作時に対応する秘密キーを認証のためAPIへ送信します/);
+  assert.match(html, /秘密キーそのものはデータベースへ保存せず、照合用のハッシュだけを保存します/);
+  assert.match(html, /管理の秘密キーはポータル作成時に作成したブラウザへ保存し/);
   assert.match(html, /現在、サイト独自のアクセス解析タグ、広告配信タグ、アフィリエイト追跡タグは設置していません/);
   assert.match(html, /https:\/\/github\.com\/Ranats\/vampir-support-hub\/issues/);
   assert.match(html, /開発者・更新情報/);
