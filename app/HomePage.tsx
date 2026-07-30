@@ -46,6 +46,8 @@ import {
   parsePersonalBackup,
 } from "./personal-backup";
 import { replaceStorageValues } from "./storage-transaction";
+import LanguageSwitch from "./LanguageSwitch";
+import type { Locale } from "./localization";
 
 type SpawnEvent = {
   id: string;
@@ -263,6 +265,46 @@ const LIMITED_EVENTS: LimitedEvent[] = [
   },
 ];
 
+const EN_SPAWN_COPY: Record<string, Pick<SpawnEvent, "title" | "label">> = {
+  "world-noon": { title: "World Boss", label: "Daily" },
+  "gehenna-13": { title: "Gehenna ★1 & ★2", label: "Daily" },
+  "gehenna-17": { title: "Gehenna ★1", label: "Daily" },
+  "world-night": { title: "World Boss", label: "Daily" },
+  "gehenna-21": { title: "Gehenna ★1 & ★2", label: "Daily" },
+  "gehenna-sat-22": { title: "Gehenna ★3", label: "Saturday" },
+};
+
+const EN_DAILY_COPY: Record<string, Pick<Routine, "title" | "note"> & { unlock?: string }> = {
+  "daily-quest": { title: "Complete 10 Daily Quests", note: "12 with Olga's Blessing", unlock: "Unlocks: Episode 1 act3-101" },
+  "creation-abyss": { title: "Abyss of Creation — 1 hour", note: "Up to 1 hour per day" },
+  "faded-legacy": { title: "Faded Legacy — 1 hour", note: "Up to 1 hour per day" },
+  "death-recovery": { title: "Check incapacitation penalties", note: "Check on the day they occur. The first five recoveries within 24 hours are free" },
+  "gold-shop": { title: "Check gold exchanges", note: "When you have spare gold" },
+};
+
+const EN_WEEKLY_COPY: Record<string, Pick<Routine, "title" | "note"> & { unlock?: string }> = {
+  "epic-dungeon": { title: "Epic Dungeon — 3 runs", note: "Up to 3 free entries per week", unlock: "Unlocks through the corresponding episode" },
+  "ancient-workshop": { title: "Ancient Workshop — 8 hours", note: "Up to 8 hours per week" },
+  "dark-trade": { title: "Check Dark Trade", note: "Items and exchange limits update weekly" },
+  "clan-mission": { title: "Check Clan Missions", note: "Requires clan membership and Clan Lv3+" },
+  "clan-guard": { title: "Check Clan Guard", note: "Requires clan membership and Clan Lv3+" },
+  "farm-diamond": { title: "Farm 1,000 Diamonds", note: "Standard weekly limit; 2,000 with a blessing" },
+  "gehenna-weekly": { title: "Check weekly Gehenna points", note: "Review current points and planned exchanges" },
+};
+
+const EN_EVENT_COPY: Record<string, string> = {
+  "red-login-7": "Red Moon Eve Festival — 7-Day Special Login",
+  "red-growth": "Red Moon Eve Festival — Growth Support Missions",
+  "red-payback": "Enhancement Support Payback",
+  "daily-double": "Daily Quest Double Rewards",
+  "region-growth": "New Region Opening — Growth Support",
+};
+
+function localizedRoutines(routines: Routine[], copy: typeof EN_DAILY_COPY, locale: Locale) {
+  if (locale === "ja") return routines;
+  return routines.map((routine) => ({ ...routine, ...copy[routine.id] }));
+}
+
 function makeJstDate(
   year: number,
   month: number,
@@ -277,7 +319,7 @@ function shiftedToJst(date: Date) {
   return new Date(date.getTime() + JST_OFFSET);
 }
 
-function upcomingOccurrences(now: Date, level: number, take = 6) {
+function upcomingOccurrences(events: readonly SpawnEvent[], now: Date, level: number, take = 6) {
   const items: Occurrence[] = [];
   const jst = shiftedToJst(now);
 
@@ -285,7 +327,7 @@ function upcomingOccurrences(now: Date, level: number, take = 6) {
     const cursor = new Date(jst);
     cursor.setUTCDate(cursor.getUTCDate() + offset);
 
-    for (const event of SPAWN_EVENTS) {
+    for (const event of events) {
       if (event.days && !event.days.includes(cursor.getUTCDay())) continue;
       if (event.minLevel && event.minLevel > level) continue;
 
@@ -305,7 +347,7 @@ function upcomingOccurrences(now: Date, level: number, take = 6) {
     .slice(0, take);
 }
 
-function formatCountdown(target: Date, now: Date) {
+function formatCountdown(target: Date, now: Date, locale: Locale = "ja") {
   const total = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000));
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
@@ -314,11 +356,11 @@ function formatCountdown(target: Date, now: Date) {
   const clock = [hours, minutes, seconds]
     .map((value) => String(value).padStart(2, "0"))
     .join(":");
-  return days ? `${days}日 ${clock}` : clock;
+  return days ? (locale === "en" ? `${days}d ${clock}` : `${days}日 ${clock}`) : clock;
 }
 
-function formatJst(date: Date, withSeconds = false) {
-  return new Intl.DateTimeFormat("ja-JP", {
+function formatJst(date: Date, withSeconds = false, locale: Locale = "ja") {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
     timeZone: "Asia/Tokyo",
     month: "numeric",
     day: "numeric",
@@ -400,14 +442,14 @@ function safeNotifiedOccurrences() {
   }
 }
 
-function freshnessLabel(now: Date) {
+function freshnessLabel(now: Date, locale: Locale = "ja") {
   const elapsedDays = Math.max(
     0,
     Math.floor((now.getTime() - new Date(VERIFIED_AT_ISO).getTime()) / 86_400_000),
   );
-  if (elapsedDays === 0) return "本日確認";
-  if (elapsedDays === 1) return "1日前に確認";
-  return `${elapsedDays}日前に確認`;
+  if (elapsedDays === 0) return locale === "en" ? "verified today" : "本日確認";
+  if (elapsedDays === 1) return locale === "en" ? "verified 1 day ago" : "1日前に確認";
+  return locale === "en" ? `verified ${elapsedDays} days ago` : `${elapsedDays}日前に確認`;
 }
 
 function RoutineRow({
@@ -415,11 +457,13 @@ function RoutineRow({
   done,
   locked,
   onToggle,
+  locale,
 }: {
   task: Routine;
   done: boolean;
   locked: boolean;
   onToggle: () => void;
+  locale: Locale;
 }) {
   return (
     <button
@@ -436,7 +480,7 @@ function RoutineRow({
       </span>
       <span className="routine-meta">
         {task.custom
-          ? "自分"
+          ? (locale === "en" ? "Mine" : "自分")
           : locked
             ? `Lv${task.minLevel}`
             : task.unlock ?? (task.minLevel ? `Lv${task.minLevel}+` : "")}
@@ -445,7 +489,16 @@ function RoutineRow({
   );
 }
 
-export default function Home() {
+export default function HomePage({ locale = "ja" }: { locale?: Locale }) {
+  const en = locale === "en";
+  const spawnEvents = useMemo(() => locale === "en"
+    ? SPAWN_EVENTS.map((event) => ({ ...event, ...EN_SPAWN_COPY[event.id] }))
+    : SPAWN_EVENTS, [locale]);
+  const dailyTasks = useMemo(() => localizedRoutines(DAILY_TASKS, EN_DAILY_COPY, locale), [locale]);
+  const weeklyTasks = useMemo(() => localizedRoutines(WEEKLY_TASKS, EN_WEEKLY_COPY, locale), [locale]);
+  const limitedEvents = useMemo(() => locale === "en"
+    ? LIMITED_EVENTS.map((event) => ({ ...event, title: EN_EVENT_COPY[event.id] }))
+    : LIMITED_EVENTS, [locale]);
   const [now, setNow] = useState(() => new Date());
   const dailyCycle = dailyCycleKey(now);
   const weeklyCycle = weeklyCycleKey(now);
@@ -468,20 +521,22 @@ export default function Home() {
     useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [notificationMessageIsError, setNotificationMessageIsError] = useState(false);
   const [dataMessage, setDataMessage] = useState("");
+  const [dataMessageIsError, setDataMessageIsError] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
   const settingsFallbackFocusRef = useRef<HTMLButtonElement | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   const visibleDaily = visibleRoutines(
-    DAILY_TASKS,
+    dailyTasks,
     customRoutines,
     routinePreferences,
     "daily",
   ) as Routine[];
   const visibleWeekly = visibleRoutines(
-    WEEKLY_TASKS,
+    weeklyTasks,
     customRoutines,
     routinePreferences,
     "weekly",
@@ -496,8 +551,8 @@ export default function Home() {
   const weeklyCount = unlockedWeekly.filter((task) => weeklyDone.includes(task.id)).length;
   const effectiveLevel = level ?? 200;
   const upcoming = useMemo(
-    () => upcomingOccurrences(now, effectiveLevel),
-    [now, effectiveLevel],
+    () => upcomingOccurrences(spawnEvents, now, effectiveLevel),
+    [now, effectiveLevel, spawnEvents],
   );
   const next = upcoming[0];
   const todayTasks = selectTodayTasks(
@@ -507,10 +562,10 @@ export default function Home() {
     weeklyDone,
     effectiveLevel,
   );
-  const visibleDefaultCount = [...DAILY_TASKS, ...WEEKLY_TASKS].filter(
+  const visibleDefaultCount = [...dailyTasks, ...weeklyTasks].filter(
     (routine) => !routinePreferences.hiddenDefaultIds.includes(routine.id),
   ).length;
-  const activeEvents = LIMITED_EVENTS.filter((event) => event.deadline > now).sort(
+  const activeEvents = limitedEvents.filter((event) => event.deadline > now).sort(
     (a, b) => a.deadline.getTime() - b.deadline.getTime(),
   );
   const informationAgeDays = Math.max(
@@ -545,11 +600,11 @@ export default function Home() {
       );
       setRoutinePreferences(keepKnownDefaultPreferences(
         parseRoutinePreferences(window.localStorage.getItem(ROUTINE_PREFERENCES_KEY)),
-        [...DAILY_TASKS, ...WEEKLY_TASKS].map((routine) => routine.id),
+        [...dailyTasks, ...weeklyTasks].map((routine) => routine.id),
       ));
       setFavoriteSpawnIds(parseFavoriteSpawnIds(
         window.localStorage.getItem(FAVORITE_SPAWNS_KEY),
-        SPAWN_EVENTS.map((event) => event.id),
+        spawnEvents.map((event) => event.id),
       ));
       setNotificationSettings(parseNotificationSettings(
         window.localStorage.getItem(NOTIFICATION_SETTINGS_KEY),
@@ -561,7 +616,7 @@ export default function Home() {
       setHydrated(true);
     }, 0);
     return () => window.clearTimeout(hydrationTimer);
-  }, [dailyCycle, weeklyCycle]);
+  }, [dailyCycle, dailyTasks, spawnEvents, weeklyCycle, weeklyTasks]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -688,7 +743,7 @@ export default function Home() {
       } else if (event.key === ROUTINE_PREFERENCES_KEY) {
         const nextPreferences = keepKnownDefaultPreferences(
           parseRoutinePreferences(event.newValue),
-          [...DAILY_TASKS, ...WEEKLY_TASKS].map((routine) => routine.id),
+          [...dailyTasks, ...weeklyTasks].map((routine) => routine.id),
         );
         setRoutinePreferences((current) => (
           JSON.stringify(current) === JSON.stringify(nextPreferences) ? current : nextPreferences
@@ -696,7 +751,7 @@ export default function Home() {
       } else if (event.key === FAVORITE_SPAWNS_KEY) {
         const nextFavorites = parseFavoriteSpawnIds(
           event.newValue,
-          SPAWN_EVENTS.map((spawn) => spawn.id),
+          spawnEvents.map((spawn) => spawn.id),
         );
         setFavoriteSpawnIds((current) => (
           JSON.stringify(current) === JSON.stringify(nextFavorites) ? current : nextFavorites
@@ -710,7 +765,7 @@ export default function Home() {
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [dailyCycle, hydrated, weeklyCycle]);
+  }, [dailyCycle, dailyTasks, hydrated, spawnEvents, weeklyCycle, weeklyTasks]);
 
   useEffect(() => {
     if (
@@ -721,7 +776,7 @@ export default function Home() {
     ) return;
 
     const leadMilliseconds = notificationSettings.leadMinutes * 60_000;
-    const candidates = upcomingOccurrences(now, effectiveLevel, 20).filter((event) => {
+    const candidates = upcomingOccurrences(spawnEvents, now, effectiveLevel, 20).filter((event) => {
       const untilStart = event.at.getTime() - now.getTime();
       return favoriteSpawnIds.includes(event.id)
         && untilStart > 0
@@ -748,12 +803,14 @@ export default function Home() {
           Math.ceil((event.at.getTime() - Date.now()) / 60_000),
         );
         await registration.showNotification(
-          `${event.title}まであと約${remainingMinutes}分`,
+          en ? `${event.title} starts in about ${remainingMinutes} minutes` : `${event.title}まであと約${remainingMinutes}分`,
           {
-            body: `${formatJst(event.at)} JST開始予定。ゲーム内時刻表を優先してください。`,
+            body: en
+              ? `Scheduled for ${formatJst(event.at, false, locale)} JST. Always follow the in-game schedule.`
+              : `${formatJst(event.at)} JST開始予定。ゲーム内時刻表を優先してください。`,
             icon: "/icon-192.png",
             tag: occurrenceKey,
-            data: { url: "/#schedule" },
+            data: { url: en ? "/en#schedule" : "/#schedule" },
           },
         );
       };
@@ -773,6 +830,9 @@ export default function Home() {
     notificationPermission,
     notificationSettings,
     now,
+    en,
+    locale,
+    spawnEvents,
   ]);
 
   function toggle(
@@ -855,12 +915,14 @@ export default function Home() {
   function updateNotificationSettings(nextSettings: NotificationSettings) {
     setNotificationSettings(nextSettings);
     setNotificationMessage("");
+    setNotificationMessageIsError(false);
   }
 
   async function requestNotificationPermission() {
     if (!("Notification" in window)) {
       setNotificationPermission("unsupported");
-      setNotificationMessage("このブラウザは通知に対応していません。");
+      setNotificationMessage(en ? "This browser does not support notifications." : "このブラウザは通知に対応していません。");
+      setNotificationMessageIsError(true);
       return;
     }
     const permission = await window.Notification.requestPermission();
@@ -871,26 +933,29 @@ export default function Home() {
     }));
     setNotificationMessage(
       permission === "granted"
-        ? "通知を有効にしました。お気に入りの予定をサイト表示中にお知らせします。"
+        ? (en ? "Notifications are on. Favorite spawns will be announced while the site is open." : "通知を有効にしました。お気に入りの予定をサイト表示中にお知らせします。")
         : permission === "denied"
-          ? "通知が拒否されています。ブラウザのサイト設定から変更できます。"
-          : "通知は有効になりませんでした。",
+          ? (en ? "Notifications are blocked. You can change this in your browser's site settings." : "通知が拒否されています。ブラウザのサイト設定から変更できます。")
+          : (en ? "Notifications were not enabled." : "通知は有効になりませんでした。"),
     );
+    setNotificationMessageIsError(permission !== "granted");
   }
 
   async function showTestNotification() {
     if (notificationPermission !== "granted") return;
     try {
       const registration = await navigator.serviceWorker.ready;
-      await registration.showNotification("VAMPIR 日課ナビ：テスト通知", {
-        body: "通知は正常です。実際の出現時刻はゲーム内時刻表を優先してください。",
+      await registration.showNotification(en ? "VAMPIR Daily Navigator: Test notification" : "VAMPIR 日課ナビ：テスト通知", {
+        body: en ? "Notifications are working. Always follow the in-game schedule for actual spawn times." : "通知は正常です。実際の出現時刻はゲーム内時刻表を優先してください。",
         icon: "/icon-192.png",
         tag: "vampir-test-notification",
-        data: { url: "/#schedule" },
+        data: { url: en ? "/en#schedule" : "/#schedule" },
       });
-      setNotificationMessage("テスト通知を送信しました。");
+      setNotificationMessage(en ? "Test notification sent." : "テスト通知を送信しました。");
+      setNotificationMessageIsError(false);
     } catch {
-      setNotificationMessage("テスト通知を表示できませんでした。ブラウザの通知設定を確認してください。");
+      setNotificationMessage(en ? "The test notification could not be shown. Check your browser notification settings." : "テスト通知を表示できませんでした。ブラウザの通知設定を確認してください。");
+      setNotificationMessageIsError(true);
     }
   }
 
@@ -899,7 +964,8 @@ export default function Home() {
     await installPrompt.prompt();
     const choice = await installPrompt.userChoice;
     if (choice.outcome === "accepted") {
-      setNotificationMessage("ホーム画面への追加を開始しました。");
+      setNotificationMessage(en ? "Started adding the site to your Home Screen." : "ホーム画面への追加を開始しました。");
+      setNotificationMessageIsError(false);
       setInstallPrompt(null);
     }
   }
@@ -923,7 +989,8 @@ export default function Home() {
     anchor.download = `vampir-support-backup-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
-    setDataMessage("バックアップを書き出しました。");
+    setDataMessage(en ? "Backup exported." : "バックアップを書き出しました。");
+    setDataMessageIsError(false);
   }
 
   async function importPersonalData(file: File) {
@@ -957,16 +1024,18 @@ export default function Home() {
       setCustomRoutines(data.customRoutines);
       setRoutinePreferences(keepKnownDefaultPreferences(
         data.routinePreferences,
-        [...DAILY_TASKS, ...WEEKLY_TASKS].map((routine) => routine.id),
+        [...dailyTasks, ...weeklyTasks].map((routine) => routine.id),
       ));
       setFavoriteSpawnIds(parseFavoriteSpawnIds(
         JSON.stringify(data.favoriteSpawnIds),
-        SPAWN_EVENTS.map((event) => event.id),
+        spawnEvents.map((event) => event.id),
       ));
       setNotificationSettings(data.notificationSettings);
-      setDataMessage("バックアップを復元しました。期限切れのチェックは現在の周期に合わせて未完了に戻しました。");
+      setDataMessage(en ? "Backup restored. Checks from expired cycles were reset for the current cycle." : "バックアップを復元しました。期限切れのチェックは現在の周期に合わせて未完了に戻しました。");
+      setDataMessageIsError(false);
     } catch {
-      setDataMessage("このファイルは復元できません。VAMPIR 日課ナビのバックアップを選んでください。");
+      setDataMessage(en ? "This file cannot be restored. Choose a backup exported by VAMPIR Daily Navigator." : "このファイルは復元できません。VAMPIR 日課ナビのバックアップを選んでください。");
+      setDataMessageIsError(true);
     }
   }
 
@@ -989,28 +1058,29 @@ export default function Home() {
   return (
     <main className="site-shell">
       <header className="site-header">
-        <a className="brand" href="#today" aria-label="VAMPIR 日課ナビ ホーム">
+        <a className="brand" href="#today" aria-label={en ? "VAMPIR Daily Navigator home" : "VAMPIR 日課ナビ ホーム"}>
           <span className="brand-mark" aria-hidden="true">V</span>
-          <span><strong>VAMPIR</strong><small>日課ナビ</small></span>
+          <span><strong>VAMPIR</strong><small>{en ? "Daily Navigator" : "日課ナビ"}</small></span>
         </a>
         <div className="header-tools">
           <a
             className={`verified${informationIsStale ? " stale" : ""}`}
             href="#info"
-            title={`最終確認 ${VERIFIED_AT}。ゲーム内表示と公式告知を優先してください。`}
+            title={en ? "Last verified July 30, 2026. Follow the in-game display and official notices." : `最終確認 ${VERIFIED_AT}。ゲーム内表示と公式告知を優先してください。`}
           >
-            {informationIsStale ? "要再確認" : freshnessLabel(now)}
+            {informationIsStale ? (en ? "Needs review" : "要再確認") : freshnessLabel(now, locale)}
           </a>
-          <ShareMenu />
+          <LanguageSwitch locale={locale} page="home" />
+          <ShareMenu locale={locale} />
           <button
             ref={settingsFallbackFocusRef}
             className="settings-trigger"
             type="button"
             onClick={openSettings}
-            aria-label="表示とチェックリスト設定を開く"
+            aria-label={en ? "Open display and checklist settings" : "表示とチェックリスト設定を開く"}
           >
-            <span>{level ? `Lv${level}` : "Lv未設定"}</span>
-            <small>設定</small>
+            <span>{level ? `Lv${level}` : (en ? "Lv not set" : "Lv未設定")}</span>
+            <small>{en ? "Settings" : "設定"}</small>
           </button>
         </div>
       </header>
@@ -1020,14 +1090,14 @@ export default function Home() {
           <div className="today-heading">
             <div>
               <span className="eyebrow">TODAY</span>
-              <h1 id="today-title">今日、次にやること</h1>
+              <h1 id="today-title">{en ? "What to do next today" : "今日、次にやること"}</h1>
             </div>
-            <time dateTime={now.toISOString()}>{formatJst(now, true)} JST</time>
+            <time dateTime={now.toISOString()}>{formatJst(now, true, locale)} JST</time>
           </div>
 
           <div className="today-grid">
             <article className="next-card panel">
-              <div className="card-label">次の出現</div>
+              <div className="card-label">{en ? "NEXT SPAWN" : "次の出現"}</div>
               {next ? (
                 <>
                   <div className="next-title-row">
@@ -1041,16 +1111,16 @@ export default function Home() {
                         className={`favorite-button${favoriteSpawnIds.includes(next.id) ? " active" : ""}`}
                         type="button"
                         aria-pressed={favoriteSpawnIds.includes(next.id)}
-                        aria-label={`${next.title} ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")}をお気に入り${favoriteSpawnIds.includes(next.id) ? "から外す" : "に追加"}`}
+                        aria-label={en ? `${favoriteSpawnIds.includes(next.id) ? "Remove" : "Add"} ${next.title} at ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")} ${favoriteSpawnIds.includes(next.id) ? "from" : "to"} favorites` : `${next.title} ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")}をお気に入り${favoriteSpawnIds.includes(next.id) ? "から外す" : "に追加"}`}
                         onClick={() => toggleFavoriteSpawn(next.id)}
                       >
                         <span aria-hidden="true">{favoriteSpawnIds.includes(next.id) ? "★" : "☆"}</span>
-                        {favoriteSpawnIds.includes(next.id) ? "通知対象" : "お気に入り"}
+                        {favoriteSpawnIds.includes(next.id) ? (en ? "Alert on" : "通知対象") : (en ? "Favorite" : "お気に入り")}
                       </button>
                     </div>
                   </div>
-                  <div className="countdown" aria-label={`開始まで ${formatCountdown(next.at, now)}`}>{formatCountdown(next.at, now)}</div>
-                  <p>開始時刻はゲーム内の最新時刻表を優先してください。</p>
+                  <div className="countdown" aria-label={en ? `Starts in ${formatCountdown(next.at, now, locale)}` : `開始まで ${formatCountdown(next.at, now)}`}>{formatCountdown(next.at, now, locale)}</div>
+                  <p>{en ? "Always follow the latest in-game schedule for the start time." : "開始時刻はゲーム内の最新時刻表を優先してください。"}</p>
                 </>
               ) : null}
             </article>
@@ -1058,8 +1128,8 @@ export default function Home() {
             <article className="quick-card panel">
               <div className="quick-head">
                 <div>
-                  <span className="card-label">次にやること</span>
-                  <h2>未完了の3件</h2>
+                  <span className="card-label">{en ? "UP NEXT" : "次にやること"}</span>
+                  <h2>{en ? "3 unfinished tasks" : "未完了の3件"}</h2>
                 </div>
                 <strong>{dailyCount}/{unlockedDaily.length}</strong>
               </div>
@@ -1075,41 +1145,41 @@ export default function Home() {
                       <span className="check-box" aria-hidden="true" />
                       <span>
                         <strong>{task.title}</strong>
-                        <small>{isDaily ? "今日" : "今週"}{task.custom ? "・自分" : ""}</small>
+                        <small>{isDaily ? (en ? "Today" : "今日") : (en ? "This week" : "今週")}{task.custom ? (en ? " · Mine" : "・自分") : ""}</small>
                       </span>
                     </button>
                   );
                 }) : (
-                  <p className="all-done">表示中の項目は完了です。</p>
+                  <p className="all-done">{en ? "All visible tasks are complete." : "表示中の項目は完了です。"}</p>
                 )}
               </div>
-              <a href="#checklists">すべてのチェックを見る</a>
+              <a href="#checklists">{en ? "View all checklist items" : "すべてのチェックを見る"}</a>
             </article>
           </div>
 
           <div className="reset-strip">
-            <span>日次05:00まで <strong>{formatCountdown(nextDailyReset(now), now)}</strong></span>
-            <span>週次・月曜05:00まで <strong>{formatCountdown(nextWeeklyReset(now), now)}</strong></span>
+            <span>{en ? "Daily reset at 05:00 in" : "日次05:00まで"} <strong>{formatCountdown(nextDailyReset(now), now, locale)}</strong></span>
+            <span>{en ? "Weekly reset Monday at 05:00 in" : "週次・月曜05:00まで"} <strong>{formatCountdown(nextWeeklyReset(now), now, locale)}</strong></span>
           </div>
 
           <div className="personalization-strip">
             <div>
-              <span>あなた向け表示</span>
+              <span>{en ? "PERSONALIZED VIEW" : "あなた向け表示"}</span>
               <strong>
                 {level
-                  ? `Lv${level}で候補・集計・予定を絞り込み中`
-                  : "レベル未設定のため、すべてのコンテンツを表示中"}
+                  ? (en ? `Filtering suggestions, progress, and schedules for Lv${level}` : `Lv${level}で候補・集計・予定を絞り込み中`)
+                  : (en ? "No level set — showing all content" : "レベル未設定のため、すべてのコンテンツを表示中")}
               </strong>
               <small>
-                既定 {visibleDefaultCount}件を表示
+                {en ? `Showing ${visibleDefaultCount} default tasks` : `既定 ${visibleDefaultCount}件を表示`}
                 {routinePreferences.hiddenDefaultIds.length
-                  ? `・${routinePreferences.hiddenDefaultIds.length}件を非表示`
+                  ? (en ? ` · ${routinePreferences.hiddenDefaultIds.length} hidden` : `・${routinePreferences.hiddenDefaultIds.length}件を非表示`)
                   : ""}
-                {customRoutines.length ? `・自分の項目 ${customRoutines.length}件` : ""}
+                {customRoutines.length ? (en ? ` · ${customRoutines.length} personal tasks` : `・自分の項目 ${customRoutines.length}件`) : ""}
               </small>
             </div>
             <button type="button" onClick={openSettings}>
-              表示とリストを編集
+              {en ? "Edit display and lists" : "表示とリストを編集"}
             </button>
           </div>
         </section>
@@ -1118,18 +1188,18 @@ export default function Home() {
           <div className="section-heading">
             <div>
               <span className="eyebrow">CHECK</span>
-              <h2 id="check-title">日課・週課</h2>
+              <h2 id="check-title">{en ? "Daily and weekly routines" : "日課・週課"}</h2>
             </div>
             <div className="section-heading-actions">
-              <p>チェックはこの端末に保存され、リセット時刻に自動更新されます。</p>
-              <button type="button" onClick={openSettings}>リストを編集</button>
+              <p>{en ? "Checks are saved on this device and refresh automatically at reset time." : "チェックはこの端末に保存され、リセット時刻に自動更新されます。"}</p>
+              <button type="button" onClick={openSettings}>{en ? "Edit lists" : "リストを編集"}</button>
             </div>
           </div>
 
           <div className="check-grid">
             <details className="routine-panel panel" open>
               <summary>
-                <span><small>DAILY</small><strong>毎日やること</strong></span>
+                <span><small>DAILY</small><strong>{en ? "Daily tasks" : "毎日やること"}</strong></span>
                 <b>{dailyCount}/{unlockedDaily.length}</b>
               </summary>
               <div className="routine-list">
@@ -1142,12 +1212,13 @@ export default function Home() {
                       done={dailyDone.includes(task.id)}
                       locked={locked}
                       onToggle={() => toggle(task.id, setDailyDone)}
+                      locale={locale}
                     />
                   );
                 })}
                 {!visibleDaily.length ? (
                   <button className="empty-routine-action" type="button" onClick={openSettings}>
-                    毎日の項目を追加・再表示
+                    {en ? "Add or restore daily tasks" : "毎日の項目を追加・再表示"}
                   </button>
                 ) : null}
               </div>
@@ -1155,7 +1226,7 @@ export default function Home() {
 
             <details className="routine-panel panel">
               <summary>
-                <span><small>WEEKLY</small><strong>毎週やること</strong></span>
+                <span><small>WEEKLY</small><strong>{en ? "Weekly tasks" : "毎週やること"}</strong></span>
                 <b>{weeklyCount}/{unlockedWeekly.length}</b>
               </summary>
               <div className="routine-list">
@@ -1168,12 +1239,13 @@ export default function Home() {
                       done={weeklyDone.includes(task.id)}
                       locked={locked}
                       onToggle={() => toggle(task.id, setWeeklyDone)}
+                      locale={locale}
                     />
                   );
                 })}
                 {!visibleWeekly.length ? (
                   <button className="empty-routine-action" type="button" onClick={openSettings}>
-                    毎週の項目を追加・再表示
+                    {en ? "Add or restore weekly tasks" : "毎週の項目を追加・再表示"}
                   </button>
                 ) : null}
               </div>
@@ -1185,33 +1257,33 @@ export default function Home() {
           <div className="section-heading">
             <div>
               <span className="eyebrow">SCHEDULE</span>
-              <h2 id="schedule-title">次の出現予定</h2>
+              <h2 id="schedule-title">{en ? "Upcoming spawns" : "次の出現予定"}</h2>
             </div>
             <p>
               {level
-                ? `Lv${level}で参加できる予定をJSTで表示しています。`
-                : "レベル未設定のため、すべての予定をJSTで表示しています。"}
-              {favoriteSpawnIds.length ? ` お気に入り${favoriteSpawnIds.length}件。` : ""}
+                ? (en ? `Showing JST schedules available at Lv${level}.` : `Lv${level}で参加できる予定をJSTで表示しています。`)
+                : (en ? "No level set — showing all schedules in JST." : "レベル未設定のため、すべての予定をJSTで表示しています。")}
+              {favoriteSpawnIds.length ? (en ? ` ${favoriteSpawnIds.length} favorite${favoriteSpawnIds.length === 1 ? "" : "s"}.` : ` お気に入り${favoriteSpawnIds.length}件。`) : ""}
             </p>
           </div>
           <div className={`information-status${informationIsStale ? " stale" : ""}`}>
             <div>
-              <strong>{informationIsStale ? "掲載情報が古い可能性があります" : `掲載情報は${freshnessLabel(now)}です`}</strong>
-              <small>最終確認 {VERIFIED_AT}・時刻変更時はゲーム内時刻表を正本とします。</small>
+              <strong>{informationIsStale ? (en ? "Published information may be outdated" : "掲載情報が古い可能性があります") : (en ? `Information ${freshnessLabel(now, locale)}` : `掲載情報は${freshnessLabel(now)}です`)}</strong>
+              <small>{en ? "Last verified July 30, 2026. Follow the in-game schedule if times change." : `最終確認 ${VERIFIED_AT}・時刻変更時はゲーム内時刻表を正本とします。`}</small>
             </div>
-            <a href="#info">情報源を見る</a>
+            <a href="#info">{en ? "View sources" : "情報源を見る"}</a>
           </div>
           <div className="schedule-list panel">
             {upcoming.map((event) => (
               <article className="schedule-row" key={`${event.id}-${event.at.toISOString()}`}>
-                <time dateTime={event.at.toISOString()}>{formatJst(event.at)}</time>
-                <div><strong>{event.title}</strong><small>{event.label}{event.minLevel ? `・Lv${event.minLevel}+` : ""}</small></div>
-                <b>{formatCountdown(event.at, now)}</b>
+                <time dateTime={event.at.toISOString()}>{formatJst(event.at, false, locale)}</time>
+                <div><strong>{event.title}</strong><small>{event.label}{event.minLevel ? `${en ? " · " : "・"}Lv${event.minLevel}+` : ""}</small></div>
+                <b>{formatCountdown(event.at, now, locale)}</b>
                 <button
                   className={`schedule-favorite${favoriteSpawnIds.includes(event.id) ? " active" : ""}`}
                   type="button"
                   aria-pressed={favoriteSpawnIds.includes(event.id)}
-                  aria-label={`${event.title} ${formatJst(event.at)}をお気に入り${favoriteSpawnIds.includes(event.id) ? "から外す" : "に追加"}`}
+                  aria-label={en ? `${favoriteSpawnIds.includes(event.id) ? "Remove" : "Add"} ${event.title} at ${formatJst(event.at, false, locale)} ${favoriteSpawnIds.includes(event.id) ? "from" : "to"} favorites` : `${event.title} ${formatJst(event.at)}をお気に入り${favoriteSpawnIds.includes(event.id) ? "から外す" : "に追加"}`}
                   onClick={() => toggleFavoriteSpawn(event.id)}
                 >
                   <span aria-hidden="true">{favoriteSpawnIds.includes(event.id) ? "★" : "☆"}</span>
@@ -1219,7 +1291,7 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <p className="schedule-note">争奪戦後などに時刻が変わる場合があります。ゲーム内時刻表を正本として確認してください。</p>
+          <p className="schedule-note">{en ? "Times may change after events such as territory battles. Always treat the in-game schedule as authoritative." : "争奪戦後などに時刻が変わる場合があります。ゲーム内時刻表を正本として確認してください。"}</p>
         </section>
 
         {activeEvents.length ? (
@@ -1227,15 +1299,15 @@ export default function Home() {
             <div className="section-heading">
               <div>
                 <span className="eyebrow">DEADLINES</span>
-                <h2 id="event-title">期限が近いイベント</h2>
+                <h2 id="event-title">{en ? "Events ending soon" : "期限が近いイベント"}</h2>
               </div>
-              <p>名称と終了時刻だけを掲載しています。</p>
+              <p>{en ? "Only event names and end times are listed." : "名称と終了時刻だけを掲載しています。"}</p>
             </div>
             <div className="event-list panel">
               {activeEvents.map((event) => (
                 <article className="event-row" key={event.id}>
-                  <div><strong>{event.title}</strong><small>終了 {formatJst(event.deadline)} JST</small></div>
-                  <b>あと {formatCountdown(event.deadline, now)}</b>
+                  <div><strong>{event.title}</strong><small>{en ? "Ends" : "終了"} {formatJst(event.deadline, false, locale)} JST</small></div>
+                  <b>{en ? "In" : "あと"} {formatCountdown(event.deadline, now, locale)}</b>
                 </article>
               ))}
             </div>
@@ -1244,12 +1316,12 @@ export default function Home() {
 
         <footer className="site-footer" id="info">
           <div className="site-footer-about">
-            <strong>VAMPIR 日課ナビ</strong>
-            <p>非公式ツールです。時刻・イベント期間はゲーム内表示と公式告知を優先してください。</p>
+            <strong>{en ? "VAMPIR Daily Navigator" : "VAMPIR 日課ナビ"}</strong>
+            <p>{en ? "This is an unofficial tool, and its English labels are unofficial translations. Follow in-game information and official notices for schedules and event periods." : "非公式ツールです。時刻・イベント期間はゲーム内表示と公式告知を優先してください。"}</p>
             <section className="support-panel" aria-labelledby="support-title">
               <div>
-                <strong id="support-title">このツールを応援する</strong>
-                <p>継続的な確認・更新への支援は任意です。</p>
+                <strong id="support-title">{en ? "Support this tool" : "このツールを応援する"}</strong>
+                <p>{en ? "Support for ongoing verification and updates is optional." : "継続的な確認・更新への支援は任意です。"}</p>
               </div>
               <div className="support-links">
                 <a
@@ -1257,55 +1329,55 @@ export default function Home() {
                   href={SUPPORT_URLS.kofi}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Ko-fiで応援する（外部サイト）"
+                  aria-label={en ? "Support on Ko-fi (external site)" : "Ko-fiで応援する（外部サイト）"}
                 >
                   <span aria-hidden="true">☕</span>
-                  <span><strong>Ko-fi</strong><small>外部サイトで応援</small></span>
+                  <span><strong>Ko-fi</strong><small>{en ? "Support on external site" : "外部サイトで応援"}</small></span>
                 </a>
                 <a
                   className="support-banner support-banner-ofuse"
                   href={SUPPORT_URLS.ofuse}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="OFUSEで応援する（外部サイト）"
+                  aria-label={en ? "Support on OFUSE (external site)" : "OFUSEで応援する（外部サイト）"}
                 >
                   <span aria-hidden="true">♥</span>
-                  <span><strong>OFUSE</strong><small>外部サイトで応援</small></span>
+                  <span><strong>OFUSE</strong><small>{en ? "Support on external site" : "外部サイトで応援"}</small></span>
                 </a>
               </div>
-              <small className="support-note">支援の有無にかかわらず、すべての機能を無料で利用できます。</small>
+              <small className="support-note">{en ? "All features remain free whether or not you choose to support us." : "支援の有無にかかわらず、すべての機能を無料で利用できます。"}</small>
             </section>
-            <nav className="site-footer-meta" aria-label="運営情報">
-              <a href="/policy">運営・プライバシー方針</a>
+            <nav className="site-footer-meta" aria-label={en ? "Site information" : "運営情報"}>
+              <a href={en ? "/en/policy" : "/policy"}>{en ? "Operations and Privacy Policy" : "運営・プライバシー方針"}</a>
               <a
                 href="https://github.com/Ranats/vampir-support-hub/issues"
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="不具合・要望をGitHub Issuesで開く（新しいタブ）"
+                aria-label={en ? "Open GitHub Issues for bugs and requests (new tab)" : "不具合・要望をGitHub Issuesで開く（新しいタブ）"}
               >
-                不具合・要望
+                {en ? "Bugs and requests" : "不具合・要望"}
               </a>
               <a
                 href={DEVELOPER_X_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="開発者X @Kokonoe_variantを新しいタブで開く"
+                aria-label={en ? "Open developer X account @Kokonoe_variant in a new tab" : "開発者X @Kokonoe_variantを新しいタブで開く"}
               >
-                開発者X：@Kokonoe_variant
+                {en ? "Developer on X: @Kokonoe_variant" : "開発者X：@Kokonoe_variant"}
               </a>
             </nav>
           </div>
           <details>
-            <summary>情報源と確認日</summary>
+            <summary>{en ? "Sources and verification date" : "情報源と確認日"}</summary>
             <p>
-              最終確認：{VERIFIED_AT}（{freshnessLabel(now)}）
-              {informationIsStale ? "・現在は再確認が必要です。" : ""}
+              {en ? `Last verified: July 30, 2026 (${freshnessLabel(now, locale)})` : `最終確認：${VERIFIED_AT}（${freshnessLabel(now)}）`}
+              {informationIsStale ? (en ? " · A new review is needed." : "・現在は再確認が必要です。") : ""}
             </p>
-            <nav aria-label="情報源">
-              <a href={SOURCE_URLS.official} target="_blank" rel="noreferrer">VAMPIR公式</a>
-              <a href={SOURCE_URLS.routines} target="_blank" rel="noreferrer">日課・週課</a>
-              <a href={SOURCE_URLS.gehenna} target="_blank" rel="noreferrer">ゲヘナ時刻</a>
-              <a href={SOURCE_URLS.events} target="_blank" rel="noreferrer">イベント一覧</a>
+            <nav aria-label={en ? "Sources" : "情報源"}>
+              <a href={SOURCE_URLS.official} target="_blank" rel="noreferrer">{en ? "Official VAMPIR site (Japanese)" : "VAMPIR公式"}</a>
+              <a href={SOURCE_URLS.routines} target="_blank" rel="noreferrer">{en ? "Daily and weekly routines (Japanese)" : "日課・週課"}</a>
+              <a href={SOURCE_URLS.gehenna} target="_blank" rel="noreferrer">{en ? "Gehenna schedule (Japanese)" : "ゲヘナ時刻"}</a>
+              <a href={SOURCE_URLS.events} target="_blank" rel="noreferrer">{en ? "Event list (Japanese)" : "イベント一覧"}</a>
             </nav>
           </details>
         </footer>
@@ -1313,9 +1385,10 @@ export default function Home() {
 
       {settingsOpen ? (
         <SettingsSheet
+          locale={locale}
           level={level}
-          dailyDefaults={DAILY_TASKS}
-          weeklyDefaults={WEEKLY_TASKS}
+          dailyDefaults={dailyTasks}
+          weeklyDefaults={weeklyTasks}
           hiddenDefaultIds={routinePreferences.hiddenDefaultIds}
           customRoutines={customRoutines}
           favoriteSpawnCount={favoriteSpawnIds.length}
@@ -1324,7 +1397,9 @@ export default function Home() {
           canInstall={Boolean(installPrompt)}
           isStandalone={isStandalone}
           notificationMessage={notificationMessage}
+          notificationMessageIsError={notificationMessageIsError}
           dataMessage={dataMessage}
+          dataMessageIsError={dataMessageIsError}
           onClose={closeSettings}
           onSaveLevel={saveLevel}
           onClearLevel={clearLevel}
@@ -1344,11 +1419,11 @@ export default function Home() {
         />
       ) : null}
 
-      <nav className="mobile-nav" aria-label="モバイルナビゲーション">
-        <a href="#today">今日</a>
-        <a href="#checklists">チェック</a>
-        <a href="#schedule">時刻</a>
-        <a href="#info">情報</a>
+      <nav className="mobile-nav" aria-label={en ? "Mobile navigation" : "モバイルナビゲーション"}>
+        <a href="#today">{en ? "Today" : "今日"}</a>
+        <a href="#checklists">{en ? "Check" : "チェック"}</a>
+        <a href="#schedule">{en ? "Times" : "時刻"}</a>
+        <a href="#info">{en ? "Info" : "情報"}</a>
       </nav>
     </main>
   );

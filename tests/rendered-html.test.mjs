@@ -92,3 +92,30 @@ test("renders finished Japanese site metadata", async () => {
   );
   assert.doesNotMatch(html, /\bcodex-preview\b/i);
 });
+
+test("renders a fully localized English home with its own share target", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("english", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/en", { headers: { accept: "text/html" } }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /<html[^>]*\blang=["']en["']/i);
+  assert.match(html, /VAMPIR Daily Navigator/);
+  assert.match(html, /What to do next today/);
+  assert.match(html, /Daily and weekly routines/);
+  assert.match(html, /Open display and checklist settings/);
+  assert.match(html, /English labels are unofficial translations/);
+  assert.match(html, /Official VAMPIR site \(Japanese\)/);
+  assert.match(html, /href="\/"[^>]*hreflang="ja"/i);
+  assert.match(html, /href="\/en"[^>]*hreflang="en"/i);
+  assert.match(html, /manifest-en\.webmanifest/);
+  assert.match(html, /https%3A%2F%2Fvampir\.cilabworks\.com%2Fen/);
+  assert.match(html, /VAMPIR%E6%97%A5%E8%AA%B2%E3%83%8A%E3%83%93%2CVAMPIR/);
+  assert.doesNotMatch(html, /og\.png/);
+});

@@ -1,19 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import PwaRegistration from "./PwaRegistration";
-import "./globals.css";
+import { RootBody } from "../RootLayoutParts";
+import "../globals.css";
 
 const SITE_URL = "https://vampir.cilabworks.com";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const viewport: Viewport = {
   themeColor: "#0b0b0d",
@@ -28,6 +17,7 @@ export const metadata: Metadata = {
   applicationName: "VAMPIR 日課ナビ",
   alternates: {
     canonical: "/",
+    languages: { ja: "/", en: "/en" },
   },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -39,16 +29,15 @@ export const metadata: Metadata = {
     type: "website",
     url: "/",
     locale: "ja_JP",
+    alternateLocale: ["en_US"],
     title: "VAMPIR 日課ナビ",
     description: "次の出現と、今日やることをひと目で確認。",
-    images: [
-      {
-        url: "/og.png?v=20260730-2",
-        width: 1200,
-        height: 630,
-        alt: "VAMPIR 日課ナビ — 次の出現と、今日やること。",
-      },
-    ],
+    images: [{
+      url: "/og.png?v=20260730-2",
+      width: 1200,
+      height: 630,
+      alt: "VAMPIR 日課ナビ — 次の出現と、今日やること。",
+    }],
   },
   twitter: {
     card: "summary_large_image",
@@ -63,19 +52,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="ja">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <PwaRegistration />
-        {children}
-      </body>
-    </html>
-  );
+export default function JapaneseLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="ja"><RootBody>{children}</RootBody></html>;
 }

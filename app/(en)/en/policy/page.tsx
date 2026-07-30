@@ -1,0 +1,112 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import LanguageSwitch from "../../../LanguageSwitch";
+
+const GITHUB_ISSUES_URL = "https://github.com/Ranats/vampir-support-hub/issues";
+const DEVELOPER_X_URL = "https://x.com/Kokonoe_variant";
+
+export const metadata: Metadata = {
+  title: "Operations and Privacy Policy | VAMPIR Daily Navigator",
+  description:
+    "Learn about VAMPIR Daily Navigator's operating policy, device-local data, external services, disclaimers, and contact options.",
+  alternates: {
+    canonical: "/en/policy",
+    languages: { ja: "/policy", en: "/en/policy" },
+  },
+  openGraph: {
+    type: "website",
+    url: "/en/policy",
+    locale: "en_US",
+    alternateLocale: ["ja_JP"],
+    title: "Operations and Privacy Policy | VAMPIR Daily Navigator",
+    description:
+      "Learn about VAMPIR Daily Navigator's operating policy, device-local data, external services, disclaimers, and contact options.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Operations and Privacy Policy | VAMPIR Daily Navigator",
+    description:
+      "Learn about VAMPIR Daily Navigator's operating policy, device-local data, external services, disclaimers, and contact options.",
+  },
+};
+
+export default function EnglishPolicyPage() {
+  return (
+    <div className="policy-shell">
+      <header className="policy-header">
+        <Link className="brand" href="/en" aria-label="Return to VAMPIR Daily Navigator">
+          <span className="brand-mark" aria-hidden="true">V</span>
+          <span><strong>VAMPIR</strong><small>Daily Navigator</small></span>
+        </Link>
+        <div className="policy-header-actions">
+          <LanguageSwitch locale="en" page="policy" />
+          <Link className="policy-back" href="/en">
+            <span className="policy-back-full">Back to Daily Navigator</span>
+            <span className="policy-back-short">Back</span>
+          </Link>
+        </div>
+      </header>
+
+      <main className="policy-main">
+        <div className="policy-heading">
+          <span className="eyebrow">SITE INFORMATION</span>
+          <h1>Operations and Privacy Policy</h1>
+          <p>This page explains the information this site provides and how it handles user data.</p>
+          <time dateTime="2026-07-30">Last updated: July 30, 2026</time>
+        </div>
+
+        <div className="policy-sections">
+          <section className="policy-card">
+            <h2>Unofficial tool</h2>
+            <p>VAMPIR Daily Navigator is an unofficial support tool operated by an individual. It is not affiliated with Netmarble or the companies that operate or develop VAMPIR. English labels on this site are unofficial translations of Japanese source information.</p>
+            <p>Verification dates are shown for listed times, limits, and deadlines. Always prioritize the in-game display and official notices. We do not guarantee that the information is complete, accurate, or continuously available.</p>
+          </section>
+
+          <section className="policy-card">
+            <h2>Data saved on your device</h2>
+            <p>Your level, checklist progress, personal tasks, display preferences, favorites, notification settings, language preference, and notification deduplication records are saved in your browser&apos;s local storage.</p>
+            <ul>
+              <li>We do not connect to your game account or retrieve game data automatically.</li>
+              <li>The site&apos;s application code does not send these settings to the operator&apos;s server.</li>
+              <li>Backups are exported or imported only when you explicitly request those actions.</li>
+              <li>Deleting browser data may also delete content saved on this device.</li>
+            </ul>
+          </section>
+
+          <section className="policy-card">
+            <h2>Notifications and PWA</h2>
+            <p>Notification permission is requested only when you choose that action in Settings. Current pre-spawn alerts work only while the site is running; we do not guarantee scheduled alerts after the site is closed. Removing the PWA may leave browser-stored data in place.</p>
+          </section>
+
+          <section className="policy-card">
+            <h2>Analytics and advertising</h2>
+            <p>We currently do not install our own analytics tags, advertising tags, or affiliate-tracking tags. The hosting provider may process connection information to deliver and secure the site.</p>
+            <p>If analytics or advertising is introduced in the future, we will add its purpose and handling to this page first. Sponsorships and advertisements will be clearly distinguished from normal site guidance.</p>
+          </section>
+
+          <section className="policy-card">
+            <h2>External services and support</h2>
+            <p>We link to official information, reference articles, X, GitHub, Ko-fi, and OFUSE. Information and payments after leaving this site are governed by each service&apos;s policies. We do not embed external checkout screens or tracking scripts on this site.</p>
+            <p>Support is optional. All features remain free whether or not you choose to support us.</p>
+          </section>
+
+          <section className="policy-card" id="developer">
+            <h2>Developer and updates</h2>
+            <p>
+              Developed and operated by: <a href={DEVELOPER_X_URL} target="_blank" rel="noopener noreferrer" aria-label="Open developer X account @Kokonoe_variant in a new tab">@Kokonoe_variant</a>. This X profile is provided for update information and contact.
+            </p>
+          </section>
+
+          <section className="policy-card" id="contact">
+            <h2>Bugs and requests</h2>
+            <p>
+              Report bugs and improvement requests through the public <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer" aria-label="Open GitHub Issues in a new tab">GitHub Issues</a> page. Do not post personal information such as game-account details or email addresses.
+            </p>
+          </section>
+        </div>
+      </main>
+
+      <footer className="policy-footer"><Link href="/en">Back to VAMPIR Daily Navigator</Link></footer>
+    </div>
+  );
+}

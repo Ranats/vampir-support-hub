@@ -10,6 +10,7 @@ import {
   type RoutineFrequency,
 } from "./routine-customization";
 import type { NotificationSettings } from "./notification-settings";
+import type { Locale } from "./localization";
 
 type DefaultRoutineSummary = {
   id: string;
@@ -18,6 +19,7 @@ type DefaultRoutineSummary = {
 };
 
 type SettingsSheetProps = {
+  locale?: Locale;
   level: number | null;
   dailyDefaults: readonly DefaultRoutineSummary[];
   weeklyDefaults: readonly DefaultRoutineSummary[];
@@ -29,7 +31,9 @@ type SettingsSheetProps = {
   canInstall: boolean;
   isStandalone: boolean;
   notificationMessage: string;
+  notificationMessageIsError: boolean;
   dataMessage: string;
+  dataMessageIsError: boolean;
   onClose: () => void;
   onSaveLevel: (level: number) => void;
   onClearLevel: () => void;
@@ -49,6 +53,7 @@ type SettingsSheetProps = {
 };
 
 export default function SettingsSheet({
+  locale = "ja",
   level,
   dailyDefaults,
   weeklyDefaults,
@@ -60,7 +65,9 @@ export default function SettingsSheet({
   canInstall,
   isStandalone,
   notificationMessage,
+  notificationMessageIsError,
   dataMessage,
+  dataMessageIsError,
   onClose,
   onSaveLevel,
   onClearLevel,
@@ -78,6 +85,7 @@ export default function SettingsSheet({
   onExportData,
   onImportData,
 }: SettingsSheetProps) {
+  const en = locale === "en";
   const dialogRef = useRef<HTMLElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [levelDraft, setLevelDraft] = useState(level ? String(level) : "");
@@ -139,7 +147,7 @@ export default function SettingsSheet({
     event.preventDefault();
     const numeric = Number(levelDraft);
     if (!Number.isInteger(numeric) || numeric < 1 || numeric > 200) {
-      setLevelError("1〜200の整数で入力してください。");
+      setLevelError(en ? "Enter a whole number from 1 to 200." : "1〜200の整数で入力してください。");
       return;
     }
     onSaveLevel(numeric);
@@ -150,7 +158,7 @@ export default function SettingsSheet({
     event.preventDefault();
     const input = { title, note, frequency };
     if (!title.trim()) {
-      setCustomError("項目名を入力してください。");
+      setCustomError(en ? "Enter a task name." : "項目名を入力してください。");
       return;
     }
 
@@ -161,7 +169,7 @@ export default function SettingsSheet({
     }
 
     if (!onAddCustom(input)) {
-      setCustomError(`追加できる自分の項目は${MAX_CUSTOM_ROUTINES}件までです。`);
+      setCustomError(en ? `You can add up to ${MAX_CUSTOM_ROUTINES} personal tasks.` : `追加できる自分の項目は${MAX_CUSTOM_ROUTINES}件までです。`);
       return;
     }
     resetCustomForm();
@@ -220,10 +228,10 @@ export default function SettingsSheet({
         <header className="settings-head">
           <div>
             <span className="eyebrow">PERSONALIZE</span>
-            <h2 id="settings-title">表示とチェックリスト設定</h2>
+            <h2 id="settings-title">{en ? "Display and checklist settings" : "表示とチェックリスト設定"}</h2>
           </div>
           <button className="settings-close" type="button" onClick={onClose} autoFocus>
-            閉じる
+            {en ? "Close" : "閉じる"}
           </button>
         </header>
 
@@ -232,19 +240,19 @@ export default function SettingsSheet({
             <div className="settings-section-heading">
               <div>
                 <span>1</span>
-                <div><h3 id="level-settings-title">キャラクターレベル</h3><p>ゲームとは連携せず、Today候補・進捗・出現予定だけを絞ります。</p></div>
+                <div><h3 id="level-settings-title">{en ? "Character level" : "キャラクターレベル"}</h3><p>{en ? "This only filters Today suggestions, progress, and spawns. It does not connect to the game." : "ゲームとは連携せず、Today候補・進捗・出現予定だけを絞ります。"}</p></div>
               </div>
             </div>
             <div className="level-explanation">
-              <strong>{level ? `現在 Lv${level}で絞り込み中` : "現在は未設定・すべて表示"}</strong>
+              <strong>{level ? (en ? `Filtering for Lv${level}` : `現在 Lv${level}で絞り込み中`) : (en ? "No level set — showing everything" : "現在は未設定・すべて表示")}</strong>
               <ul>
-                <li>未解放の日課・週課をToday候補と進捗率から除外</li>
-                <li>参加できるゲヘナの出現予定だけを表示</li>
+                <li>{en ? "Excludes locked routines from Today suggestions and progress" : "未解放の日課・週課をToday候補と進捗率から除外"}</li>
+                <li>{en ? "Shows only Gehenna spawns available at your level" : "参加できるゲヘナの出現予定だけを表示"}</li>
               </ul>
             </div>
             <form className="level-form" onSubmit={submitLevel}>
               <label>
-                <span>キャラLv</span>
+                <span>{en ? "Character Lv" : "キャラLv"}</span>
                 <input
                   type="number"
                   min="1"
@@ -252,10 +260,10 @@ export default function SettingsSheet({
                   inputMode="numeric"
                   value={levelDraft}
                   onChange={(event) => setLevelDraft(event.target.value)}
-                  placeholder="例：55"
+                  placeholder={en ? "e.g. 55" : "例：55"}
                 />
               </label>
-              <button className="primary-action" type="submit">レベルを保存</button>
+              <button className="primary-action" type="submit">{en ? "Save level" : "レベルを保存"}</button>
               {level ? (
                 <button
                   className="text-action"
@@ -266,7 +274,7 @@ export default function SettingsSheet({
                     setLevelError("");
                   }}
                 >
-                  未設定に戻す
+                  {en ? "Clear level" : "未設定に戻す"}
                 </button>
               ) : null}
             </form>
@@ -277,15 +285,15 @@ export default function SettingsSheet({
             <div className="settings-section-heading split">
               <div>
                 <span>2</span>
-                <div><h3 id="visibility-settings-title">既定項目の表示</h3><p>不要な項目は非表示にできます。チェック履歴は消えません。</p></div>
+                <div><h3 id="visibility-settings-title">{en ? "Default task visibility" : "既定項目の表示"}</h3><p>{en ? "Hide tasks you do not need. Their completion history is preserved." : "不要な項目は非表示にできます。チェック履歴は消えません。"}</p></div>
               </div>
               {hiddenDefaultIds.length ? (
-                <button className="text-action" type="button" onClick={onRestoreDefaults}>すべて表示</button>
+                <button className="text-action" type="button" onClick={onRestoreDefaults}>{en ? "Show all" : "すべて表示"}</button>
               ) : null}
             </div>
             <div className="visibility-grid">
-              {visibilityGroup("毎日", dailyDefaults)}
-              {visibilityGroup("毎週", weeklyDefaults)}
+              {visibilityGroup(en ? "Daily" : "毎日", dailyDefaults)}
+              {visibilityGroup(en ? "Weekly" : "毎週", weeklyDefaults)}
             </div>
           </section>
 
@@ -293,7 +301,7 @@ export default function SettingsSheet({
             <div className="settings-section-heading">
               <div>
                 <span>3</span>
-                <div><h3 id="custom-settings-title">自分の項目</h3><p>自分用メモとして追加します。サイトが確認した攻略情報とは別扱いです。</p></div>
+                <div><h3 id="custom-settings-title">{en ? "Personal tasks" : "自分の項目"}</h3><p>{en ? "Add your own reminders. They remain separate from information verified by this site." : "自分用メモとして追加します。サイトが確認した攻略情報とは別扱いです。"}</p></div>
               </div>
             </div>
 
@@ -302,80 +310,80 @@ export default function SettingsSheet({
                 {customRoutines.map((routine) => (
                   <div className="custom-manager-row" key={routine.id}>
                     <div>
-                      <span>{routine.frequency === "daily" ? "毎日" : "毎週"}</span>
+                      <span>{routine.frequency === "daily" ? (en ? "Daily" : "毎日") : (en ? "Weekly" : "毎週")}</span>
                       <strong>{routine.title}</strong>
                       {routine.note ? <small>{routine.note}</small> : null}
                     </div>
                     {deleteId === routine.id ? (
                       <div className="inline-confirm">
-                        <span>削除しますか？</span>
+                        <span>{en ? "Delete this task?" : "削除しますか？"}</span>
                         <button
                           type="button"
-                          aria-label={`${routine.title}を削除する`}
+                          aria-label={en ? `Delete ${routine.title}` : `${routine.title}を削除する`}
                           onClick={() => { onDeleteCustom(routine.id); setDeleteId(null); }}
                         >
-                          削除
+                          {en ? "Delete" : "削除"}
                         </button>
-                        <button type="button" onClick={() => setDeleteId(null)}>戻る</button>
+                        <button type="button" onClick={() => setDeleteId(null)}>{en ? "Back" : "戻る"}</button>
                       </div>
                     ) : (
                       <div className="row-actions">
                         <button
                           type="button"
-                          aria-label={`${routine.title}を編集`}
+                          aria-label={en ? `Edit ${routine.title}` : `${routine.title}を編集`}
                           onClick={() => beginEdit(routine)}
                         >
-                          編集
+                          {en ? "Edit" : "編集"}
                         </button>
                         <button
                           type="button"
-                          aria-label={`${routine.title}を削除`}
+                          aria-label={en ? `Delete ${routine.title}` : `${routine.title}を削除`}
                           onClick={() => setDeleteId(routine.id)}
                         >
-                          削除
+                          {en ? "Delete" : "削除"}
                         </button>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-            ) : <p className="settings-empty">自分の項目はまだありません。</p>}
+            ) : <p className="settings-empty">{en ? "No personal tasks yet." : "自分の項目はまだありません。"}</p>}
 
             <form className="custom-form" onSubmit={submitCustom}>
               <div className="custom-form-title">
-                <strong>{editingId ? "自分の項目を編集" : "＋ 自分の項目を追加"}</strong>
-                {editingId ? <button className="text-action" type="button" onClick={resetCustomForm}>編集をやめる</button> : null}
+                <strong>{editingId ? (en ? "Edit personal task" : "自分の項目を編集") : (en ? "+ Add a personal task" : "＋ 自分の項目を追加")}</strong>
+                {editingId ? <button className="text-action" type="button" onClick={resetCustomForm}>{en ? "Cancel editing" : "編集をやめる"}</button> : null}
               </div>
               <div className="custom-form-grid">
                 <label>
-                  <span>繰り返し</span>
+                  <span>{en ? "Repeats" : "繰り返し"}</span>
                   <select value={frequency} onChange={(event) => setFrequency(event.target.value as RoutineFrequency)}>
-                    <option value="daily">毎日</option>
-                    <option value="weekly">毎週</option>
+                    <option value="daily">{en ? "Daily" : "毎日"}</option>
+                    <option value="weekly">{en ? "Weekly" : "毎週"}</option>
                   </select>
                 </label>
                 <label className="wide-field">
-                  <span>項目名</span>
+                  <span>{en ? "Task name" : "項目名"}</span>
                   <input
                     value={title}
                     maxLength={MAX_CUSTOM_TITLE}
                     onChange={(event) => setTitle(event.target.value)}
-                    placeholder="例：倉庫を整理"
+                    placeholder={en ? "e.g. Organize storage" : "例：倉庫を整理"}
                   />
                 </label>
                 <label className="full-field">
-                  <span>メモ（任意）</span>
+                  <span>{en ? "Note (optional)" : "メモ（任意）"}</span>
                   <textarea
                     value={note}
                     maxLength={MAX_CUSTOM_NOTE}
                     onChange={(event) => setNote(event.target.value)}
-                    placeholder="自分だけに分かる短いメモ"
+                    placeholder={en ? "A short note for yourself" : "自分だけに分かる短いメモ"}
                     rows={2}
                   />
                 </label>
               </div>
               {customError ? <p className="form-error" role="alert">{customError}</p> : null}
-              <button className="primary-action" type="submit">{editingId ? "変更を保存" : "項目を追加"}</button>
+              <button className="primary-action" type="submit">{editingId ? (en ? "Save changes" : "変更を保存") : (en ? "Add task" : "項目を追加")}</button>
             </form>
           </section>
 
@@ -384,8 +392,8 @@ export default function SettingsSheet({
               <div>
                 <span>4</span>
                 <div>
-                  <h3 id="notification-settings-title">ホーム画面と通知</h3>
-                  <p>お気に入りにした出現予定を、サイトを開いている間にお知らせします。</p>
+                  <h3 id="notification-settings-title">{en ? "Home screen and notifications" : "ホーム画面と通知"}</h3>
+                  <p>{en ? "Get alerts for favorite spawns while this site is open." : "お気に入りにした出現予定を、サイトを開いている間にお知らせします。"}</p>
                 </div>
               </div>
             </div>
@@ -393,38 +401,38 @@ export default function SettingsSheet({
             <div className="pwa-settings-grid">
               <div className="pwa-setting-card">
                 <div>
-                  <strong>ホーム画面に追加</strong>
+                  <strong>{en ? "Add to Home Screen" : "ホーム画面に追加"}</strong>
                   <small>
                     {isStandalone
-                      ? "ホーム画面アプリとして起動中です。"
+                      ? (en ? "Running as a Home Screen app." : "ホーム画面アプリとして起動中です。")
                       : canInstall
-                        ? "アプリのように素早く開けます。"
-                        : "ブラウザメニューの「ホーム画面に追加」も利用できます。"}
+                        ? (en ? "Open it quickly like an app." : "アプリのように素早く開けます。")
+                        : (en ? "You can also use Add to Home Screen from your browser menu." : "ブラウザメニューの「ホーム画面に追加」も利用できます。")}
                   </small>
                 </div>
                 {isStandalone ? (
-                  <span className="setting-status good">追加済み</span>
+                  <span className="setting-status good">{en ? "Added" : "追加済み"}</span>
                 ) : canInstall ? (
-                  <button type="button" onClick={() => void onInstall()}>追加する</button>
+                  <button type="button" onClick={() => void onInstall()}>{en ? "Add" : "追加する"}</button>
                 ) : (
-                  <span className="setting-status">ブラウザ操作</span>
+                  <span className="setting-status">{en ? "Browser action" : "ブラウザ操作"}</span>
                 )}
               </div>
 
               <div className="pwa-setting-card notification-card">
                 <div>
-                  <strong>出現前の通知</strong>
+                  <strong>{en ? "Pre-spawn alerts" : "出現前の通知"}</strong>
                   <small>
-                    お気に入り {favoriteSpawnCount}件・ページを閉じた後の定刻通知には対応していません。
+                    {en ? `${favoriteSpawnCount} favorite${favoriteSpawnCount === 1 ? "" : "s"}. Scheduled alerts are unavailable after you close the page.` : `お気に入り ${favoriteSpawnCount}件・ページを閉じた後の定刻通知には対応していません。`}
                   </small>
                 </div>
                 {notificationPermission === "unsupported" ? (
-                  <span className="setting-status">非対応</span>
+                  <span className="setting-status">{en ? "Unsupported" : "非対応"}</span>
                 ) : notificationPermission === "denied" ? (
-                  <span className="setting-status warning">ブラウザで拒否中</span>
+                  <span className="setting-status warning">{en ? "Blocked by browser" : "ブラウザで拒否中"}</span>
                 ) : notificationPermission !== "granted" ? (
                   <button type="button" onClick={() => void onRequestNotificationPermission()}>
-                    通知を許可
+                    {en ? "Allow notifications" : "通知を許可"}
                   </button>
                 ) : (
                   <label className="notification-toggle">
@@ -436,7 +444,7 @@ export default function SettingsSheet({
                         enabled: event.target.checked,
                       })}
                     />
-                    <span>{notificationSettings.enabled ? "通知オン" : "通知オフ"}</span>
+                    <span>{notificationSettings.enabled ? (en ? "Alerts on" : "通知オン") : (en ? "Alerts off" : "通知オフ")}</span>
                   </label>
                 )}
               </div>
@@ -445,7 +453,7 @@ export default function SettingsSheet({
             {notificationPermission === "granted" ? (
               <div className="notification-options">
                 <label>
-                  <span>何分前に知らせる</span>
+                  <span>{en ? "Notify me before" : "何分前に知らせる"}</span>
                   <select
                     value={notificationSettings.leadMinutes}
                     onChange={(event) => onUpdateNotificationSettings({
@@ -453,22 +461,22 @@ export default function SettingsSheet({
                       leadMinutes: Number(event.target.value) as NotificationSettings["leadMinutes"],
                     })}
                   >
-                    <option value="5">5分前</option>
-                    <option value="10">10分前</option>
-                    <option value="30">30分前</option>
+                    <option value="5">{en ? "5 minutes" : "5分前"}</option>
+                    <option value="10">{en ? "10 minutes" : "10分前"}</option>
+                    <option value="30">{en ? "30 minutes" : "30分前"}</option>
                   </select>
                 </label>
                 <button type="button" onClick={() => void onTestNotification()}>
-                  テスト通知
+                  {en ? "Test notification" : "テスト通知"}
                 </button>
               </div>
             ) : null}
             <p className="notification-note">
-              初回表示で勝手に許可を求めません。通知対象は「次の出現予定」の☆で選べます。
+              {en ? "We never request permission on first load. Select alert targets with the stars under Upcoming spawns." : "初回表示で勝手に許可を求めません。通知対象は「次の出現予定」の☆で選べます。"}
             </p>
             {notificationMessage ? (
               <p
-                className={`data-message${/できません|拒否|対応していません|有効になりません/.test(notificationMessage) ? " error" : ""}`}
+                className={`data-message${notificationMessageIsError ? " error" : ""}`}
                 role="status"
               >
                 {notificationMessage}
@@ -480,17 +488,17 @@ export default function SettingsSheet({
             <div className="settings-section-heading">
               <div>
                 <span>5</span>
-                <div><h3 id="data-settings-title">データ管理</h3><p>バックアップ・復元と、項目ごとのリセットを行えます。</p></div>
+                <div><h3 id="data-settings-title">{en ? "Data management" : "データ管理"}</h3><p>{en ? "Back up, restore, or reset selected data." : "バックアップ・復元と、項目ごとのリセットを行えます。"}</p></div>
               </div>
             </div>
             <div className="data-actions">
               <div>
-                <div><strong>バックアップ</strong><small>レベル、チェック、表示設定、自分の項目、通知設定を書き出す</small></div>
-                <button type="button" onClick={onExportData}>書き出す</button>
+                <div><strong>{en ? "Backup" : "バックアップ"}</strong><small>{en ? "Export level, checks, display settings, personal tasks, and notification settings" : "レベル、チェック、表示設定、自分の項目、通知設定を書き出す"}</small></div>
+                <button type="button" onClick={onExportData}>{en ? "Export" : "書き出す"}</button>
               </div>
               <div>
-                <div><strong>バックアップから復元</strong><small>このサイトから書き出したJSONファイルを読み込む</small></div>
-                <button type="button" onClick={() => importInputRef.current?.click()}>ファイルを選ぶ</button>
+                <div><strong>{en ? "Restore from backup" : "バックアップから復元"}</strong><small>{en ? "Import a JSON file exported from this site" : "このサイトから書き出したJSONファイルを読み込む"}</small></div>
+                <button type="button" onClick={() => importInputRef.current?.click()}>{en ? "Choose file" : "ファイルを選ぶ"}</button>
                 <input
                   ref={importInputRef}
                   className="visually-hidden"
@@ -500,7 +508,7 @@ export default function SettingsSheet({
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (file && window.confirm(
-                      "現在の端末内データをバックアップ内容で置き換えます。先に書き出しておくことをおすすめします。復元しますか？",
+                      en ? "This replaces the data on this device with the backup. We recommend exporting your current data first. Restore now?" : "現在の端末内データをバックアップ内容で置き換えます。先に書き出しておくことをおすすめします。復元しますか？",
                     )) {
                       void onImportData(file);
                     }
@@ -509,29 +517,29 @@ export default function SettingsSheet({
                 />
               </div>
               <div>
-                <div><strong>チェック状況</strong><small>日課・週課の完了だけを解除</small></div>
+                <div><strong>{en ? "Checklist progress" : "チェック状況"}</strong><small>{en ? "Clear daily and weekly completion only" : "日課・週課の完了だけを解除"}</small></div>
                 {dataAction === "checks" ? (
                   <div className="inline-confirm">
-                    <span>すべて未完了に戻しますか？</span>
-                    <button type="button" onClick={() => { onResetChecks(); setDataAction(null); }}>リセット</button>
-                    <button type="button" onClick={() => setDataAction(null)}>戻る</button>
+                    <span>{en ? "Mark everything incomplete?" : "すべて未完了に戻しますか？"}</span>
+                    <button type="button" onClick={() => { onResetChecks(); setDataAction(null); }}>{en ? "Reset" : "リセット"}</button>
+                    <button type="button" onClick={() => setDataAction(null)}>{en ? "Back" : "戻る"}</button>
                   </div>
-                ) : <button type="button" onClick={() => setDataAction("checks")}>チェックをリセット</button>}
+                ) : <button type="button" onClick={() => setDataAction("checks")}>{en ? "Reset checks" : "チェックをリセット"}</button>}
               </div>
               <div>
-                <div><strong>自分の項目</strong><small>追加した項目だけをまとめて削除</small></div>
+                <div><strong>{en ? "Personal tasks" : "自分の項目"}</strong><small>{en ? "Delete only the tasks you added" : "追加した項目だけをまとめて削除"}</small></div>
                 {dataAction === "customs" ? (
                   <div className="inline-confirm">
-                    <span>自分の項目をすべて削除しますか？</span>
-                    <button type="button" onClick={() => { onDeleteAllCustom(); resetCustomForm(); setDataAction(null); }}>すべて削除</button>
-                    <button type="button" onClick={() => setDataAction(null)}>戻る</button>
+                    <span>{en ? "Delete all personal tasks?" : "自分の項目をすべて削除しますか？"}</span>
+                    <button type="button" onClick={() => { onDeleteAllCustom(); resetCustomForm(); setDataAction(null); }}>{en ? "Delete all" : "すべて削除"}</button>
+                    <button type="button" onClick={() => setDataAction(null)}>{en ? "Back" : "戻る"}</button>
                   </div>
-                ) : <button type="button" disabled={!customRoutines.length} onClick={() => setDataAction("customs")}>自分の項目を削除</button>}
+                ) : <button type="button" disabled={!customRoutines.length} onClick={() => setDataAction("customs")}>{en ? "Delete personal tasks" : "自分の項目を削除"}</button>}
               </div>
             </div>
             {dataMessage ? (
               <p
-                className={`data-message${/できません|拒否|対応していません|有効になりません/.test(dataMessage) ? " error" : ""}`}
+                className={`data-message${dataMessageIsError ? " error" : ""}`}
                 role="status"
               >
                 {dataMessage}
@@ -540,8 +548,8 @@ export default function SettingsSheet({
           </section>
 
           <aside className="local-data-note">
-            <strong>この端末だけに保存</strong>
-            <p>レベル、チェック、表示設定、自分の項目、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。</p>
+            <strong>{en ? "Saved only on this device" : "この端末だけに保存"}</strong>
+            <p>{en ? "Your level, checks, display settings, personal tasks, and notification settings are not sent elsewhere. They sync across tabs in the same browser, but not across devices. Export a backup before changing devices. Do not enter personal information." : "レベル、チェック、表示設定、自分の項目、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。"}</p>
           </aside>
         </div>
       </section>
