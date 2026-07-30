@@ -32,12 +32,7 @@ export default function ShareMenu() {
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
-  const [nativeShareSupported, setNativeShareSupported] = useState(false);
   const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    setNativeShareSupported(typeof navigator.share === "function");
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -70,6 +65,11 @@ export default function ShareMenu() {
   }
 
   async function shareFromDevice() {
+    if (typeof navigator.share !== "function") {
+      await copyUrl();
+      return;
+    }
+
     try {
       await navigator.share({
         title: "VAMPIR 日課ナビ",
@@ -120,18 +120,16 @@ export default function ShareMenu() {
           <span><strong>Xで共有</strong><small>紹介文とURLを入力済みで開く</small></span>
           <span className="share-menu-arrow" aria-hidden="true">↗</span>
         </a>
-        {nativeShareSupported ? (
-          <button
-            className="share-menu-item"
-            type="button"
-            role="menuitem"
-            onClick={shareFromDevice}
-          >
-            <span className="share-menu-icon"><ShareIcon /></span>
-            <span><strong>端末で共有</strong><small>利用できるアプリを選ぶ</small></span>
-            <span className="share-menu-arrow" aria-hidden="true">›</span>
-          </button>
-        ) : null}
+        <button
+          className="share-menu-item"
+          type="button"
+          role="menuitem"
+          onClick={shareFromDevice}
+        >
+          <span className="share-menu-icon"><ShareIcon /></span>
+          <span><strong>端末で共有</strong><small>未対応の場合はURLをコピー</small></span>
+          <span className="share-menu-arrow" aria-hidden="true">›</span>
+        </button>
         <button
           className="share-menu-item"
           type="button"
