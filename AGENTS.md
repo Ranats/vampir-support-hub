@@ -3,8 +3,8 @@
 ## Project scope
 
 - Repository source of truth: the `main` branch on GitHub. Keep the local `main` branch aligned with it before starting new work.
-- Source of truth: `app/page.tsx` for displayed schedules and routines; linked official VAMPIR pages and dated reference articles for factual values.
-- Read order: `AGENTS.md`, `app/page.tsx`, `app/layout.tsx`, `app/policy/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, then tests.
+- Source of truth: `app/HomeClient.tsx` for displayed schedules and routines; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; linked official VAMPIR pages and dated reference articles for factual values.
+- Read order: `AGENTS.md`, `app/page.tsx`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, `app/layout.tsx`, `app/policy/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, then tests.
 - Supported users and environments: Japanese VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
 
 ## Change boundaries
@@ -12,12 +12,15 @@
 - Preserve: the `vampir-level`, `vampir-daily-checks`, and `vampir-weekly-checks` localStorage keys and their existing JSON shapes; daily 05:00 JST and weekly Monday 05:00 JST resets.
 - Preserve: `vampir-custom-routines-v1` for user-authored routines and `vampir-routine-preferences-v1` for hidden default IDs. These preferences stay device-local and must not be presented as verified game information.
 - Preserve: `vampir-favorite-spawns-v1` and `vampir-notification-settings-v1` as device-local preferences. Notification permission must be requested only from an explicit user action and the UI must state that scheduled notification works only while the site is running.
+- Preserve: `vampir-clan-schedule-v1` for user-entered clan weekdays, times, and reminder choices. These plans stay device-local, reuse the existing weekly completion IDs, and must remain visually distinct from verified game schedules.
+- Preserve: shared clan portals store only a clan display name and administrator-entered content weekday/time. Personal reminders, completion, level, favorites, custom routines, and notification settings remain device-local and are never uploaded with a portal schedule.
+- Preserve: viewer and administrator portal capabilities use independent 32-byte secrets. Persist only their SHA-256 hashes; remove URL fragments after capture; authorize every read and mutation server-side; keep portal responses private and non-indexable.
 - Preserve: a Today-first experience that works without screen-sharing, OCR, account access, or game-client integration.
 - Preserve: Ko-fi and OFUSE support actions as optional external links. Keep every feature free, do not embed checkout or third-party tracking scripts, and state that support is optional.
 - Preserve: sharing uses the canonical `https://vampir.cilabworks.com/` URL through an X Web Intent or the browser share API with clipboard fallback. Do not embed X widgets or tracking scripts.
 - Preserve: `https://vampir.cilabworks.com/` is the canonical public origin. Keep metadata, `robots.txt`, `sitemap.xml`, and legacy-host redirects aligned with it.
 - Preserve: `/policy` accurately describes current device-local storage, notifications, external services, analytics/advertising status, the public GitHub Issues contact route, and the developer X profile at `https://x.com/Kokonoe_variant`. Update it before introducing analytics, advertising, affiliate tracking, or another data flow.
-- Out of scope: unverified game-menu routes, destination instructions, memory or traffic inspection, automated game input, claims of official affiliation, cloud sync, and claims of background scheduled Push without a verified server-side scheduler.
+- Out of scope: unverified game-menu routes, destination instructions, memory or traffic inspection, automated game input, claims of official affiliation, cloud sync of personal progress/settings, and claims of background scheduled Push without a verified server-side scheduler.
 - Display only schedule times, limits, deadlines, and unlock conditions that have a dated source. Keep the game client's current schedule and official notices authoritative.
 
 ## Required validation
@@ -32,6 +35,11 @@
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
 - Acceptance criteria: the footer and `/policy` link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
 - Acceptance criteria: the primary page and `/policy` publish canonical URLs on `vampir.cilabworks.com`; `robots.txt` advertises the canonical sitemap; the sitemap contains both public routes; the legacy `vampir-support-hub.codarrr.chatgpt.site` hostname redirects to the equivalent canonical path and query.
+- Acceptance criteria: clan mission and guard plans accept a weekly JST day/time, keep completion in the existing Monday 05:00 weekly cycle, notify only while the site is running, survive backups and same-browser tab sync, and never imply a game-account connection or an official clan timetable.
+- Acceptance criteria: opening clan settings from a clan card shows only the clan schedule controls and restores focus to that card when closed; each visible limited-event card is a keyboard-accessible external link to a verified announcement or details page.
+- Acceptance criteria: the server-rendered initial timestamp is serialized once and reused by the first client render; initial load produces no hydration mismatch from clocks, countdowns, event filtering, or cycle keys.
+- Acceptance criteria: a clan master receives separate one-time viewer/admin links; viewer access is read-only and refreshes on focus or within 30 seconds; admin updates use optimistic revision checks and can rotate the viewer link or delete the portal.
+- Acceptance criteria: shared schedules exclude reminder and completion fields; explicitly copying a shared schedule to a device preserves that device's reminder choices and established localStorage shape.
 
 ## Deliverables
 

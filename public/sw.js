@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "vampir-support-hub-";
 // Bump this value whenever the app shell changes. activate removes older versions.
-const CACHE_NAME = `${CACHE_PREFIX}2026-07-30-v1`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-07-30-v2`;
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -35,6 +35,9 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  // Capability-protected responses must never enter Cache Storage. Let the
+  // browser perform API requests directly so no-store and authorization stay authoritative.
+  if (url.pathname.startsWith("/api/")) return;
 
   event.respondWith(
     fetch(request)
