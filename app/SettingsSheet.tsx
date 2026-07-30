@@ -20,6 +20,7 @@ type DefaultRoutineSummary = {
 };
 
 type SettingsSheetProps = {
+  mode: "all" | "clan";
   level: number | null;
   dailyDefaults: readonly DefaultRoutineSummary[];
   weeklyDefaults: readonly DefaultRoutineSummary[];
@@ -54,6 +55,7 @@ type SettingsSheetProps = {
 };
 
 export default function SettingsSheet({
+  mode,
   level,
   dailyDefaults,
   weeklyDefaults,
@@ -227,15 +229,25 @@ export default function SettingsSheet({
       >
         <header className="settings-head">
           <div>
-            <span className="eyebrow">PERSONALIZE</span>
-            <h2 id="settings-title">表示とチェックリスト設定</h2>
+            <span className="eyebrow">{mode === "clan" ? "CLAN PLAN" : "PERSONALIZE"}</span>
+            <h2 id="settings-title">
+              {mode === "clan" ? "クラン予定を設定" : "表示とチェックリスト設定"}
+            </h2>
           </div>
           <button className="settings-close" type="button" onClick={onClose} autoFocus>
             閉じる
           </button>
         </header>
 
-        <div className="settings-body">
+        <div className={`settings-body${mode === "clan" ? " clan-settings-body" : ""}`}>
+          {mode === "clan" ? (
+            <ClanScheduleSettings
+              settings={clanSchedule}
+              onChange={onUpdateClanSchedule}
+              standalone
+            />
+          ) : (
+            <>
           <section className="settings-section" aria-labelledby="level-settings-title">
             <div className="settings-section-heading">
               <div>
@@ -556,6 +568,8 @@ export default function SettingsSheet({
             <strong>この端末だけに保存</strong>
             <p>レベル、チェック、表示設定、自分の項目、クラン予定、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。</p>
           </aside>
+            </>
+          )}
         </div>
       </section>
     </div>

@@ -30,6 +30,7 @@
 - Acceptance criteria: both support links open their stated external destinations, are keyboard accessible, and do not load third-party payment code on the Site.
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
 - Acceptance criteria: clan mission and guard plans accept a weekly JST day/time, keep completion in the existing Monday 05:00 weekly cycle, notify only while the site is running, survive backups and same-browser tab sync, and never imply a game-account connection or an official clan timetable.
+- Acceptance criteria: opening clan settings from a clan card shows only the clan schedule controls and restores focus to that card when closed; each visible limited-event card is a keyboard-accessible external link to a verified announcement or details page.
 
 ## Deliverables
 

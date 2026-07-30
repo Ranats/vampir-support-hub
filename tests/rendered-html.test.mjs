@@ -1,5 +1,31 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
+
+test("wires the focused clan settings flow and event detail links", async () => {
+  const [pageSource, settingsSource, clanSettingsSource] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/SettingsSheet.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/ClanScheduleSettings.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(pageSource, /const openClanSettings = useCallback/);
+  assert.match(pageSource, /onClick=\{openClanSettings\}/);
+  assert.match(
+    pageSource,
+    /\)\}\s*<button\s+className="clan-schedule-edit"[\s\S]*?onClick=\{openClanSettings\}/,
+  );
+  assert.match(pageSource, /item\.scheduled \? "予定を変更" : "クラン予定を設定"/);
+  assert.match(pageSource, /mode=\{settingsMode\}/);
+  assert.match(settingsSource, /mode === "clan" \? "クラン予定を設定"/);
+  assert.match(settingsSource, /<ClanScheduleSettings[\s\S]*?standalone/);
+  assert.match(clanSettingsSource, /standalone \? null : <span>4<\/span>/);
+
+  assert.equal(pageSource.match(/detailsUrl: SOURCE_URLS\.events/g)?.length, 5);
+  assert.match(pageSource, /className="event-row event-row-link"/);
+  assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
+  assert.match(pageSource, /の詳細を外部ページで開く/);
+});
 
 test("renders finished Japanese site metadata", async () => {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
