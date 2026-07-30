@@ -4,7 +4,7 @@
 
 - Repository source of truth: the `main` branch on GitHub. Keep the local `main` branch aligned with it before starting new work.
 - Source of truth: `app/page.tsx` for displayed schedules and routines; linked official VAMPIR pages and dated reference articles for factual values.
-- Read order: `AGENTS.md`, `app/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, then tests.
+- Read order: `AGENTS.md`, `app/page.tsx`, `app/layout.tsx`, `app/policy/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, then tests.
 - Supported users and environments: Japanese VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
 
 ## Change boundaries
@@ -15,6 +15,8 @@
 - Preserve: a Today-first experience that works without screen-sharing, OCR, account access, or game-client integration.
 - Preserve: Ko-fi and OFUSE support actions as optional external links. Keep every feature free, do not embed checkout or third-party tracking scripts, and state that support is optional.
 - Preserve: sharing uses the canonical `https://vampir.cilabworks.com/` URL through an X Web Intent or the browser share API with clipboard fallback. Do not embed X widgets or tracking scripts.
+- Preserve: `https://vampir.cilabworks.com/` is the canonical public origin. Keep metadata, `robots.txt`, `sitemap.xml`, and legacy-host redirects aligned with it.
+- Preserve: `/policy` accurately describes current device-local storage, notifications, external services, analytics/advertising status, the public GitHub Issues contact route, and the developer X profile at `https://x.com/Kokonoe_variant`. Update it before introducing analytics, advertising, affiliate tracking, or another data flow.
 - Out of scope: unverified game-menu routes, destination instructions, memory or traffic inspection, automated game input, claims of official affiliation, cloud sync, and claims of background scheduled Push without a verified server-side scheduler.
 - Display only schedule times, limits, deadlines, and unlock conditions that have a dated source. Keep the game client's current schedule and official notices authoritative.
 
@@ -28,6 +30,8 @@
 - Acceptance criteria: the last verified date and a stale warning are visible while the game client and official notices remain authoritative.
 - Acceptance criteria: both support links open their stated external destinations, are keyboard accessible, and do not load third-party payment code on the Site.
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
+- Acceptance criteria: the footer and `/policy` link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
+- Acceptance criteria: the primary page and `/policy` publish canonical URLs on `vampir.cilabworks.com`; `robots.txt` advertises the canonical sitemap; the sitemap contains both public routes; the legacy `vampir-support-hub.codarrr.chatgpt.site` hostname redirects to the equivalent canonical path and query.
 
 ## Deliverables
 
