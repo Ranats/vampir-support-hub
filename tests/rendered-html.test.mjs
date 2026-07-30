@@ -37,6 +37,13 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /Lv未設定/);
   assert.match(html, /クラン任務を確認/);
   assert.match(html, /クラン守護を確認/);
+  assert.match(html, /id="clan"/);
+  assert.match(html, /クラン予定/);
+  assert.match(html, /この端末だけに保存/);
+  assert.match(html, /検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません/);
+  assert.match(html, /https:\/\/guide\.netmarble\.com\/thered\/110/);
+  assert.match(html, /クラン機能 公式ガイド（韓国語）/);
+  assert.match(html, /日課・週課・クラン概要（日本語解説）/);
   assert.match(html, /og\.png/);
   assert.match(html, /og\.png\?v=20260730-2/);
   assert.match(html, /favicon\.png\?v=20260730-1/);

@@ -818,6 +818,162 @@ summary:focus-visible {
   cursor: pointer;
 }
 
+.clan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.clan-card {
+  min-width: 0;
+  padding: 22px;
+}
+
+.clan-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.clan-card-head > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.clan-card-head span,
+.clan-card-head > small {
+  color: var(--accent-strong);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.clan-card-head h3 {
+  margin: 3px 0 0;
+  font-size: 22px;
+}
+
+.clan-card-head > small {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border: 1px solid rgba(131, 201, 149, 0.28);
+  border-radius: 999px;
+  color: var(--success);
+  letter-spacing: 0;
+}
+
+.clan-verified-summary {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.clan-schedule-status {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin-top: 18px;
+  padding: 13px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.clan-schedule-status strong {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.clan-schedule-status small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.clan-countdown {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-top: 15px;
+}
+
+.clan-countdown span,
+.clan-countdown time {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.clan-countdown b {
+  min-width: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+
+.clan-countdown time {
+  grid-column: 1 / -1;
+}
+
+.clan-complete {
+  display: flex;
+  width: 100%;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--text);
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.clan-complete.done {
+  border-color: rgba(131, 201, 149, 0.35);
+  color: var(--success);
+  background: rgba(131, 201, 149, 0.08);
+}
+
+.clan-complete.done .check-box {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.clan-unscheduled {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.clan-unscheduled p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.clan-unscheduled button {
+  min-height: 42px;
+  flex: 0 0 auto;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 90, 100, 0.4);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--accent-soft);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .schedule-list,
 .event-list {
   overflow: hidden;
@@ -1457,6 +1613,104 @@ summary:focus-visible {
   margin-top: 12px;
 }
 
+.clan-settings-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.clan-setting-card {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.clan-setting-card legend {
+  padding: 0 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.clan-setting-enabled,
+.clan-reminder-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.clan-setting-enabled {
+  min-height: 38px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.clan-setting-enabled input,
+.clan-reminder-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent-strong);
+}
+
+.clan-setting-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.clan-setting-controls > label:not(.clan-reminder-toggle) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.clan-setting-controls label > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.clan-setting-controls select,
+.clan-setting-controls input[type="time"] {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.clan-setting-controls select:disabled,
+.clan-setting-controls input:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.clan-reminder-toggle {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.clan-setting-card > small {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
 .data-actions {
   display: grid;
   gap: 8px;
@@ -1676,6 +1930,7 @@ summary:focus-visible {
 
   .today-grid,
   .check-grid,
+  .clan-grid,
   .site-footer {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1837,6 +2092,15 @@ summary:focus-visible {
     width: 100%;
   }
 
+  .clan-unscheduled {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .clan-unscheduled button {
+    width: 100%;
+  }
+
   .section-heading h2 {
     font-size: 28px;
   }
@@ -1920,7 +2184,8 @@ summary:focus-visible {
   }
 
   .visibility-grid,
-  .custom-form-grid {
+  .custom-form-grid,
+  .clan-setting-controls {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1959,7 +2224,7 @@ summary:focus-visible {
     bottom: 10px;
     left: 10px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 4px;
     padding: 5px;
     border: 1px solid var(--line);

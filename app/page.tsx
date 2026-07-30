@@ -46,6 +46,15 @@ import {
   parsePersonalBackup,
 } from "./personal-backup";
 import { replaceStorageValues } from "./storage-transaction";
+import {
+  CLAN_CONTENT_META,
+  CLAN_SCHEDULE_KEY,
+  CLAN_WEEKDAY_LABELS,
+  DEFAULT_CLAN_SCHEDULE_SETTINGS,
+  nextClanOccurrences,
+  parseClanScheduleSettings,
+  type ClanScheduleSettings,
+} from "./clan-schedule";
 
 type SpawnEvent = {
   id: string;
@@ -58,6 +67,14 @@ type SpawnEvent = {
 };
 
 type Occurrence = SpawnEvent & { at: Date };
+
+type ReminderCandidate = {
+  occurrenceKey: string;
+  startsAt: Date;
+  title: string;
+  body: string;
+  url: string;
+};
 
 type Routine = {
   id: string;
@@ -89,6 +106,7 @@ type BeforeInstallPromptEvent = Event & {
 const SOURCE_URLS = {
   official: "https://vampirjp.netmarble.com/landing",
   routines: "https://gamewith.jp/vampir/567160",
+  clanOfficial: "https://guide.netmarble.com/thered/110",
   gehenna: "https://gamewith.jp/vampir/569771",
   events: "https://gamewith.jp/vampir/567177",
 };
@@ -328,6 +346,10 @@ function formatJst(date: Date, withSeconds = false) {
   }).format(date);
 }
 
+function formatTime(hour: number, minute: number) {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 function nextDailyReset(now: Date) {
   const jst = shiftedToJst(now);
   const today = makeJstDate(
@@ -457,6 +479,9 @@ export default function Home() {
     DEFAULT_ROUTINE_PREFERENCES,
   );
   const [favoriteSpawnIds, setFavoriteSpawnIds] = useState<string[]>([]);
+  const [clanSchedule, setClanSchedule] = useState<ClanScheduleSettings>(
+    DEFAULT_CLAN_SCHEDULE_SETTINGS,
+  );
   const [notificationSettings, setNotificationSettings] =
     useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [notificationPermission, setNotificationPermission] = useState<
@@ -498,6 +523,13 @@ export default function Home() {
     [now, effectiveLevel],
   );
   const next = upcoming[0];
+  const clanOccurrences = useMemo(
+    () => nextClanOccurrences(clanSchedule, now),
+    [clanSchedule, now],
+  );
+  const clanReminderCount = clanSchedule.items.filter((item) => (
+    item.scheduled && item.reminder
+  )).length;
   const todayTasks = selectTodayTasks(
     visibleDaily,
     visibleWeekly,
@@ -548,6 +580,9 @@ export default function Home() {
       setFavoriteSpawnIds(parseFavoriteSpawnIds(
         window.localStorage.getItem(FAVORITE_SPAWNS_KEY),
         SPAWN_EVENTS.map((event) => event.id),
+      ));
+      setClanSchedule(parseClanScheduleSettings(
+        window.localStorage.getItem(CLAN_SCHEDULE_KEY),
       ));
       setNotificationSettings(parseNotificationSettings(
         window.localStorage.getItem(NOTIFICATION_SETTINGS_KEY),
@@ -615,6 +650,11 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(FAVORITE_SPAWNS_KEY, JSON.stringify(favoriteSpawnIds));
   }, [favoriteSpawnIds, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(CLAN_SCHEDULE_KEY, JSON.stringify(clanSchedule));
+  }, [clanSchedule, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -699,6 +739,11 @@ export default function Home() {
         setFavoriteSpawnIds((current) => (
           JSON.stringify(current) === JSON.stringify(nextFavorites) ? current : nextFavorites
         ));
+      } else if (event.key === CLAN_SCHEDULE_KEY) {
+        const nextSettings = parseClanScheduleSettings(event.newValue);
+        setClanSchedule((current) => (
+          JSON.stringify(current) === JSON.stringify(nextSettings) ? current : nextSettings
+        ));
       } else if (event.key === NOTIFICATION_SETTINGS_KEY) {
         const nextSettings = parseNotificationSettings(event.newValue);
         setNotificationSettings((current) => (
@@ -715,45 +760,76 @@ export default function Home() {
       !hydrated
       || !notificationSettings.enabled
       || notificationPermission !== "granted"
-      || favoriteSpawnIds.length === 0
     ) return;
 
     const leadMilliseconds = notificationSettings.leadMinutes * 60_000;
-    const candidates = upcomingOccurrences(now, effectiveLevel, 20).filter((event) => {
-      const untilStart = event.at.getTime() - now.getTime();
-      return favoriteSpawnIds.includes(event.id)
-        && untilStart > 0
-        && untilStart <= leadMilliseconds;
-    });
+    const spawnCandidates: ReminderCandidate[] = upcomingOccurrences(now, effectiveLevel, 20)
+      .filter((event) => {
+        const untilStart = event.at.getTime() - now.getTime();
+        return favoriteSpawnIds.includes(event.id)
+          && untilStart > 0
+          && untilStart <= leadMilliseconds;
+      })
+      .map((event) => ({
+        occurrenceKey: `${event.id}:${event.at.toISOString()}`,
+        startsAt: event.at,
+        title: event.title,
+        body: `${formatJst(event.at)} JST開始予定。ゲーム内時刻表を優先してください。`,
+        url: "/#schedule",
+      }));
+    const clanCandidates: ReminderCandidate[] = nextClanOccurrences(clanSchedule, now)
+      .filter((occurrence) => {
+        const item = clanSchedule.items.find(({ contentId }) => (
+          contentId === occurrence.contentId
+        ));
+        const untilStart = occurrence.startsAt.getTime() - now.getTime();
+        return Boolean(item?.reminder)
+          && !weeklyDone.includes(occurrence.contentId)
+          && untilStart > 0
+          && untilStart <= leadMilliseconds;
+      })
+      .map((occurrence) => {
+        const meta = CLAN_CONTENT_META.find(({ contentId }) => (
+          contentId === occurrence.contentId
+        ))!;
+        return {
+          occurrenceKey: occurrence.occurrenceKey,
+          startsAt: occurrence.startsAt,
+          title: meta.name,
+          body: `あなたが登録したクラン予定（${formatJst(occurrence.startsAt)} JST）です。クラン内の案内を確認してください。`,
+          url: "/#clan",
+        };
+      });
+    const candidates = [...spawnCandidates, ...clanCandidates];
     if (!candidates.length) return;
 
     const recentCutoff = now.getTime() - 2 * 86_400_000;
 
     for (const event of candidates) {
-      const occurrenceKey = `${event.id}:${event.at.toISOString()}`;
+      const { occurrenceKey } = event;
       const sendOnce = async () => {
         const notified = safeNotifiedOccurrences();
         if (notified[occurrenceKey]) return;
-        const pruned = Object.fromEntries(
-          Object.entries(notified).filter(([, timestamp]) => timestamp >= recentCutoff),
-        );
-        pruned[occurrenceKey] = Date.now();
-        window.localStorage.setItem(NOTIFIED_OCCURRENCES_KEY, JSON.stringify(pruned));
-
         const registration = await navigator.serviceWorker.ready;
         const remainingMinutes = Math.max(
           1,
-          Math.ceil((event.at.getTime() - Date.now()) / 60_000),
+          Math.ceil((event.startsAt.getTime() - Date.now()) / 60_000),
         );
         await registration.showNotification(
           `${event.title}まであと約${remainingMinutes}分`,
           {
-            body: `${formatJst(event.at)} JST開始予定。ゲーム内時刻表を優先してください。`,
+            body: event.body,
             icon: "/icon-192.png",
             tag: occurrenceKey,
-            data: { url: "/#schedule" },
+            data: { url: event.url },
           },
         );
+        const latestNotified = safeNotifiedOccurrences();
+        const nextNotified = Object.fromEntries(
+          Object.entries(latestNotified).filter(([, timestamp]) => timestamp >= recentCutoff),
+        );
+        nextNotified[occurrenceKey] = Date.now();
+        window.localStorage.setItem(NOTIFIED_OCCURRENCES_KEY, JSON.stringify(nextNotified));
       };
 
       if ("locks" in navigator) {
@@ -767,10 +843,12 @@ export default function Home() {
   }, [
     effectiveLevel,
     favoriteSpawnIds,
+    clanSchedule,
     hydrated,
     notificationPermission,
     notificationSettings,
     now,
+    weeklyDone,
   ]);
 
   function toggle(
@@ -869,7 +947,7 @@ export default function Home() {
     }));
     setNotificationMessage(
       permission === "granted"
-        ? "通知を有効にしました。お気に入りの予定をサイト表示中にお知らせします。"
+        ? "通知を有効にしました。お気に入りと登録済みのクラン予定をサイト表示中にお知らせします。"
         : permission === "denied"
           ? "通知が拒否されています。ブラウザのサイト設定から変更できます。"
           : "通知は有効になりませんでした。",
@@ -910,6 +988,7 @@ export default function Home() {
       customRoutines,
       routinePreferences,
       favoriteSpawnIds,
+      clanSchedule,
       notificationSettings,
     });
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -943,6 +1022,7 @@ export default function Home() {
         [CUSTOM_ROUTINES_KEY, JSON.stringify(data.customRoutines)],
         [ROUTINE_PREFERENCES_KEY, JSON.stringify(data.routinePreferences)],
         [FAVORITE_SPAWNS_KEY, JSON.stringify(data.favoriteSpawnIds)],
+        [CLAN_SCHEDULE_KEY, JSON.stringify(data.clanSchedule)],
         [NOTIFICATION_SETTINGS_KEY, JSON.stringify(data.notificationSettings)],
       ]);
       replaceStorageValues(window.localStorage, nextValues);
@@ -961,6 +1041,7 @@ export default function Home() {
         JSON.stringify(data.favoriteSpawnIds),
         SPAWN_EVENTS.map((event) => event.id),
       ));
+      setClanSchedule(data.clanSchedule);
       setNotificationSettings(data.notificationSettings);
       setDataMessage("バックアップを復元しました。期限切れのチェックは現在の周期に合わせて未完了に戻しました。");
     } catch {
@@ -1179,6 +1260,88 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="clan-section section-block" id="clan" aria-labelledby="clan-title">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">CLAN</span>
+              <h2 id="clan-title">クラン予定</h2>
+            </div>
+            <p>
+              曜日・時刻は、あなたのクラン内の取り決めとしてこの端末だけに保存します。
+              検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません。
+            </p>
+          </div>
+
+          <div className="clan-grid">
+            {CLAN_CONTENT_META.map((meta) => {
+              const item = clanSchedule.items.find(({ contentId }) => (
+                contentId === meta.contentId
+              ));
+              const occurrence = clanOccurrences.find(({ contentId }) => (
+                contentId === meta.contentId
+              ));
+              const done = weeklyDone.includes(meta.contentId);
+              if (!item) return null;
+
+              const reminderState = !item.reminder
+                ? "リマインダー：オフ"
+                : notificationPermission !== "granted"
+                  ? "リマインダー：通知許可待ち"
+                  : !notificationSettings.enabled
+                    ? "リマインダー：全体通知オフ"
+                    : `リマインダー：${notificationSettings.leadMinutes}分前`;
+
+              return (
+                <article className="clan-card panel" key={meta.contentId}>
+                  <div className="clan-card-head">
+                    <div>
+                      <span>{meta.contentId === "clan-mission" ? "MISSION" : "GUARD"}</span>
+                      <h3>{meta.name}</h3>
+                    </div>
+                    <small>確認済み概要</small>
+                  </div>
+                  <p className="clan-verified-summary">
+                    クランLv{meta.minimumClanLevel}以上・週{meta.weeklyLimit}回参加可能
+                  </p>
+
+                  {item.scheduled && occurrence ? (
+                    <>
+                      <div className="clan-schedule-status">
+                        <strong>
+                          毎週{CLAN_WEEKDAY_LABELS[item.day]}曜 {formatTime(item.hour, item.minute)} JST
+                        </strong>
+                        <small>ユーザー設定・{reminderState}</small>
+                      </div>
+                      <div className="clan-countdown">
+                        <span>次回まで</span>
+                        <b>{formatCountdown(occurrence.startsAt, now)}</b>
+                        <time dateTime={occurrence.startsAt.toISOString()}>{formatJst(occurrence.startsAt)} JST</time>
+                      </div>
+                      <button
+                        className={`clan-complete${done ? " done" : ""}`}
+                        type="button"
+                        aria-pressed={done}
+                        onClick={() => toggle(meta.contentId, setWeeklyDone)}
+                      >
+                        <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
+                        {done ? "今週は完了済み" : "今週の完了にする"}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="clan-unscheduled">
+                      <p>クラン内の開催曜日と時刻は未登録です。</p>
+                      <button type="button" onClick={openSettings}>クラン予定を設定</button>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+          <p className="schedule-note">
+            機能概要は公式ガイドと日本語解説で確認しています。実際の開催日時はクラン内の最新案内を優先してください。
+          </p>
+        </section>
+
         <section className="schedule-section section-block" id="schedule" aria-labelledby="schedule-title">
           <div className="section-heading">
             <div>
@@ -1282,7 +1445,8 @@ export default function Home() {
             </p>
             <nav aria-label="情報源">
               <a href={SOURCE_URLS.official} target="_blank" rel="noreferrer">VAMPIR公式</a>
-              <a href={SOURCE_URLS.routines} target="_blank" rel="noreferrer">日課・週課</a>
+              <a href={SOURCE_URLS.clanOfficial} target="_blank" rel="noreferrer">クラン機能 公式ガイド（韓国語）</a>
+              <a href={SOURCE_URLS.routines} target="_blank" rel="noreferrer">日課・週課・クラン概要（日本語解説）</a>
               <a href={SOURCE_URLS.gehenna} target="_blank" rel="noreferrer">ゲヘナ時刻</a>
               <a href={SOURCE_URLS.events} target="_blank" rel="noreferrer">イベント一覧</a>
             </nav>
@@ -1297,7 +1461,9 @@ export default function Home() {
           weeklyDefaults={WEEKLY_TASKS}
           hiddenDefaultIds={routinePreferences.hiddenDefaultIds}
           customRoutines={customRoutines}
+          clanSchedule={clanSchedule}
           favoriteSpawnCount={favoriteSpawnIds.length}
+          clanReminderCount={clanReminderCount}
           notificationPermission={notificationPermission}
           notificationSettings={notificationSettings}
           canInstall={Boolean(installPrompt)}
@@ -1314,6 +1480,7 @@ export default function Home() {
           onDeleteCustom={deleteCustomRoutine}
           onResetChecks={resetChecks}
           onDeleteAllCustom={deleteAllCustomRoutines}
+          onUpdateClanSchedule={setClanSchedule}
           onUpdateNotificationSettings={updateNotificationSettings}
           onRequestNotificationPermission={requestNotificationPermission}
           onTestNotification={showTestNotification}
@@ -1326,6 +1493,7 @@ export default function Home() {
       <nav className="mobile-nav" aria-label="モバイルナビゲーション">
         <a href="#today">今日</a>
         <a href="#checklists">チェック</a>
+        <a href="#clan">クラン</a>
         <a href="#schedule">時刻</a>
         <a href="#info">情報</a>
       </nav>

@@ -31,6 +31,27 @@ const validData = {
     hiddenDefaultIds: ["guild-donation"],
   },
   favoriteSpawnIds: ["gehena"],
+  clanSchedule: {
+    version: 1,
+    items: [
+      {
+        contentId: "clan-mission",
+        scheduled: true,
+        day: 2,
+        hour: 21,
+        minute: 30,
+        reminder: true,
+      },
+      {
+        contentId: "clan-guard",
+        scheduled: false,
+        day: 0,
+        hour: 0,
+        minute: 0,
+        reminder: false,
+      },
+    ],
+  },
   notificationSettings: {
     version: 1,
     enabled: true,
@@ -53,12 +74,60 @@ test("round-trips a valid backup", () => {
   assert.deepEqual(parsePersonalBackup(JSON.stringify(backup)), backup);
 });
 
+test("accepts a legacy version 1 backup without a clan schedule", () => {
+  const legacyData = { ...validData };
+  delete legacyData.clanSchedule;
+  const parsed = parsePersonalBackup(JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    data: legacyData,
+  }));
+
+  assert.deepEqual(parsed?.data.clanSchedule, {
+    version: 1,
+    items: [
+      {
+        contentId: "clan-mission",
+        scheduled: false,
+        day: 0,
+        hour: 0,
+        minute: 0,
+        reminder: true,
+      },
+      {
+        contentId: "clan-guard",
+        scheduled: false,
+        day: 0,
+        hour: 0,
+        minute: 0,
+        reminder: true,
+      },
+    ],
+  });
+});
+
 test("rejects broken JSON and unsupported versions", () => {
   assert.equal(parsePersonalBackup("{broken"), null);
   assert.equal(parsePersonalBackup(JSON.stringify({
     format: BACKUP_FORMAT,
     version: 2,
     data: validData,
+  })), null);
+});
+
+test("rejects a malformed clan schedule without partially importing", () => {
+  assert.equal(parsePersonalBackup(JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    data: {
+      ...validData,
+      clanSchedule: {
+        ...validData.clanSchedule,
+        items: validData.clanSchedule.items.map((item, index) => (
+          index === 0 ? { ...item, day: 7 } : item
+        )),
+      },
+    },
   })), null);
 });
 

@@ -12,6 +12,7 @@
 - Preserve: the `vampir-level`, `vampir-daily-checks`, and `vampir-weekly-checks` localStorage keys and their existing JSON shapes; daily 05:00 JST and weekly Monday 05:00 JST resets.
 - Preserve: `vampir-custom-routines-v1` for user-authored routines and `vampir-routine-preferences-v1` for hidden default IDs. These preferences stay device-local and must not be presented as verified game information.
 - Preserve: `vampir-favorite-spawns-v1` and `vampir-notification-settings-v1` as device-local preferences. Notification permission must be requested only from an explicit user action and the UI must state that scheduled notification works only while the site is running.
+- Preserve: `vampir-clan-schedule-v1` for user-entered clan weekdays, times, and reminder choices. These plans stay device-local, reuse the existing weekly completion IDs, and must remain visually distinct from verified game schedules.
 - Preserve: a Today-first experience that works without screen-sharing, OCR, account access, or game-client integration.
 - Preserve: Ko-fi and OFUSE support actions as optional external links. Keep every feature free, do not embed checkout or third-party tracking scripts, and state that support is optional.
 - Preserve: sharing uses the canonical `https://vampir.cilabworks.com/` URL through an X Web Intent or the browser share API with clipboard fallback. Do not embed X widgets or tracking scripts.
@@ -28,6 +29,7 @@
 - Acceptance criteria: the last verified date and a stale warning are visible while the game client and official notices remain authoritative.
 - Acceptance criteria: both support links open their stated external destinations, are keyboard accessible, and do not load third-party payment code on the Site.
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
+- Acceptance criteria: clan mission and guard plans accept a weekly JST day/time, keep completion in the existing Monday 05:00 weekly cycle, notify only while the site is running, survive backups and same-browser tab sync, and never imply a game-account connection or an official clan timetable.
 
 ## Deliverables
 

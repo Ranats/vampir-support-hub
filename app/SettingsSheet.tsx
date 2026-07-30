@@ -10,6 +10,8 @@ import {
   type RoutineFrequency,
 } from "./routine-customization";
 import type { NotificationSettings } from "./notification-settings";
+import ClanScheduleSettings from "./ClanScheduleSettings";
+import type { ClanScheduleSettings as ClanScheduleSettingsValue } from "./clan-schedule";
 
 type DefaultRoutineSummary = {
   id: string;
@@ -23,7 +25,9 @@ type SettingsSheetProps = {
   weeklyDefaults: readonly DefaultRoutineSummary[];
   hiddenDefaultIds: readonly string[];
   customRoutines: readonly CustomRoutine[];
+  clanSchedule: ClanScheduleSettingsValue;
   favoriteSpawnCount: number;
+  clanReminderCount: number;
   notificationPermission: NotificationPermission | "unsupported";
   notificationSettings: NotificationSettings;
   canInstall: boolean;
@@ -40,6 +44,7 @@ type SettingsSheetProps = {
   onDeleteCustom: (id: string) => void;
   onResetChecks: () => void;
   onDeleteAllCustom: () => void;
+  onUpdateClanSchedule: (settings: ClanScheduleSettingsValue) => void;
   onUpdateNotificationSettings: (settings: NotificationSettings) => void;
   onRequestNotificationPermission: () => Promise<void>;
   onTestNotification: () => Promise<void>;
@@ -54,7 +59,9 @@ export default function SettingsSheet({
   weeklyDefaults,
   hiddenDefaultIds,
   customRoutines,
+  clanSchedule,
   favoriteSpawnCount,
+  clanReminderCount,
   notificationPermission,
   notificationSettings,
   canInstall,
@@ -71,6 +78,7 @@ export default function SettingsSheet({
   onDeleteCustom,
   onResetChecks,
   onDeleteAllCustom,
+  onUpdateClanSchedule,
   onUpdateNotificationSettings,
   onRequestNotificationPermission,
   onTestNotification,
@@ -379,13 +387,18 @@ export default function SettingsSheet({
             </form>
           </section>
 
+          <ClanScheduleSettings
+            settings={clanSchedule}
+            onChange={onUpdateClanSchedule}
+          />
+
           <section className="settings-section" aria-labelledby="notification-settings-title">
             <div className="settings-section-heading">
               <div>
-                <span>4</span>
+                <span>5</span>
                 <div>
                   <h3 id="notification-settings-title">ホーム画面と通知</h3>
-                  <p>お気に入りにした出現予定を、サイトを開いている間にお知らせします。</p>
+                  <p>お気に入りの出現予定と登録したクラン予定を、サイトを開いている間にお知らせします。</p>
                 </div>
               </div>
             </div>
@@ -415,7 +428,7 @@ export default function SettingsSheet({
                 <div>
                   <strong>出現前の通知</strong>
                   <small>
-                    お気に入り {favoriteSpawnCount}件・ページを閉じた後の定刻通知には対応していません。
+                    お気に入り {favoriteSpawnCount}件・クラン予定 {clanReminderCount}件・ページを閉じた後の定刻通知には対応していません。
                   </small>
                 </div>
                 {notificationPermission === "unsupported" ? (
@@ -464,7 +477,7 @@ export default function SettingsSheet({
               </div>
             ) : null}
             <p className="notification-note">
-              初回表示で勝手に許可を求めません。通知対象は「次の出現予定」の☆で選べます。
+              初回表示で勝手に許可を求めません。出現予定の☆と、登録したクラン予定ごとに通知対象を選べます。
             </p>
             {notificationMessage ? (
               <p
@@ -479,13 +492,13 @@ export default function SettingsSheet({
           <section className="settings-section" aria-labelledby="data-settings-title">
             <div className="settings-section-heading">
               <div>
-                <span>5</span>
+                <span>6</span>
                 <div><h3 id="data-settings-title">データ管理</h3><p>バックアップ・復元と、項目ごとのリセットを行えます。</p></div>
               </div>
             </div>
             <div className="data-actions">
               <div>
-                <div><strong>バックアップ</strong><small>レベル、チェック、表示設定、自分の項目、通知設定を書き出す</small></div>
+                <div><strong>バックアップ</strong><small>レベル、チェック、表示設定、自分の項目、クラン予定、通知設定を書き出す</small></div>
                 <button type="button" onClick={onExportData}>書き出す</button>
               </div>
               <div>
@@ -541,7 +554,7 @@ export default function SettingsSheet({
 
           <aside className="local-data-note">
             <strong>この端末だけに保存</strong>
-            <p>レベル、チェック、表示設定、自分の項目、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。</p>
+            <p>レベル、チェック、表示設定、自分の項目、クラン予定、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。</p>
           </aside>
         </div>
       </section>
