@@ -4,7 +4,7 @@ import test from "node:test";
 
 test("wires the focused clan settings flow and event detail links", async () => {
   const [pageSource, settingsSource, clanSettingsSource] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/HomeClient.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/SettingsSheet.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/ClanScheduleSettings.tsx", import.meta.url), "utf8"),
   ]);
@@ -25,6 +25,8 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(pageSource, /className="event-row event-row-link"/);
   assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
   assert.match(pageSource, /の詳細を外部ページで開く/);
+  assert.match(pageSource, /href="\/clan\/create"/);
+  assert.match(pageSource, /共有ポータルを作成/);
 });
 
 test("renders finished Japanese site metadata", async () => {
@@ -65,6 +67,7 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /クラン守護を確認/);
   assert.match(html, /id="clan"/);
   assert.match(html, /クラン予定/);
+  assert.match(html, /共有ポータルを作成/);
   assert.match(html, /この端末だけに保存/);
   assert.match(html, /検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません/);
   assert.match(html, /https:\/\/guide\.netmarble\.com\/thered\/110/);

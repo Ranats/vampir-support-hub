@@ -25,6 +25,7 @@ test("service worker uses network-first requests and handles notification clicks
   const worker = await readFile(new URL("sw.js", publicUrl), "utf8");
   assert.match(worker, /addEventListener\("fetch"/);
   assert.match(worker, /fetch\(request\)/);
+  assert.match(worker, /if \(url\.pathname\.startsWith\("\/api\/"\)\) return/);
   assert.match(worker, /addEventListener\("notificationclick"/);
   assert.match(worker, /clients\.openWindow/);
 });
