@@ -55,11 +55,14 @@ test("renders finished Japanese site metadata", async () => {
     /<a\b[^>]*class="support-banner support-banner-ofuse"[^>]*href="https:\/\/ofuse\.me\/d2c3aa65"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>/i,
   );
   assert.match(html, /すべての機能を無料で利用できます/);
-  assert.match(html, /このツールを共有する/);
+  assert.match(html, /このツールを共有/);
   assert.match(html, /https:\/\/twitter\.com\/intent\/tweet\?/);
   assert.match(html, /https%3A%2F%2Fvampir\.cilabworks\.com%2F/);
+  assert.match(html, /共有メニューを開く/);
+  assert.match(html, /class="share-menu"/);
   assert.match(html, /Xで共有/);
-  assert.match(html, /共有する/);
+  assert.match(html, /URLをコピー/);
+  assert.doesNotMatch(html, /class="share-panel"/);
   assert.doesNotMatch(html, /画面検知を開始|SCREEN SYNC|目的地|行き先/);
   assert.doesNotMatch(html, /buymeacoffee|support-widget|payment-script/i);
   assert.doesNotMatch(html, /platform\.twitter\.com|widgets\.js|publish\.x\.com/i);

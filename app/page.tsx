@@ -16,6 +16,7 @@ import {
   weeklyCycleKey,
 } from "./progress-cycle";
 import SettingsSheet from "./SettingsSheet";
+import ShareMenu from "./ShareMenu";
 import {
   CUSTOM_ROUTINES_KEY,
   DEFAULT_ROUTINE_PREFERENCES,
@@ -96,14 +97,6 @@ const SUPPORT_URLS = {
   kofi: "https://ko-fi.com/ranats",
   ofuse: "https://ofuse.me/d2c3aa65",
 };
-
-const SHARE_URL = "https://vampir.cilabworks.com/";
-const SHARE_TEXT = "VAMPIR 日課ナビ｜次の出現時刻・日課・週課をまとめて確認";
-const X_SHARE_URL = `https://twitter.com/intent/tweet?${new URLSearchParams({
-  text: SHARE_TEXT,
-  url: SHARE_URL,
-  hashtags: "VAMPIR,ヴァンピール",
-}).toString()}`;
 
 const SPAWN_EVENTS: SpawnEvent[] = [
   {
@@ -474,7 +467,6 @@ export default function Home() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
-  const [shareMessage, setShareMessage] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
   const settingsFallbackFocusRef = useRef<HTMLButtonElement | null>(null);
@@ -976,34 +968,6 @@ export default function Home() {
     }
   }
 
-  async function shareTool() {
-    const shareData = {
-      title: "VAMPIR 日課ナビ",
-      text: SHARE_TEXT,
-      url: SHARE_URL,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        setShareMessage("共有しました。");
-        return;
-      }
-
-      await navigator.clipboard.writeText(SHARE_URL);
-      setShareMessage("URLをコピーしました。");
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-
-      try {
-        await navigator.clipboard.writeText(SHARE_URL);
-        setShareMessage("URLをコピーしました。");
-      } catch {
-        setShareMessage("共有できませんでした。URLを直接コピーしてください。");
-      }
-    }
-  }
-
   const openSettings = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
     settingsReturnFocusRef.current = event.currentTarget;
     setSettingsOpen(true);
@@ -1035,6 +999,7 @@ export default function Home() {
           >
             {informationIsStale ? "要再確認" : freshnessLabel(now)}
           </a>
+          <ShareMenu />
           <button
             ref={settingsFallbackFocusRef}
             className="settings-trigger"
@@ -1279,37 +1244,6 @@ export default function Home() {
           <div className="site-footer-about">
             <strong>VAMPIR 日課ナビ</strong>
             <p>非公式ツールです。時刻・イベント期間はゲーム内表示と公式告知を優先してください。</p>
-            <section className="share-panel" aria-labelledby="share-title">
-              <div>
-                <strong id="share-title">このツールを共有する</strong>
-                <p>独自ドメインのURLと紹介文を共有できます。</p>
-              </div>
-              <div className="share-actions">
-                <a
-                  className="share-button share-button-x"
-                  href={X_SHARE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="XでVAMPIR 日課ナビを共有する（外部サイト）"
-                >
-                  <span aria-hidden="true">X</span>
-                  Xで共有
-                </a>
-                <button
-                  className="share-button share-button-native"
-                  type="button"
-                  onClick={shareTool}
-                >
-                  <span aria-hidden="true">↗</span>
-                  共有する
-                </button>
-              </div>
-              {shareMessage ? (
-                <small className="share-status" role="status" aria-live="polite">
-                  {shareMessage}
-                </small>
-              ) : null}
-            </section>
             <section className="support-panel" aria-labelledby="support-title">
               <div>
                 <strong id="support-title">このツールを応援する</strong>
