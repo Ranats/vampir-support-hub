@@ -9,6 +9,7 @@ type ClanScheduleSettingsProps = {
   settings: ClanScheduleSettingsValue;
   onChange: (settings: ClanScheduleSettingsValue) => void;
   standalone?: boolean;
+  shared?: boolean;
 };
 
 function formatTime(hour: number, minute: number) {
@@ -19,6 +20,7 @@ export default function ClanScheduleSettings({
   settings,
   onChange,
   standalone = false,
+  shared = false,
 }: ClanScheduleSettingsProps) {
   return (
     <section
@@ -32,7 +34,11 @@ export default function ClanScheduleSettings({
             <h3 id="clan-schedule-settings-title">
               {standalone ? "開催曜日と時刻" : "クラン予定"}
             </h3>
-            <p>クラン内で決めた曜日と時刻を、この端末だけに保存します。</p>
+            <p>
+              {shared
+                ? "保存すると、閲覧リンクを持つクランメンバー全員へ反映されます。"
+                : "クラン内で決めた曜日と時刻を、この端末だけに保存します。"}
+            </p>
           </div>
         </div>
       </div>
@@ -92,29 +98,35 @@ export default function ClanScheduleSettings({
                     }}
                   />
                 </label>
-                <label className="clan-reminder-toggle">
-                  <input
-                    type="checkbox"
-                    checked={item.reminder}
-                    disabled={!item.scheduled}
-                    onChange={(event) => onChange(updateClanScheduleItem(
-                      settings,
-                      meta.contentId,
-                      { reminder: event.target.checked },
-                    ))}
-                  />
-                  <span>リマインダー対象</span>
-                </label>
+                {shared ? null : (
+                  <label className="clan-reminder-toggle">
+                    <input
+                      type="checkbox"
+                      checked={item.reminder}
+                      disabled={!item.scheduled}
+                      onChange={(event) => onChange(updateClanScheduleItem(
+                        settings,
+                        meta.contentId,
+                        { reminder: event.target.checked },
+                      ))}
+                    />
+                    <span>リマインダー対象</span>
+                  </label>
+                )}
               </div>
               <small>
-                リマインダーは全体通知設定と共通の通知タイミングを使い、サイトを開いている間だけ動作します。
+                {shared
+                  ? "共有するのは曜日と時刻だけです。リマインダー設定と完了状況は各メンバーの端末に残ります。"
+                  : "リマインダーは全体通知設定と共通の通知タイミングを使い、サイトを開いている間だけ動作します。"}
               </small>
             </fieldset>
           );
         })}
       </div>
       <p className="notification-note">
-        ここで設定する開催時刻はユーザー入力であり、検証済みのゲーム内スケジュールやアカウント連携ではありません。
+        {shared
+          ? "この予定はクラン管理者による入力です。ゲーム内スケジュールや公式情報としては扱いません。"
+          : "ここで設定する開催時刻はユーザー入力であり、検証済みのゲーム内スケジュールやアカウント連携ではありません。"}
       </p>
     </section>
   );
