@@ -58,6 +58,11 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /すべての機能を無料で利用できます/);
   assert.match(html, /運営・プライバシー方針/);
   assert.match(html, /https:\/\/github\.com\/Ranats\/vampir-support-hub\/issues/);
+  assert.match(html, /開発者X：@Kokonoe_variant/);
+  assert.match(
+    html,
+    /<a\b[^>]*href="https:\/\/x\.com\/Kokonoe_variant"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>/i,
+  );
   assert.match(html, /https:\/\/twitter\.com\/intent\/tweet\?/);
   assert.match(html, /https%3A%2F%2Fvampir\.cilabworks\.com%2F/);
   assert.match(html, /class="header-share-actions"/);

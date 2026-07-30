@@ -98,6 +98,8 @@ const SUPPORT_URLS = {
   ofuse: "https://ofuse.me/d2c3aa65",
 };
 
+const DEVELOPER_X_URL = "https://x.com/Kokonoe_variant";
+
 const SPAWN_EVENTS: SpawnEvent[] = [
   {
     id: "world-noon",
@@ -1282,6 +1284,14 @@ export default function Home() {
                 aria-label="不具合・要望をGitHub Issuesで開く（新しいタブ）"
               >
                 不具合・要望
+              </a>
+              <a
+                href={DEVELOPER_X_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="開発者X @Kokonoe_variantを新しいタブで開く"
+              >
+                開発者X：@Kokonoe_variant
               </a>
             </nav>
           </div>

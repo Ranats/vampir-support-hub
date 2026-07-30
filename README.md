@@ -14,7 +14,7 @@ VAMPIRの次回出現時刻、日課・週課、期限をまとめて確認す�
 - 任意の開発支援リンク（Ko-fi／OFUSE、外部サイト）
 - 情報確認日と古くなった場合の警告
 - 独自ドメイン向けのcanonical、robots.txt、sitemap.xml
-- 運営・プライバシー方針とGitHub Issuesの問い合わせ導線
+- 運営・プライバシー方針、GitHub Issues、開発者Xの問い合わせ導線
 
 通知は利用者が設定画面から明示的に許可した場合だけ使用します。サーバー側の定刻
 Pushは使っていないため、ページを閉じた後の通知は保証しません。ゲーム内表示と
@@ -32,6 +32,7 @@ Pushは使っていないため、ページを閉じた後の通知は保証し�
 
 - Production: https://vampir.cilabworks.com/
 - GitHub: https://github.com/Ranats/vampir-support-hub
+- Developer X: https://x.com/Kokonoe_variant
 
 Bundled font licensing is documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No license is granted for the project source code unless a project license is added separately.
 

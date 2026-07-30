@@ -3,6 +3,7 @@ import Link from "next/link";
 
 const GITHUB_ISSUES_URL =
   "https://github.com/Ranats/vampir-support-hub/issues";
+const DEVELOPER_X_URL = "https://x.com/Kokonoe_variant";
 
 export const metadata: Metadata = {
   title: "運営・プライバシー方針｜VAMPIR 日課ナビ",
@@ -114,6 +115,22 @@ export default function PolicyPage() {
             </p>
             <p>
               支援は任意で、支援の有無にかかわらず、すべての機能を無料で利用できます。
+            </p>
+          </section>
+
+          <section className="policy-card" id="developer">
+            <h2>開発者・更新情報</h2>
+            <p>
+              開発・運営：
+              <a
+                href={DEVELOPER_X_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="開発者X @Kokonoe_variantを新しいタブで開く"
+              >
+                @Kokonoe_variant
+              </a>
+              。更新情報の確認や連絡先として、こちらのXプロフィールをご案内しています。
             </p>
           </section>
 

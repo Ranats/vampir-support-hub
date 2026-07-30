@@ -67,6 +67,8 @@ test("publishes the operation and privacy policy", async () => {
   assert.match(html, /通知の重複防止記録/);
   assert.match(html, /現在、サイト独自のアクセス解析タグ、広告配信タグ、アフィリエイト追跡タグは設置していません/);
   assert.match(html, /https:\/\/github\.com\/Ranats\/vampir-support-hub\/issues/);
+  assert.match(html, /開発者・更新情報/);
+  assert.match(html, /https:\/\/x\.com\/Kokonoe_variant/);
   assert.match(
     html,
     /<link\b[^>]*rel="canonical"[^>]*href="https:\/\/vampir\.cilabworks\.com\/policy"/i,
