@@ -3,11 +3,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 const SHARE_URL = "https://vampir.cilabworks.com/";
-const SHARE_TEXT = "VAMPIR 日課ナビ｜次の出現時刻・日課・週課をまとめて確認";
+const SHARE_TEXT = "VAMPIR 日課ナビで、次の出現時刻・日課・週課をまとめて確認できます。";
 const X_SHARE_URL = `https://twitter.com/intent/tweet?${new URLSearchParams({
   text: SHARE_TEXT,
   url: SHARE_URL,
-  hashtags: "VAMPIR,ヴァンピール",
+  hashtags: "VAMPIR日課ナビ,ヴァンピール",
 }).toString()}`;
 
 function ShareIcon() {
