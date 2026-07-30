@@ -34,6 +34,7 @@
 - Acceptance criteria: the footer and `/policy` link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
 - Acceptance criteria: the primary page and `/policy` publish canonical URLs on `vampir.cilabworks.com`; `robots.txt` advertises the canonical sitemap; the sitemap contains both public routes; the legacy `vampir-support-hub.codarrr.chatgpt.site` hostname redirects to the equivalent canonical path and query.
 - Acceptance criteria: clan mission and guard plans accept a weekly JST day/time, keep completion in the existing Monday 05:00 weekly cycle, notify only while the site is running, survive backups and same-browser tab sync, and never imply a game-account connection or an official clan timetable.
+- Acceptance criteria: opening clan settings from a clan card shows only the clan schedule controls and restores focus to that card when closed; each visible limited-event card is a keyboard-accessible external link to a verified announcement or details page.
 
 ## Deliverables
 

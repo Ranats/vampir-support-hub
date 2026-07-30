@@ -946,10 +946,6 @@ summary:focus-visible {
 }
 
 .clan-unscheduled {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--line-soft);
@@ -961,9 +957,10 @@ summary:focus-visible {
   font-size: 12px;
 }
 
-.clan-unscheduled button {
+.clan-schedule-edit {
+  width: 100%;
   min-height: 42px;
-  flex: 0 0 auto;
+  margin-top: 12px;
   padding: 0 13px;
   border: 1px solid rgba(255, 90, 100, 0.4);
   border-radius: 10px;
@@ -1105,6 +1102,37 @@ summary:focus-visible {
 
 .event-row {
   grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.event-row-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.event-row-link:hover {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.event-row-link:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--accent-strong);
+  outline-offset: -2px;
+}
+
+.event-row-meta {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.event-row-meta > small {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .event-row b {
@@ -2231,15 +2259,6 @@ summary:focus-visible {
     width: 100%;
   }
 
-  .clan-unscheduled {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .clan-unscheduled button {
-    width: 100%;
-  }
-
   .section-heading h2 {
     font-size: 28px;
   }
@@ -2281,6 +2300,12 @@ summary:focus-visible {
     grid-template-columns: minmax(0, 1fr);
     gap: 7px;
     padding: 15px 14px;
+  }
+
+  .event-row-meta {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
   }
 
   .routine-row {

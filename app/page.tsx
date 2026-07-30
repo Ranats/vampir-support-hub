@@ -90,6 +90,7 @@ type LimitedEvent = {
   id: string;
   title: string;
   deadline: Date;
+  detailsUrl: string;
 };
 
 const JST_OFFSET = 9 * 60 * 60 * 1000;
@@ -258,26 +259,31 @@ const LIMITED_EVENTS: LimitedEvent[] = [
     id: "red-login-7",
     title: "レッドムーン前夜祭 7日間特別ログイン",
     deadline: makeJstDate(2026, 7, 12, 4, 59),
+    detailsUrl: SOURCE_URLS.events,
   },
   {
     id: "red-growth",
     title: "レッドムーン前夜祭 成長支援ミッション",
     deadline: makeJstDate(2026, 7, 12, 4, 59),
+    detailsUrl: SOURCE_URLS.events,
   },
   {
     id: "red-payback",
     title: "強化支援ペイバック",
     deadline: makeJstDate(2026, 7, 12, 4, 59),
+    detailsUrl: SOURCE_URLS.events,
   },
   {
     id: "daily-double",
     title: "デイリークエスト W報酬",
     deadline: makeJstDate(2026, 7, 26, 4, 59),
+    detailsUrl: SOURCE_URLS.events,
   },
   {
     id: "region-growth",
     title: "新地域オープン記念 成長支援",
     deadline: makeJstDate(2026, 8, 16, 4, 59),
+    detailsUrl: SOURCE_URLS.events,
   },
 ];
 
@@ -495,6 +501,7 @@ export default function Home() {
   const [notificationMessage, setNotificationMessage] = useState("");
   const [dataMessage, setDataMessage] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsMode, setSettingsMode] = useState<"all" | "clan">("all");
   const settingsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
   const settingsFallbackFocusRef = useRef<HTMLButtonElement | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -1053,6 +1060,13 @@ export default function Home() {
 
   const openSettings = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
     settingsReturnFocusRef.current = event.currentTarget;
+    setSettingsMode("all");
+    setSettingsOpen(true);
+  }, []);
+
+  const openClanSettings = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
+    settingsReturnFocusRef.current = event.currentTarget;
+    setSettingsMode("clan");
     setSettingsOpen(true);
   }, []);
 
@@ -1332,9 +1346,16 @@ export default function Home() {
                   ) : (
                     <div className="clan-unscheduled">
                       <p>クラン内の開催曜日と時刻は未登録です。</p>
-                      <button type="button" onClick={openSettings}>クラン予定を設定</button>
                     </div>
                   )}
+                  <button
+                    className="clan-schedule-edit"
+                    type="button"
+                    aria-label={`${meta.name}のクラン予定を${item.scheduled ? "変更" : "設定"}`}
+                    onClick={openClanSettings}
+                  >
+                    {item.scheduled ? "予定を変更" : "クラン予定を設定"}
+                  </button>
                 </article>
               );
             })}
@@ -1392,14 +1413,24 @@ export default function Home() {
                 <span className="eyebrow">DEADLINES</span>
                 <h2 id="event-title">期限が近いイベント</h2>
               </div>
-              <p>名称と終了時刻だけを掲載しています。</p>
+              <p>カードを選ぶと、各イベントの内容と報酬を外部ページで確認できます。</p>
             </div>
             <div className="event-list panel">
               {activeEvents.map((event) => (
-                <article className="event-row" key={event.id}>
+                <a
+                  className="event-row event-row-link"
+                  href={event.detailsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${event.title}の詳細を外部ページで開く`}
+                  key={event.id}
+                >
                   <div><strong>{event.title}</strong><small>終了 {formatJst(event.deadline)} JST</small></div>
-                  <b>あと {formatCountdown(event.deadline, now)}</b>
-                </article>
+                  <span className="event-row-meta">
+                    <b>あと {formatCountdown(event.deadline, now)}</b>
+                    <small>詳細を見る <span aria-hidden="true">↗</span></small>
+                  </span>
+                </a>
               ))}
             </div>
           </section>
@@ -1477,6 +1508,7 @@ export default function Home() {
 
       {settingsOpen ? (
         <SettingsSheet
+          mode={settingsMode}
           level={level}
           dailyDefaults={DAILY_TASKS}
           weeklyDefaults={WEEKLY_TASKS}

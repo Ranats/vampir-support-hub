@@ -8,6 +8,7 @@ import {
 type ClanScheduleSettingsProps = {
   settings: ClanScheduleSettingsValue;
   onChange: (settings: ClanScheduleSettingsValue) => void;
+  standalone?: boolean;
 };
 
 function formatTime(hour: number, minute: number) {
@@ -17,14 +18,20 @@ function formatTime(hour: number, minute: number) {
 export default function ClanScheduleSettings({
   settings,
   onChange,
+  standalone = false,
 }: ClanScheduleSettingsProps) {
   return (
-    <section className="settings-section" aria-labelledby="clan-schedule-settings-title">
+    <section
+      className={`settings-section${standalone ? " clan-settings-standalone" : ""}`}
+      aria-labelledby="clan-schedule-settings-title"
+    >
       <div className="settings-section-heading">
         <div>
-          <span>4</span>
+          {standalone ? null : <span>4</span>}
           <div>
-            <h3 id="clan-schedule-settings-title">クラン予定</h3>
+            <h3 id="clan-schedule-settings-title">
+              {standalone ? "開催曜日と時刻" : "クラン予定"}
+            </h3>
             <p>クラン内で決めた曜日と時刻を、この端末だけに保存します。</p>
           </div>
         </div>
@@ -100,7 +107,7 @@ export default function ClanScheduleSettings({
                 </label>
               </div>
               <small>
-                リマインダーは下の全体通知と共通の通知タイミングを使い、サイトを開いている間だけ動作します。
+                リマインダーは全体通知設定と共通の通知タイミングを使い、サイトを開いている間だけ動作します。
               </small>
             </fieldset>
           );
