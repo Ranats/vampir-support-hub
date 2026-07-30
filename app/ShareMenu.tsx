@@ -91,7 +91,6 @@ export default function ShareMenu() {
         className="share-trigger"
         type="button"
         aria-label="共有メニューを開く"
-        aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => {
@@ -103,7 +102,7 @@ export default function ShareMenu() {
         <span>共有</span>
       </button>
 
-      <div className="share-menu" id={menuId} role="menu" hidden={!open}>
+      <div className="share-menu" id={menuId} hidden={!open}>
         <div className="share-menu-heading">
           <strong>このツールを共有</strong>
           <small>使っている仲間へすぐ送れます</small>
@@ -113,7 +112,6 @@ export default function ShareMenu() {
           href={X_SHARE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          role="menuitem"
           onClick={() => setOpen(false)}
         >
           <span className="share-menu-icon share-menu-icon-x" aria-hidden="true">X</span>
@@ -123,7 +121,6 @@ export default function ShareMenu() {
         <button
           className="share-menu-item"
           type="button"
-          role="menuitem"
           onClick={shareFromDevice}
         >
           <span className="share-menu-icon"><ShareIcon /></span>
@@ -133,7 +130,6 @@ export default function ShareMenu() {
         <button
           className="share-menu-item"
           type="button"
-          role="menuitem"
           onClick={copyUrl}
         >
           <span className="share-menu-icon"><CopyIcon /></span>

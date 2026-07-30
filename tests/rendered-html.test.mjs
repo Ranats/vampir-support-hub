@@ -60,6 +60,7 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /https%3A%2F%2Fvampir\.cilabworks\.com%2F/);
   assert.match(html, /共有メニューを開く/);
   assert.match(html, /class="share-menu"/);
+  assert.doesNotMatch(html, /role="menu(?:item)?"/);
   assert.match(html, /Xで共有/);
   assert.match(html, /URLをコピー/);
   assert.doesNotMatch(html, /class="share-panel"/);

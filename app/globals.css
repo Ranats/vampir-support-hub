@@ -1730,6 +1730,17 @@ summary:focus-visible {
     display: none;
   }
 
+  .share-menu {
+    position: fixed;
+    top: 76px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-height: calc(100dvh - 92px);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .settings-trigger {
     min-height: 44px;
     padding-inline: 10px 7px;
