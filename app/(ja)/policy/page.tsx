@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import CloudflareWebAnalytics from "../../CloudflareWebAnalytics";
 import LanguagePreferenceRedirect from "../../LanguagePreferenceRedirect";
 import LanguageSwitch from "../../LanguageSwitch";
 
@@ -126,11 +127,18 @@ export default function PolicyPage() {
           <section className="policy-card">
             <h2>アクセス解析・広告</h2>
             <p>
-              現在、サイト独自のアクセス解析タグ、広告配信タグ、アフィリエイト追跡タグは設置していません。
-              サイトの配信・セキュリティ維持のため、ホスティング事業者が通信情報を取り扱う場合があります。
+              日本語・英語の公開トップページと方針ページでは、Cloudflare Web Analyticsを使用しています。
+              ページビュー、訪問、参照元、国、端末種別、ブラウザ、OS、ページ読み込み性能、
+              Core Web Vitalsを集計し、計測に必要な情報をCloudflareへ送信します。
             </p>
             <p>
-              将来、解析や広告を導入する場合は、導入前にこのページへ目的と取り扱いを追記します。
+              Cloudflare Web Analyticsへ、ゲームアカウント、端末内のチェック状況、レベル、通知設定、
+              個人用クラン予定、クラン共有ポータルの閲覧・管理キーは送信しません。
+              クラン共有ポータル（<code>/clan/*</code>、<code>/en/clan/*</code>）には解析タグを設置していません。
+              現在、広告配信タグとアフィリエイト追跡タグは設置していません。
+            </p>
+            <p>
+              将来、別の解析や広告を導入する場合は、導入前にこのページへ目的と取り扱いを追記します。
               スポンサーや広告を掲載する場合は、通常の案内と区別できるよう明示します。
             </p>
           </section>
@@ -139,7 +147,8 @@ export default function PolicyPage() {
             <h2>外部サービスと支援</h2>
             <p>
               公式情報、参考記事、X、GitHub、Ko-fi、OFUSEへのリンクを掲載しています。
-              移動後の情報や決済は各サービスの方針に従います。このサイト内には外部の決済画面や追跡スクリプトを埋め込みません。
+              移動後の情報や決済は各サービスの方針に従います。このサイト内には外部の決済画面や、
+              支援先・外部リンク提供者による追跡スクリプトを埋め込みません。
             </p>
             <p>
               支援は任意で、支援の有無にかかわらず、すべての機能を無料で利用できます。
@@ -183,6 +192,7 @@ export default function PolicyPage() {
       <footer className="policy-footer">
         <Link href="/">VAMPIR 日課ナビへ戻る</Link>
       </footer>
+      <CloudflareWebAnalytics />
     </div>
   );
 }

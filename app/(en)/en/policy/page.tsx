@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import CloudflareWebAnalytics from "../../../CloudflareWebAnalytics";
 import LanguageSwitch from "../../../LanguageSwitch";
 
 const GITHUB_ISSUES_URL = "https://github.com/Ranats/vampir-support-hub/issues";
@@ -92,13 +93,14 @@ export default function EnglishPolicyPage() {
 
           <section className="policy-card">
             <h2>Analytics and advertising</h2>
-            <p>We currently do not install our own analytics tags, advertising tags, or affiliate-tracking tags. The hosting provider may process connection information to deliver and secure the site.</p>
-            <p>If analytics or advertising is introduced in the future, we will add its purpose and handling to this page first. Sponsorships and advertisements will be clearly distinguished from normal site guidance.</p>
+            <p>We use Cloudflare Web Analytics on the Japanese and English public home and policy pages. It aggregates page views, visits, referrers, country, device type, browser, operating system, page-load performance, and Core Web Vitals. Information required for measurement is sent to Cloudflare.</p>
+            <p>Cloudflare Web Analytics does not receive your game account, device-local checklist progress, level, notification settings, personal clan plans, or clan portal viewer or administrator keys. Shared clan portal routes (<code>/clan/*</code> and <code>/en/clan/*</code>) do not include the analytics tag. We currently do not install advertising tags or affiliate-tracking tags.</p>
+            <p>If other analytics or advertising is introduced in the future, we will add its purpose and handling to this page first. Sponsorships and advertisements will be clearly distinguished from normal site guidance.</p>
           </section>
 
           <section className="policy-card">
             <h2>External services and support</h2>
-            <p>We link to official information, reference articles, X, GitHub, Ko-fi, and OFUSE. Information and payments after leaving this site are governed by each service&apos;s policies. We do not embed external checkout screens or tracking scripts on this site.</p>
+            <p>We link to official information, reference articles, X, GitHub, Ko-fi, and OFUSE. Information and payments after leaving this site are governed by each service&apos;s policies. We do not embed external checkout screens or tracking scripts from support or external-link providers.</p>
             <p>Support is optional. All features remain free whether or not you choose to support us.</p>
           </section>
 
@@ -119,6 +121,7 @@ export default function EnglishPolicyPage() {
       </main>
 
       <footer className="policy-footer"><Link href="/en">Back to VAMPIR Daily Navigator</Link></footer>
+      <CloudflareWebAnalytics />
     </div>
   );
 }

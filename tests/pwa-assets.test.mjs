@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const publicUrl = new URL("../public/", import.meta.url);
+const serviceWorkerSource = await readFile(new URL("sw.js", publicUrl), "utf8");
 
 test("ships installable PWA metadata and raster icons", async () => {
   const manifest = JSON.parse(
@@ -35,10 +37,72 @@ test("ships an English install experience for the English route", async () => {
 });
 
 test("service worker uses network-first requests and handles notification clicks", async () => {
-  const worker = await readFile(new URL("sw.js", publicUrl), "utf8");
-  assert.match(worker, /addEventListener\("fetch"/);
-  assert.match(worker, /fetch\(request\)/);
-  assert.match(worker, /if \(url\.pathname\.startsWith\("\/api\/"\)\) return/);
-  assert.match(worker, /addEventListener\("notificationclick"/);
-  assert.match(worker, /clients\.openWindow/);
+  assert.match(serviceWorkerSource, /addEventListener\("fetch"/);
+  assert.match(serviceWorkerSource, /fetch\(request\)/);
+  assert.match(serviceWorkerSource, /url\.pathname\.startsWith\("\/api\/"\)/);
+  assert.match(serviceWorkerSource, /url\.pathname\.startsWith\("\/clan\/"\)/);
+  assert.match(serviceWorkerSource, /url\.pathname\.startsWith\("\/en\/clan\/"\)/);
+  assert.match(serviceWorkerSource, /addEventListener\("notificationclick"/);
+  assert.match(serviceWorkerSource, /clients\.openWindow/);
+  assert.match(serviceWorkerSource, /2026-07-31-v4/);
+});
+
+test("service worker never intercepts or caches clan routes", () => {
+  const listeners = new Map();
+  const self = {
+    location: { origin: "https://vampir.cilabworks.com" },
+    addEventListener(type, listener) {
+      listeners.set(type, listener);
+    },
+    skipWaiting() {},
+    clients: {
+      claim() {},
+      matchAll: async () => [],
+      openWindow() {},
+    },
+  };
+  const context = vm.createContext({
+    URL,
+    Response,
+    caches: {
+      open: async () => ({
+        addAll: async () => {},
+        put: async () => {
+          assert.fail("clan routes must not enter Cache Storage");
+        },
+      }),
+      keys: async () => [],
+      delete: async () => true,
+      match: async () => {
+        assert.fail("clan routes must not read Cache Storage");
+      },
+    },
+    fetch: async () => {
+      assert.fail("the service worker must not fetch clan routes");
+    },
+    self,
+  });
+  vm.runInContext(serviceWorkerSource, context);
+
+  const fetchListener = listeners.get("fetch");
+  assert.equal(typeof fetchListener, "function");
+
+  for (const path of [
+    "/clan",
+    "/clan/create",
+    "/clan/example",
+    "/en/clan",
+    "/en/clan/create",
+    "/en/clan/example",
+  ]) {
+    let intercepted = false;
+    fetchListener({
+      request: new Request(`https://vampir.cilabworks.com${path}`),
+      respondWith() {
+        intercepted = true;
+      },
+      waitUntil() {},
+    });
+    assert.equal(intercepted, false, `${path} must bypass the service worker`);
+  }
 });

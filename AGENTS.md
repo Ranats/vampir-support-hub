@@ -3,8 +3,8 @@
 ## Project scope
 
 - Repository source of truth: the `main` branch on GitHub. Keep the local `main` branch aligned with it before starting new work.
-- Source of truth: `app/HomeClient.tsx` for displayed schedules, routines, clan plans, and localized UI; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; linked official VAMPIR pages and dated reference articles for factual values.
-- Read order: `AGENTS.md`, localized route pages and layouts under `app/(ja)` and `app/(en)`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, localized policy pages, `app/progress-cycle.ts`, `app/globals.css`, then tests.
+- Source of truth: `app/HomeClient.tsx` for displayed schedules, routines, clan plans, and localized UI; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; `docs/TRAFFIC_MONETIZATION_ROADMAP.md` for PV stages and monetization decisions; linked official VAMPIR pages and dated reference articles for factual values.
+- Read order: `AGENTS.md`, localized route pages and layouts under `app/(ja)` and `app/(en)`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, localized policy pages, `app/progress-cycle.ts`, `app/globals.css`, `docs/TRAFFIC_MONETIZATION_ROADMAP.md`, then tests.
 - Supported users and environments: Japanese- and English-speaking VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
 
 ## Change boundaries
@@ -20,7 +20,9 @@
 - Preserve: sharing uses the canonical `https://vampir.cilabworks.com/` URL through an X Web Intent or the browser share API with clipboard fallback. Do not embed X widgets or tracking scripts.
 - Preserve: `/` and `/policy` are Japanese; `/en` and `/en/policy` are English. Keep route-specific `html lang`, canonical URLs, JA/EN alternates, localized share targets, and the device-local `vampir-language-v1` preference aligned. Do not add the language preference to the personal-backup schema or translate user-authored routine titles and notes.
 - Preserve: `https://vampir.cilabworks.com/` is the canonical public origin. Keep metadata, `robots.txt`, `sitemap.xml`, and legacy-host redirects aligned with it.
-- Preserve: `/policy` accurately describes current device-local storage, notifications, external services, analytics/advertising status, the public GitHub Issues contact route, and the developer X profile at `https://x.com/Kokonoe_variant`. Update it before introducing analytics, advertising, affiliate tracking, or another data flow.
+- Preserve: `/policy` and `/en/policy` accurately describe current device-local storage, notifications, external services, analytics/advertising status, the public GitHub Issues contact route, and the developer X profile at `https://x.com/Kokonoe_variant`. Update both before introducing analytics, advertising, affiliate tracking, or another data flow.
+- Preserve: the public Cloudflare Web Analytics site token `11a11bdb70184f96822eb5d171c6687b` is an embed identifier, not an API credential. Render its manual beacon exactly once in the initial HTML for `/`, `/policy`, `/en`, and `/en/policy`, with `spa: false`, and never render it from a shared layout or under `/clan/*` or `/en/clan/*`.
+- Preserve: Cloudflare API credentials, account/zone identifiers, and PV history stay outside the public site, client JavaScript, D1, Git history, and public CI logs. Use only a least-privilege read-only secret in a private operations context after validating its metric against the Cloudflare dashboard.
 - Out of scope: unverified game-menu routes, destination instructions, memory or traffic inspection, automated game input, claims of official affiliation, cloud sync of personal progress/settings, and claims of background scheduled Push without a verified server-side scheduler.
 - Display only schedule times, limits, deadlines, and unlock conditions that have a dated source. Keep the game client's current schedule and official notices authoritative.
 
@@ -34,8 +36,9 @@
 - Acceptance criteria: the last verified date and a stale warning are visible while the game client and official notices remain authoritative.
 - Acceptance criteria: both support links open their stated external destinations, are keyboard accessible, and do not load third-party payment code on the Site.
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
-- Acceptance criteria: the footer and `/policy` link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
-- Acceptance criteria: the primary page and `/policy` publish canonical URLs on `vampir.cilabworks.com`; `robots.txt` advertises the canonical sitemap; the sitemap contains both public routes; the legacy `vampir-support-hub.codarrr.chatgpt.site` hostname redirects to the equivalent canonical path and query.
+- Acceptance criteria: the localized footers and policy pages link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
+- Acceptance criteria: the initial HTML for `/`, `/policy`, `/en`, and `/en/policy` each contains exactly one manual `https://static.cloudflareinsights.com/beacon.min.js` script with the configured public site token and `spa: false`; `/clan/*` and `/en/clan/*` contain none, including after SPA navigation or an offline navigation fallback. The service worker must not intercept, fetch, cache, read from cache for, or provide an offline fallback to `/clan`, `/clan/*`, `/en/clan`, or `/en/clan/*`.
+- Acceptance criteria: all four public routes publish canonical URLs on `vampir.cilabworks.com`; `robots.txt` advertises the canonical sitemap; the sitemap contains all four public routes; the legacy `vampir-support-hub.codarrr.chatgpt.site` hostname redirects to the equivalent canonical path and query.
 - Acceptance criteria: all four public routes (`/`, `/policy`, `/en`, `/en/policy`) are in the sitemap; publish social images only after the saved asset passes visual QA in its target language.
 - Acceptance criteria: clan mission and guard plans accept a weekly JST day/time, keep completion in the existing Monday 05:00 weekly cycle, notify only while the site is running, survive backups and same-browser tab sync, and never imply a game-account connection or an official clan timetable.
 - Acceptance criteria: opening clan settings from a clan card shows only the clan schedule controls and restores focus to that card when closed; each visible limited-event card is a keyboard-accessible external link to a verified announcement or details page.

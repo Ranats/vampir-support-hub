@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "vampir-support-hub-";
 // Bump this value whenever the app shell changes. activate removes older versions.
-const CACHE_NAME = `${CACHE_PREFIX}2026-07-30-v2`;
+const CACHE_NAME = `${CACHE_PREFIX}2026-07-31-v4`;
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
@@ -36,8 +36,14 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   // Capability-protected responses must never enter Cache Storage. Let the
-  // browser perform API requests directly so no-store and authorization stay authoritative.
-  if (url.pathname.startsWith("/api/")) return;
+  // browser perform API and clan requests directly so no-store, authorization,
+  // and the Web Analytics exclusion stay authoritative even while offline.
+  const isClanRoute =
+    url.pathname === "/clan" ||
+    url.pathname.startsWith("/clan/") ||
+    url.pathname === "/en/clan" ||
+    url.pathname.startsWith("/en/clan/");
+  if (url.pathname.startsWith("/api/") || isClanRoute) return;
 
   event.respondWith(
     fetch(request)

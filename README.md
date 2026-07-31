@@ -22,11 +22,14 @@ VAMPIRの次回出現時刻、日課・週課、期限をまとめて確認す�
 Pushは使っていないため、ページを閉じた後の通知は保証しません。ゲーム内表示と
 公式告知を常に正本とします。
 
-支援リンクは任意です。決済処理や第三者の追跡スクリプトはサイト内へ埋め込まず、
+支援リンクは任意です。決済処理や支援先の追跡スクリプトはサイト内へ埋め込まず、
 すべての機能を支援の有無にかかわらず無料で利用できます。
 
-現在、独自のアクセス解析タグ、広告タグ、アフィリエイト追跡タグは設置していません。
-運営・プライバシー方針は https://vampir.cilabworks.com/policy で公開します。
+日本語・英語の公開トップページと運営・プライバシー方針ページではCloudflare Web Analyticsを使用し、
+ページビューと表示性能などを集計します。クラン共有ポータル（`/clan/*`、`/en/clan/*`）は計測対象外です。
+現在、広告タグとアフィリエイト追跡タグは設置していません。
+運営・プライバシー方針は https://vampir.cilabworks.com/policy と
+https://vampir.cilabworks.com/en/policy で公開します。
 クラン共有ポータルを明示的に作成した場合だけ、クラン名と開催曜日・時刻をD1へ保存します。
 個人のチェック状況、レベル、通知設定は引き続き端末内に保持し、共有予定とは分離します。
 
@@ -37,6 +40,19 @@ Pushは使っていないため、ページを閉じた後の通知は保証し�
 - Production: https://vampir.cilabworks.com/
 - GitHub: https://github.com/Ranats/vampir-support-hub
 - Developer X: https://x.com/Kokonoe_variant
+
+## Traffic and monetization
+
+The current traffic state is unmeasured. The source of truth for PV stages,
+promotion and demotion rules, monetization work, and the private-data boundary is
+[docs/TRAFFIC_MONETIZATION_ROADMAP.md](docs/TRAFFIC_MONETIZATION_ROADMAP.md).
+
+Classify a completed monthly PV value without storing credentials or traffic
+history in the repository:
+
+```sh
+npm run traffic:phase -- --pageviews 12345 --period 2026-06 --source "Cloudflare Web Analytics"
+```
 
 Bundled font licensing is documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No license is granted for the project source code unless a project license is added separately.
 
