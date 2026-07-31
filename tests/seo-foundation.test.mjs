@@ -21,6 +21,28 @@ async function request(path, options = {}) {
   return worker.fetch(new Request(`http://localhost${path}`, options), env, context);
 }
 
+const CLOUDFLARE_WEB_ANALYTICS_SRC =
+  "https://static.cloudflareinsights.com/beacon.min.js";
+const CLOUDFLARE_WEB_ANALYTICS_TOKEN = "11a11bdb70184f96822eb5d171c6687b";
+
+function cloudflareWebAnalyticsScripts(html) {
+  return [
+    ...html.matchAll(
+      /<script\b[^>]*src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js"[^>]*><\/script>/gi,
+    ),
+  ].map(([script]) => script.replaceAll("&quot;", '"'));
+}
+
+function assertSingleCloudflareWebAnalyticsScript(html) {
+  const scripts = cloudflareWebAnalyticsScripts(html);
+  assert.equal(scripts.length, 1);
+  assert.ok(
+    scripts[0].includes(
+      `data-cf-beacon="{\"token\":\"${CLOUDFLARE_WEB_ANALYTICS_TOKEN}\",\"spa\":false}"`,
+    ),
+  );
+}
+
 test("publishes canonical metadata on the primary page", async () => {
   const response = await request("/", {
     headers: { accept: "text/html" },
@@ -37,6 +59,7 @@ test("publishes canonical metadata on the primary page", async () => {
     /<meta\b[^>]*property="og:url"[^>]*content="https:\/\/vampir\.cilabworks\.com\/"/i,
   );
   assert.match(html, /https:\/\/vampir\.cilabworks\.com\/og\.png\?v=20260730-2/i);
+  assertSingleCloudflareWebAnalyticsScript(html);
 });
 
 test("serves robots and sitemap for the canonical domain", async () => {
@@ -71,7 +94,12 @@ test("publishes the operation and privacy policy", async () => {
   assert.match(html, /閲覧・管理操作時に対応する秘密キーを認証のためAPIへ送信します/);
   assert.match(html, /秘密キーそのものはデータベースへ保存せず、照合用のハッシュだけを保存します/);
   assert.match(html, /管理の秘密キーはポータル作成時に作成したブラウザへ保存し/);
-  assert.match(html, /現在、サイト独自のアクセス解析タグ、広告配信タグ、アフィリエイト追跡タグは設置していません/);
+  assert.match(html, /Cloudflare Web Analyticsを使用しています/);
+  assert.match(html, /ページビュー、訪問、参照元、国、端末種別、ブラウザ、OS、ページ読み込み性能/);
+  assert.match(html, /計測に必要な情報をCloudflareへ送信します/);
+  assert.match(html, /ゲームアカウント、端末内のチェック状況、レベル、通知設定/);
+  assert.match(html, /クラン共有ポータル（<code>\/clan\/\*<\/code>）には解析タグを設置していません/);
+  assert.match(html, /現在、広告配信タグとアフィリエイト追跡タグは設置していません/);
   assert.match(html, /https:\/\/github\.com\/Ranats\/vampir-support-hub\/issues/);
   assert.match(html, /開発者・更新情報/);
   assert.match(html, /https:\/\/x\.com\/Kokonoe_variant/);
@@ -79,6 +107,19 @@ test("publishes the operation and privacy policy", async () => {
     html,
     /<link\b[^>]*rel="canonical"[^>]*href="https:\/\/vampir\.cilabworks\.com\/policy"/i,
   );
+  assertSingleCloudflareWebAnalyticsScript(html);
+});
+
+test("does not publish Cloudflare Web Analytics on clan routes", async () => {
+  const response = await request("/clan/create", {
+    headers: { accept: "text/html" },
+  });
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.equal(cloudflareWebAnalyticsScripts(html).length, 0);
+  assert.doesNotMatch(html, new RegExp(CLOUDFLARE_WEB_ANALYTICS_SRC));
+  assert.doesNotMatch(html, new RegExp(CLOUDFLARE_WEB_ANALYTICS_TOKEN));
 });
 
 test("redirects the legacy Sites hostname to the custom domain", async () => {

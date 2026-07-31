@@ -4,7 +4,9 @@
 
 2026年7月31日時点の段階は **未計測・未確認** です。独自ドメイン、canonical、
 `robots.txt`、`sitemap.xml`、運営方針、任意の支援リンクは公開済みですが、
-サイト固有のアクセス解析タグ、広告タグ、アフィリエイト追跡タグは設置していません。
+完了月のPV実績はまだありません。Cloudflare Web Analyticsの手動ビーコンは、公開
+トップページと `/policy` だけに設置し、`/clan/*` は計測対象外としています。
+広告タグとアフィリエイト追跡タグは設置していません。
 
 PVを取得できるまでは「1万PV未満」とは判定しません。現在の表示や利用者データを
 変えずに進められる準備として、段階定義と手入力の判定ツールをこの文書と
@@ -13,7 +15,8 @@ PVを取得できるまでは「1万PV未満」とは判定しません。現在
 ## 判定に使うPV
 
 - 対象: `vampir.cilabworks.com` のインデックス可能な公開コンテンツのページ表示
-- 除外: `/clan/*`、API、静的ファイル、旧ホスト、運営者自身のテストアクセス
+- 現在の計測対象: `/` と `/policy` の初期ページ表示
+- 除外: `/clan/*`、API、静的ファイル、旧ホスト
 - 直近30日PV: 日々の傾向を見る参考値
 - 確定月間PV: 毎月1日から末日までの値。段階変更の正式判定に使用
 - 昇格: 上位段階の下限を2か月連続で満たしたとき
@@ -28,7 +31,7 @@ Cloudflareの `visits` はページビューと同義ではないため、PVと�
 
 | 確定月間PV | この段階で行うこと | 次段階へ進む条件 |
 | --- | --- | --- |
-| 未計測 | Cloudflare Web Analyticsまたは同等のPV計測を選定し、方針ページを同時更新する。Search Consoleのドメイン所有権とサイトマップ送信を確認する。 | 完了月のPVを記録できること |
+| 未計測 | Cloudflare Web Analyticsの本番受信を確認し、Search Consoleのドメイン所有権とサイトマップ送信を確認する。 | 完了月のPVを記録できること |
 | 0〜9,999 | コンテンツ更新、検索流入、再訪率を優先する。Ko-fi・OFUSE以外の広告は置かない。月次PVを記録する。 | 10,000以上を2か月連続 |
 | 10,000〜49,999 | スポンサー候補と掲載条件を整理し、媒体資料の素案を作る。広告は小規模な直接スポンサー枠を優先し、表示速度への影響を計測する。 | 50,000以上を2か月連続 |
 | 50,000〜99,999 | スポンサー媒体資料を確定し、広告審査、`ads.txt`、同意管理、方針表示の要否を確認する。導入する場合は1枠から検証する。 | 100,000以上を2か月連続 |
@@ -40,14 +43,15 @@ PVだけで広告導入を自動決定しません。情報の正確性、表示
 ## 今すぐ完了できること
 
 - この文書を収益化判断の正本にする
+- Cloudflare Web Analyticsを公開2ルートだけに設置し、方針ページへ取り扱いを明記する
 - 手入力した確定PVの段階、昇格、降格を同じ規則で判定する
 - 秘密情報やPV履歴を公開サイト、D1、Git履歴に保存しない境界を固定する
 - 将来の月次レポート出力先を `.traffic-reports/` としてGit対象外にする
 
 ## 利用者による設定・確認が必要なこと
 
-1. Cloudflareで `vampir.cilabworks.com` のPVを確認できる計測方法を選ぶ。
-   Web Analyticsビーコンを追加する場合は、公開前に `/policy` も更新する。
+1. 本番反映後、Cloudflare Web Analyticsで `/` と `/policy` の受信を確認する。
+   `/clan/*` が記録されていないことも確認する。
 2. Google Search Consoleでドメイン所有権を確認し、
    `https://vampir.cilabworks.com/sitemap.xml` を送信する。
 3. 自動取得へ進む場合だけ、Cloudflareの読取専用トークンを秘密管理へ登録する。
@@ -90,3 +94,12 @@ npm run traffic:phase -- \
 - `/clan/*`、API、静的ファイル、旧ホスト、テストアクセスを除外できる
 - 集計値と秘密情報が公開ログ、公開Issue、Git履歴に残らない
 - 計測によるデータフローを公開前に `/policy` へ反映している
+
+## 一次情報
+
+- [Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/about/)
+- [Cloudflare Web Analyticsのデータと指標](https://developers.cloudflare.com/web-analytics/data-metrics/)
+- [SPA計測の無効化](https://developers.cloudflare.com/web-analytics/get-started/web-analytics-spa/)
+- [GraphQL Analytics API用トークン](https://developers.cloudflare.com/analytics/graphql-api/getting-started/authentication/api-token-auth/)
+- [Google AdSense参加要件](https://support.google.com/adsense/answer/9724?hl=ja)
+- [GoogleのCMP要件](https://support.google.com/adsense/answer/13554020?hl=ja)
