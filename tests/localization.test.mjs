@@ -7,6 +7,7 @@ import {
   parseLocalePreference,
   preferredEnglishPath,
 } from "../app/localization.ts";
+import { DEFAULT_CLAN_SCHEDULE_SETTINGS } from "../app/clan-schedule.ts";
 import { createPersonalBackup } from "../app/personal-backup.ts";
 
 test("accepts only supported device-local language preferences", () => {
@@ -38,6 +39,7 @@ test("language preference remains outside the version 1 personal backup schema",
     weeklyChecks: { cycle: "2026-7-27", completed: [] },
     customRoutines: [],
     routinePreferences: { version: 1, hiddenDefaultIds: [] },
+    clanSchedule: DEFAULT_CLAN_SCHEDULE_SETTINGS,
     favoriteSpawnIds: [],
     notificationSettings: { version: 1, enabled: false, leadMinutes: 10 },
   });

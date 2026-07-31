@@ -52,7 +52,7 @@ export default function EnglishPolicyPage() {
           <span className="eyebrow">SITE INFORMATION</span>
           <h1>Operations and Privacy Policy</h1>
           <p>This page explains the information this site provides and how it handles user data.</p>
-          <time dateTime="2026-07-30">Last updated: July 30, 2026</time>
+          <time dateTime="2026-07-31">Last updated: July 31, 2026</time>
         </div>
 
         <div className="policy-sections">
@@ -64,12 +64,24 @@ export default function EnglishPolicyPage() {
 
           <section className="policy-card">
             <h2>Data saved on your device</h2>
-            <p>Your level, checklist progress, personal tasks, display preferences, favorites, notification settings, language preference, and notification deduplication records are saved in your browser&apos;s local storage.</p>
+            <p>Your level, checklist progress, personal tasks, display preferences, favorites, notification settings, language preference, notification deduplication records, personal clan plans, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
             <ul>
               <li>We do not connect to your game account or retrieve game data automatically.</li>
-              <li>The site&apos;s application code does not send these settings to the operator&apos;s server.</li>
+              <li>When you create or update a shared clan portal, its clan name, weekday, and time are sent to the API. The corresponding secret key is sent for authentication when viewing or administering the portal.</li>
+              <li>Other device-local settings—including level, checklist progress, personal reminders, and notification settings—are not sent to the operator&apos;s server.</li>
               <li>Backups are exported or imported only when you explicitly request those actions.</li>
               <li>Deleting browser data may also delete content saved on this device.</li>
+            </ul>
+          </section>
+
+          <section className="policy-card">
+            <h2>Shared clan portals</h2>
+            <p>A personal clan plan&apos;s weekday and time can be used as the initial values for the shared portal form. Only after a clan master selects Create shared portal are the clan name and current weekdays and times stored in the server database. Personal reminders, completion, level, notification settings, and game-account information are not shared.</p>
+            <ul>
+              <li>Viewer and administrator links use separate secret keys. Only their verification hashes are stored in the database.</li>
+              <li>An administrator can change the shared schedule, rotate the viewer link, or delete the portal.</li>
+              <li>To limit abusive bulk creation, the site derives a temporary verification key from the network address. The original address is not stored, and verification records older than two hours are removed during later portal creation.</li>
+              <li>The shared schedule remains stored until an administrator deletes the portal.</li>
             </ul>
           </section>
 
@@ -100,7 +112,7 @@ export default function EnglishPolicyPage() {
           <section className="policy-card" id="contact">
             <h2>Bugs and requests</h2>
             <p>
-              Report bugs and improvement requests through the public <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer" aria-label="Open GitHub Issues in a new tab">GitHub Issues</a> page. Do not post personal information such as game-account details or email addresses.
+              Report bugs and improvement requests through the public <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer" aria-label="Open GitHub Issues in a new tab">GitHub Issues</a> page. Do not post personal information such as game-account details or email addresses, or a clan portal administrator link.
             </p>
           </section>
         </div>

@@ -1,3 +1,9 @@
+import type {
+  ClanContentId,
+  ClanScheduleItem,
+  ClanScheduleSettings,
+} from "./clan-schedule";
+
 export const BACKUP_FORMAT = "vampir-support-hub-personal-backup";
 export const BACKUP_VERSION = 1;
 
@@ -33,6 +39,7 @@ export type PersonalBackupData = {
   customRoutines: SavedCustomRoutine[];
   routinePreferences: SavedRoutinePreferences;
   favoriteSpawnIds: string[];
+  clanSchedule: ClanScheduleSettings;
   notificationSettings: SavedNotificationSettings;
 };
 
@@ -52,6 +59,7 @@ const MAX_CUSTOM_NOTE_LENGTH = 160;
 const MAX_HIDDEN_IDS = 100;
 const MAX_FAVORITE_SPAWNS = 100;
 const MAX_SPAWN_ID_LENGTH = 100;
+const CLAN_CONTENT_IDS = ["clan-mission", "clan-guard"] as const satisfies readonly ClanContentId[];
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -152,6 +160,69 @@ function copyNotificationSettings(value: unknown): SavedNotificationSettings | n
   };
 }
 
+function copyDefaultClanSchedule(): ClanScheduleSettings {
+  return {
+    version: 1,
+    items: CLAN_CONTENT_IDS.map((contentId) => ({
+      contentId,
+      scheduled: false,
+      day: 0,
+      hour: 0,
+      minute: 0,
+      reminder: true,
+    })),
+  };
+}
+
+function copyClanSchedule(value: unknown): ClanScheduleSettings | null {
+  if (value === undefined) return copyDefaultClanSchedule();
+  if (!isObject(value)
+    || value.version !== 1
+    || !Array.isArray(value.items)
+    || value.items.length !== CLAN_CONTENT_IDS.length) {
+    return null;
+  }
+
+  const items: ClanScheduleItem[] = [];
+  const seen = new Set<ClanContentId>();
+  for (const item of value.items) {
+    if (!isObject(item)
+      || !CLAN_CONTENT_IDS.includes(item.contentId as ClanContentId)
+      || seen.has(item.contentId as ClanContentId)
+      || typeof item.scheduled !== "boolean"
+      || !Number.isInteger(item.day)
+      || (item.day as number) < 0
+      || (item.day as number) > 6
+      || !Number.isInteger(item.hour)
+      || (item.hour as number) < 0
+      || (item.hour as number) > 23
+      || !Number.isInteger(item.minute)
+      || (item.minute as number) < 0
+      || (item.minute as number) > 59
+      || typeof item.reminder !== "boolean") {
+      return null;
+    }
+
+    const contentId = item.contentId as ClanContentId;
+    seen.add(contentId);
+    items.push({
+      contentId,
+      scheduled: item.scheduled,
+      day: item.day as number,
+      hour: item.hour as number,
+      minute: item.minute as number,
+      reminder: item.reminder,
+    });
+  }
+
+  if (CLAN_CONTENT_IDS.some((contentId) => !seen.has(contentId))) return null;
+  const byId = new Map(items.map((item) => [item.contentId, item]));
+  return {
+    version: 1,
+    items: CLAN_CONTENT_IDS.map((contentId) => ({ ...byId.get(contentId)! })),
+  };
+}
+
 function copyBackupData(value: unknown): PersonalBackupData | null {
   if (!isObject(value)) return null;
 
@@ -170,6 +241,7 @@ function copyBackupData(value: unknown): PersonalBackupData | null {
   const customRoutines = copyCustomRoutines(value.customRoutines);
   const routinePreferences = copyRoutinePreferences(value.routinePreferences);
   const favoriteSpawnIds = copyFavoriteSpawnIds(value.favoriteSpawnIds);
+  const clanSchedule = copyClanSchedule(value.clanSchedule);
   const notificationSettings = copyNotificationSettings(value.notificationSettings);
 
   if (!dailyChecks
@@ -177,6 +249,7 @@ function copyBackupData(value: unknown): PersonalBackupData | null {
     || !customRoutines
     || !routinePreferences
     || !favoriteSpawnIds
+    || !clanSchedule
     || !notificationSettings) {
     return null;
   }
@@ -188,6 +261,7 @@ function copyBackupData(value: unknown): PersonalBackupData | null {
     customRoutines,
     routinePreferences,
     favoriteSpawnIds,
+    clanSchedule,
     notificationSettings,
   };
 }

@@ -11,6 +11,8 @@ import {
 } from "./routine-customization";
 import type { NotificationSettings } from "./notification-settings";
 import type { Locale } from "./localization";
+import ClanScheduleSettings from "./ClanScheduleSettings";
+import type { ClanScheduleSettings as ClanScheduleSettingsValue } from "./clan-schedule";
 
 type DefaultRoutineSummary = {
   id: string;
@@ -20,12 +22,15 @@ type DefaultRoutineSummary = {
 
 type SettingsSheetProps = {
   locale?: Locale;
+  mode: "all" | "clan";
   level: number | null;
   dailyDefaults: readonly DefaultRoutineSummary[];
   weeklyDefaults: readonly DefaultRoutineSummary[];
   hiddenDefaultIds: readonly string[];
   customRoutines: readonly CustomRoutine[];
+  clanSchedule: ClanScheduleSettingsValue;
   favoriteSpawnCount: number;
+  clanReminderCount: number;
   notificationPermission: NotificationPermission | "unsupported";
   notificationSettings: NotificationSettings;
   canInstall: boolean;
@@ -44,6 +49,7 @@ type SettingsSheetProps = {
   onDeleteCustom: (id: string) => void;
   onResetChecks: () => void;
   onDeleteAllCustom: () => void;
+  onUpdateClanSchedule: (settings: ClanScheduleSettingsValue) => void;
   onUpdateNotificationSettings: (settings: NotificationSettings) => void;
   onRequestNotificationPermission: () => Promise<void>;
   onTestNotification: () => Promise<void>;
@@ -54,12 +60,15 @@ type SettingsSheetProps = {
 
 export default function SettingsSheet({
   locale = "ja",
+  mode,
   level,
   dailyDefaults,
   weeklyDefaults,
   hiddenDefaultIds,
   customRoutines,
+  clanSchedule,
   favoriteSpawnCount,
+  clanReminderCount,
   notificationPermission,
   notificationSettings,
   canInstall,
@@ -78,6 +87,7 @@ export default function SettingsSheet({
   onDeleteCustom,
   onResetChecks,
   onDeleteAllCustom,
+  onUpdateClanSchedule,
   onUpdateNotificationSettings,
   onRequestNotificationPermission,
   onTestNotification,
@@ -227,15 +237,28 @@ export default function SettingsSheet({
       >
         <header className="settings-head">
           <div>
-            <span className="eyebrow">PERSONALIZE</span>
-            <h2 id="settings-title">{en ? "Display and checklist settings" : "表示とチェックリスト設定"}</h2>
+            <span className="eyebrow">{mode === "clan" ? "CLAN PLAN" : "PERSONALIZE"}</span>
+            <h2 id="settings-title">
+              {mode === "clan"
+                ? (en ? "Set clan schedule" : "クラン予定を設定")
+                : (en ? "Display and checklist settings" : "表示とチェックリスト設定")}
+            </h2>
           </div>
           <button className="settings-close" type="button" onClick={onClose} autoFocus>
             {en ? "Close" : "閉じる"}
           </button>
         </header>
 
-        <div className="settings-body">
+        <div className={`settings-body${mode === "clan" ? " clan-settings-body" : ""}`}>
+          {mode === "clan" ? (
+            <ClanScheduleSettings
+              locale={locale}
+              settings={clanSchedule}
+              onChange={onUpdateClanSchedule}
+              standalone
+            />
+          ) : (
+            <>
           <section className="settings-section" aria-labelledby="level-settings-title">
             <div className="settings-section-heading">
               <div>
@@ -387,13 +410,19 @@ export default function SettingsSheet({
             </form>
           </section>
 
+          <ClanScheduleSettings
+            locale={locale}
+            settings={clanSchedule}
+            onChange={onUpdateClanSchedule}
+          />
+
           <section className="settings-section" aria-labelledby="notification-settings-title">
             <div className="settings-section-heading">
               <div>
-                <span>4</span>
+                <span>5</span>
                 <div>
                   <h3 id="notification-settings-title">{en ? "Home screen and notifications" : "ホーム画面と通知"}</h3>
-                  <p>{en ? "Get alerts for favorite spawns while this site is open." : "お気に入りにした出現予定を、サイトを開いている間にお知らせします。"}</p>
+                  <p>{en ? "Get alerts for favorite spawns and saved clan plans while this site is open." : "お気に入りの出現予定と登録したクラン予定を、サイトを開いている間にお知らせします。"}</p>
                 </div>
               </div>
             </div>
@@ -423,7 +452,9 @@ export default function SettingsSheet({
                 <div>
                   <strong>{en ? "Pre-spawn alerts" : "出現前の通知"}</strong>
                   <small>
-                    {en ? `${favoriteSpawnCount} favorite${favoriteSpawnCount === 1 ? "" : "s"}. Scheduled alerts are unavailable after you close the page.` : `お気に入り ${favoriteSpawnCount}件・ページを閉じた後の定刻通知には対応していません。`}
+                    {en
+                      ? `${favoriteSpawnCount} favorite${favoriteSpawnCount === 1 ? "" : "s"} · ${clanReminderCount} clan reminder${clanReminderCount === 1 ? "" : "s"} · Scheduled alerts are unavailable after you close the page.`
+                      : `お気に入り ${favoriteSpawnCount}件・クラン予定 ${clanReminderCount}件・ページを閉じた後の定刻通知には対応していません。`}
                   </small>
                 </div>
                 {notificationPermission === "unsupported" ? (
@@ -472,7 +503,7 @@ export default function SettingsSheet({
               </div>
             ) : null}
             <p className="notification-note">
-              {en ? "We never request permission on first load. Select alert targets with the stars under Upcoming spawns." : "初回表示で勝手に許可を求めません。通知対象は「次の出現予定」の☆で選べます。"}
+              {en ? "We never request permission on first load. Choose alert targets with the stars under Upcoming spawns and in each saved clan plan." : "初回表示で勝手に許可を求めません。出現予定の☆と、登録したクラン予定ごとに通知対象を選べます。"}
             </p>
             {notificationMessage ? (
               <p
@@ -487,13 +518,13 @@ export default function SettingsSheet({
           <section className="settings-section" aria-labelledby="data-settings-title">
             <div className="settings-section-heading">
               <div>
-                <span>5</span>
+                <span>6</span>
                 <div><h3 id="data-settings-title">{en ? "Data management" : "データ管理"}</h3><p>{en ? "Back up, restore, or reset selected data." : "バックアップ・復元と、項目ごとのリセットを行えます。"}</p></div>
               </div>
             </div>
             <div className="data-actions">
               <div>
-                <div><strong>{en ? "Backup" : "バックアップ"}</strong><small>{en ? "Export level, checks, display settings, personal tasks, and notification settings" : "レベル、チェック、表示設定、自分の項目、通知設定を書き出す"}</small></div>
+                <div><strong>{en ? "Backup" : "バックアップ"}</strong><small>{en ? "Export level, checks, display settings, personal tasks, clan plans, and notification settings" : "レベル、チェック、表示設定、自分の項目、クラン予定、通知設定を書き出す"}</small></div>
                 <button type="button" onClick={onExportData}>{en ? "Export" : "書き出す"}</button>
               </div>
               <div>
@@ -549,8 +580,10 @@ export default function SettingsSheet({
 
           <aside className="local-data-note">
             <strong>{en ? "Saved only on this device" : "この端末だけに保存"}</strong>
-            <p>{en ? "Your level, checks, display settings, personal tasks, and notification settings are not sent elsewhere. They sync across tabs in the same browser, but not across devices. Export a backup before changing devices. Do not enter personal information." : "レベル、チェック、表示設定、自分の項目、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。"}</p>
+            <p>{en ? "Your level, checks, display settings, personal tasks, clan plans, and notification settings are not sent elsewhere. They sync across tabs in the same browser, but not across devices. Export a backup before changing devices. Do not enter personal information." : "レベル、チェック、表示設定、自分の項目、クラン予定、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。"}</p>
           </aside>
+            </>
+          )}
         </div>
       </section>
     </div>

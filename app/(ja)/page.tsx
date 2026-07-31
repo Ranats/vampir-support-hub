@@ -1,11 +1,16 @@
-import HomePage from "../HomePage";
+import { connection } from "next/server";
+import HomeClient from "../HomeClient";
 import LanguagePreferenceRedirect from "../LanguagePreferenceRedirect";
+import { currentRequestTimeMs } from "../request-time";
 
-export default function Home() {
+export default async function Home() {
+  await connection();
+  const initialNowMs = currentRequestTimeMs();
+
   return (
     <>
       <LanguagePreferenceRedirect page="home" />
-      <HomePage locale="ja" />
+      <HomeClient locale="ja" initialNowMs={initialNowMs} />
     </>
   );
 }
