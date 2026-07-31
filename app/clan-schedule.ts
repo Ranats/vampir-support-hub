@@ -1,3 +1,9 @@
+import { Temporal } from "@js-temporal/polyfill";
+import {
+  JAPAN_TIME_ZONE,
+  isValidClanTimeZone,
+} from "./clan-time-zone.ts";
+
 export const CLAN_SCHEDULE_KEY = "vampir-clan-schedule-v1";
 
 export const CLAN_CONTENT_IDS = ["clan-mission", "clan-guard"] as const;
@@ -54,8 +60,6 @@ export const CLAN_CONTENT_META = [
   weeklyLimit: number;
 }[];
 
-const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_STORED_LENGTH = 8_192;
 const MAX_STORED_ITEMS = 20;
 const KNOWN_CONTENT_IDS = new Set<string>(CLAN_CONTENT_IDS);
@@ -168,26 +172,43 @@ export function updateClanScheduleItem(
 export function nextClanOccurrence(
   item: ClanScheduleItem,
   now: Date,
+  timeZone = JAPAN_TIME_ZONE,
 ): ClanScheduleOccurrence | null {
   const safeItem = parseItem(item);
   const nowTime = now.getTime();
-  if (!safeItem?.scheduled || !Number.isFinite(nowTime)) return null;
+  if (!safeItem?.scheduled
+    || !Number.isFinite(nowTime)
+    || !isValidClanTimeZone(timeZone)) {
+    return null;
+  }
 
-  const jstNow = new Date(nowTime + JST_OFFSET_MS);
-  const daysUntil = (safeItem.day - jstNow.getUTCDay() + 7) % 7;
-  let startsAtTime = Date.UTC(
-    jstNow.getUTCFullYear(),
-    jstNow.getUTCMonth(),
-    jstNow.getUTCDate() + daysUntil,
-    safeItem.hour - 9,
-    safeItem.minute,
-    0,
-    0,
-  );
+  const nowInstant = Temporal.Instant.fromEpochMilliseconds(nowTime);
+  const zonedNow = nowInstant.toZonedDateTimeISO(timeZone);
+  const currentDay = zonedNow.dayOfWeek % 7;
+  const daysUntil = (safeItem.day - currentDay + 7) % 7;
+  let targetDate = zonedNow.toPlainDate().add({ days: daysUntil });
+  let target = Temporal.ZonedDateTime.from({
+    timeZone,
+    year: targetDate.year,
+    month: targetDate.month,
+    day: targetDate.day,
+    hour: safeItem.hour,
+    minute: safeItem.minute,
+  }, { disambiguation: "compatible" });
 
-  if (startsAtTime < nowTime) startsAtTime += WEEK_MS;
+  if (Temporal.Instant.compare(target.toInstant(), nowInstant) < 0) {
+    targetDate = targetDate.add({ weeks: 1 });
+    target = Temporal.ZonedDateTime.from({
+      timeZone,
+      year: targetDate.year,
+      month: targetDate.month,
+      day: targetDate.day,
+      hour: safeItem.hour,
+      minute: safeItem.minute,
+    }, { disambiguation: "compatible" });
+  }
 
-  const startsAt = new Date(startsAtTime);
+  const startsAt = new Date(target.epochMilliseconds);
   return {
     contentId: safeItem.contentId,
     startsAt,
@@ -198,9 +219,10 @@ export function nextClanOccurrence(
 export function nextClanOccurrences(
   settings: ClanScheduleSettings,
   now: Date,
+  timeZone = JAPAN_TIME_ZONE,
 ): ClanScheduleOccurrence[] {
   return settings.items
-    .map((item, index) => ({ occurrence: nextClanOccurrence(item, now), index }))
+    .map((item, index) => ({ occurrence: nextClanOccurrence(item, now, timeZone), index }))
     .filter((candidate): candidate is { occurrence: ClanScheduleOccurrence; index: number } => (
       candidate.occurrence !== null
     ))

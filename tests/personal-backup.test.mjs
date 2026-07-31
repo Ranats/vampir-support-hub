@@ -52,6 +52,10 @@ const validData = {
       },
     ],
   },
+  clanScheduleTimeZone: {
+    version: 1,
+    timeZone: "America/New_York",
+  },
   notificationSettings: {
     version: 1,
     enabled: true,
@@ -59,7 +63,7 @@ const validData = {
   },
 };
 
-test("creates a deterministic version 1 backup without mutating saved shapes", () => {
+test("creates a deterministic version 2 backup without mutating saved shapes", () => {
   const backup = createPersonalBackup(validData);
 
   assert.equal(backup.format, BACKUP_FORMAT);
@@ -74,12 +78,13 @@ test("round-trips a valid backup", () => {
   assert.deepEqual(parsePersonalBackup(JSON.stringify(backup)), backup);
 });
 
-test("accepts a legacy version 1 backup without a clan schedule", () => {
+test("migrates a legacy version 1 backup without a clan schedule or time zone to JST", () => {
   const legacyData = { ...validData };
   delete legacyData.clanSchedule;
+  delete legacyData.clanScheduleTimeZone;
   const parsed = parsePersonalBackup(JSON.stringify({
     format: BACKUP_FORMAT,
-    version: BACKUP_VERSION,
+    version: 1,
     data: legacyData,
   }));
 
@@ -104,14 +109,37 @@ test("accepts a legacy version 1 backup without a clan schedule", () => {
       },
     ],
   });
+  assert.deepEqual(parsed?.data.clanScheduleTimeZone, {
+    version: 1,
+    timeZone: "Asia/Tokyo",
+  });
 });
 
 test("rejects broken JSON and unsupported versions", () => {
   assert.equal(parsePersonalBackup("{broken"), null);
   assert.equal(parsePersonalBackup(JSON.stringify({
     format: BACKUP_FORMAT,
-    version: 2,
+    version: 3,
     data: validData,
+  })), null);
+});
+
+test("rejects an invalid v2 time zone without partially importing", () => {
+  assert.equal(parsePersonalBackup(JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    data: {
+      ...validData,
+      clanScheduleTimeZone: { version: 1, timeZone: "Mars/Olympus" },
+    },
+  })), null);
+  assert.equal(parsePersonalBackup(JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    data: {
+      ...validData,
+      clanScheduleTimeZone: { version: 2, timeZone: "UTC" },
+    },
   })), null);
 });
 

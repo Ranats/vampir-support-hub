@@ -9,6 +9,11 @@ import {
   parseClanScheduleSettings,
 } from "./clan-schedule";
 import {
+  CLAN_SCHEDULE_TIME_ZONE_KEY,
+  detectBrowserTimeZone,
+  resolveClanScheduleTimeZone,
+} from "./clan-time-zone";
+import {
   MAX_CLAN_PORTAL_NAME,
   buildClanPortalUrl,
   clanPortalAccessStorageKey,
@@ -45,7 +50,9 @@ export default function ClanPortalCreateClient({ locale = "ja" }: { locale?: Loc
   const en = locale === "en";
   const homeHref = en ? "/en" : "/";
   const [displayName, setDisplayName] = useState("");
-  const [schedule, setSchedule] = useState<SharedClanSchedule>(defaultSharedClanSchedule);
+  const [schedule, setSchedule] = useState<SharedClanSchedule>(
+    () => defaultSharedClanSchedule(),
+  );
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
@@ -53,12 +60,20 @@ export default function ClanPortalCreateClient({ locale = "ja" }: { locale?: Loc
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setSchedule(toSharedClanSchedule(parseClanScheduleSettings(
-        window.localStorage.getItem(CLAN_SCHEDULE_KEY),
-      )));
+      const storedSchedule = window.localStorage.getItem(CLAN_SCHEDULE_KEY);
+      const timeZone = resolveClanScheduleTimeZone(
+        locale,
+        storedSchedule,
+        window.localStorage.getItem(CLAN_SCHEDULE_TIME_ZONE_KEY),
+        detectBrowserTimeZone(),
+      );
+      setSchedule(toSharedClanSchedule(
+        parseClanScheduleSettings(storedSchedule),
+        timeZone,
+      ));
     }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [locale]);
 
   const editableSchedule = useMemo(
     () => mergeSharedScheduleIntoLocal(schedule, DEFAULT_CLAN_SCHEDULE_SETTINGS),
@@ -174,7 +189,9 @@ export default function ClanPortalCreateClient({ locale = "ja" }: { locale?: Loc
 
             <ClanScheduleSettings
               settings={editableSchedule}
-              onChange={(next) => setSchedule(toSharedClanSchedule(next))}
+              onChange={(next) => setSchedule(toSharedClanSchedule(next, schedule.timeZone))}
+              timeZone={schedule.timeZone}
+              onTimeZoneChange={(timeZone) => setSchedule({ ...schedule, timeZone })}
               locale={locale}
               standalone
               shared
@@ -183,8 +200,8 @@ export default function ClanPortalCreateClient({ locale = "ja" }: { locale?: Loc
             <div className="portal-data-boundary">
               <strong>{en ? "Data you share" : "共有するデータ"}</strong>
               <p>{en
-                ? "Only the clan name and scheduled weekdays and times are stored on the server. Personal completion, level, notification settings, and game-account information are not shared."
-                : "クラン名と開催曜日・時刻だけをサーバーへ保存します。個人の完了状況、レベル、通知設定、ゲームアカウント情報は共有しません。"}</p>
+                ? "Only the clan name, scheduled weekdays and times, and clan time zone are stored on the server. Personal completion, level, notification settings, and game-account information are not shared."
+                : "クラン名、開催曜日・時刻、クラン予定のタイムゾーンだけをサーバーへ保存します。個人の完了状況、レベル、通知設定、ゲームアカウント情報は共有しません。"}</p>
             </div>
             {error ? <p className="form-error" role="alert">{error}</p> : null}
             <button className="primary-action portal-submit" type="submit" disabled={creating}>

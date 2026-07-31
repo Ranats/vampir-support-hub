@@ -6,6 +6,7 @@ import {
   hashClanPortalToken,
   normalizeClanPortalName,
   parseSharedClanSchedule,
+  parseSharedClanScheduleForWrite,
   type ClanPortalCapability,
   type ClanPortalSnapshot,
   type SharedClanSchedule,
@@ -129,7 +130,7 @@ export async function createClanPortal(
   await consumeCreationAllowance(request);
 
   const displayName = normalizeClanPortalName(displayNameValue);
-  const schedule = parseSharedClanSchedule(scheduleValue);
+  const schedule = parseSharedClanScheduleForWrite(scheduleValue);
   if (!displayName || !schedule) throw new TypeError("Invalid clan portal input");
 
   const db = getD1();
@@ -195,7 +196,7 @@ export async function updateClanPortal(
 ): Promise<UpdateResult> {
   await ensureClanPortalSchema();
   const displayName = normalizeClanPortalName(displayNameValue);
-  const schedule = parseSharedClanSchedule(scheduleValue);
+  const schedule = parseSharedClanScheduleForWrite(scheduleValue);
   if (!displayName || !schedule || !Number.isInteger(expectedRevision) || (expectedRevision as number) < 1) {
     throw new TypeError("Invalid clan portal input");
   }

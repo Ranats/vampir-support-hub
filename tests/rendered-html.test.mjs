@@ -69,6 +69,7 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /クラン守護を確認/);
   assert.match(html, /id="clan"/);
   assert.match(html, /クラン予定/);
+  assert.match(html, /クラン予定のタイムゾーン/);
   assert.match(html, /共有ポータルを作成/);
   assert.match(html, /この端末だけに保存/);
   assert.match(html, /検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません/);
@@ -151,6 +152,7 @@ test("renders a fully localized English home with its own share target", async (
   assert.match(html, /English labels are unofficial translations/);
   assert.match(html, /Official VAMPIR site \(Japanese\)/);
   assert.match(html, /Clan plans/);
+  assert.match(html, /clan time zone/i);
   assert.match(html, /Create a shared portal/);
   assert.match(html, /Open .* details on an external page/);
   assert.match(html, /href="\/"[^>]*hreflang="ja"/i);

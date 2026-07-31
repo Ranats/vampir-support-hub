@@ -29,6 +29,7 @@ type SettingsSheetProps = {
   hiddenDefaultIds: readonly string[];
   customRoutines: readonly CustomRoutine[];
   clanSchedule: ClanScheduleSettingsValue;
+  clanScheduleTimeZone: string;
   favoriteSpawnCount: number;
   clanReminderCount: number;
   notificationPermission: NotificationPermission | "unsupported";
@@ -50,6 +51,7 @@ type SettingsSheetProps = {
   onResetChecks: () => void;
   onDeleteAllCustom: () => void;
   onUpdateClanSchedule: (settings: ClanScheduleSettingsValue) => void;
+  onUpdateClanScheduleTimeZone: (timeZone: string) => void;
   onUpdateNotificationSettings: (settings: NotificationSettings) => void;
   onRequestNotificationPermission: () => Promise<void>;
   onTestNotification: () => Promise<void>;
@@ -67,6 +69,7 @@ export default function SettingsSheet({
   hiddenDefaultIds,
   customRoutines,
   clanSchedule,
+  clanScheduleTimeZone,
   favoriteSpawnCount,
   clanReminderCount,
   notificationPermission,
@@ -88,6 +91,7 @@ export default function SettingsSheet({
   onResetChecks,
   onDeleteAllCustom,
   onUpdateClanSchedule,
+  onUpdateClanScheduleTimeZone,
   onUpdateNotificationSettings,
   onRequestNotificationPermission,
   onTestNotification,
@@ -255,6 +259,8 @@ export default function SettingsSheet({
               locale={locale}
               settings={clanSchedule}
               onChange={onUpdateClanSchedule}
+              timeZone={clanScheduleTimeZone}
+              onTimeZoneChange={onUpdateClanScheduleTimeZone}
               standalone
             />
           ) : (
@@ -414,6 +420,8 @@ export default function SettingsSheet({
             locale={locale}
             settings={clanSchedule}
             onChange={onUpdateClanSchedule}
+            timeZone={clanScheduleTimeZone}
+            onTimeZoneChange={onUpdateClanScheduleTimeZone}
           />
 
           <section className="settings-section" aria-labelledby="notification-settings-title">

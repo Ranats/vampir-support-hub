@@ -4,6 +4,10 @@ import {
   type ClanContentId,
   type ClanScheduleSettings,
 } from "./clan-schedule.ts";
+import {
+  JAPAN_TIME_ZONE,
+  isValidClanTimeZone,
+} from "./clan-time-zone.ts";
 import type { Locale } from "./localization";
 
 export const CLAN_PORTAL_ACCESS_STORAGE_PREFIX = "vampir-clan-portal-access-v1:";
@@ -25,7 +29,8 @@ export type SharedClanScheduleItem = {
 };
 
 export type SharedClanSchedule = {
-  version: 1;
+  version: 2;
+  timeZone: string;
   items: SharedClanScheduleItem[];
 };
 
@@ -63,9 +68,12 @@ function defaultSharedItem(contentId: ClanContentId): SharedClanScheduleItem {
   };
 }
 
-export function defaultSharedClanSchedule(): SharedClanSchedule {
+export function defaultSharedClanSchedule(
+  timeZone = JAPAN_TIME_ZONE,
+): SharedClanSchedule {
   return {
-    version: 1,
+    version: 2,
+    timeZone: isValidClanTimeZone(timeZone) ? timeZone : JAPAN_TIME_ZONE,
     items: CLAN_CONTENT_IDS.map(defaultSharedItem),
   };
 }
@@ -88,7 +96,13 @@ function parseSharedItem(value: unknown): SharedClanScheduleItem | null {
 }
 
 export function parseSharedClanSchedule(value: unknown): SharedClanSchedule | null {
-  if (!isRecord(value) || value.version !== 1 || !Array.isArray(value.items)) return null;
+  if (!isRecord(value)
+    || (value.version !== 1 && value.version !== 2)
+    || !Array.isArray(value.items)) {
+    return null;
+  }
+  const timeZone = value.version === 1 ? JAPAN_TIME_ZONE : value.timeZone;
+  if (!isValidClanTimeZone(timeZone)) return null;
   if (value.items.length !== CLAN_CONTENT_IDS.length) return null;
 
   const byId = new Map<ClanContentId, SharedClanScheduleItem>();
@@ -100,12 +114,21 @@ export function parseSharedClanSchedule(value: unknown): SharedClanSchedule | nu
 
   if (byId.size !== CLAN_CONTENT_IDS.length) return null;
   return {
-    version: 1,
+    version: 2,
+    timeZone,
     items: CLAN_CONTENT_IDS.map((contentId) => byId.get(contentId) ?? defaultSharedItem(contentId)),
   };
 }
 
-export function toSharedClanSchedule(settings: ClanScheduleSettings): SharedClanSchedule {
+export function parseSharedClanScheduleForWrite(value: unknown): SharedClanSchedule | null {
+  if (!isRecord(value) || value.version !== 2) return null;
+  return parseSharedClanSchedule(value);
+}
+
+export function toSharedClanSchedule(
+  settings: ClanScheduleSettings,
+  timeZone = JAPAN_TIME_ZONE,
+): SharedClanSchedule {
   const items = CLAN_CONTENT_IDS.map((contentId) => {
     const item = settings.items.find((candidate) => candidate.contentId === contentId);
     return item
@@ -118,7 +141,11 @@ export function toSharedClanSchedule(settings: ClanScheduleSettings): SharedClan
         }
       : defaultSharedItem(contentId);
   });
-  return { version: 1, items };
+  return {
+    version: 2,
+    timeZone: isValidClanTimeZone(timeZone) ? timeZone : JAPAN_TIME_ZONE,
+    items,
+  };
 }
 
 export function mergeSharedScheduleIntoLocal(

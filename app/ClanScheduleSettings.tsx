@@ -1,15 +1,25 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   CLAN_CONTENT_META,
   CLAN_WEEKDAY_LABELS,
   updateClanScheduleItem,
   type ClanScheduleSettings as ClanScheduleSettingsValue,
 } from "./clan-schedule";
+import {
+  JAPAN_TIME_ZONE,
+  formatClanTimeZoneName,
+  supportedClanTimeZones,
+} from "./clan-time-zone";
 import type { Locale } from "./localization";
 
 type ClanScheduleSettingsProps = {
   locale?: Locale;
   settings: ClanScheduleSettingsValue;
   onChange: (settings: ClanScheduleSettingsValue) => void;
+  timeZone?: string;
+  onTimeZoneChange?: (timeZone: string) => void;
   standalone?: boolean;
   shared?: boolean;
 };
@@ -22,10 +32,19 @@ export default function ClanScheduleSettings({
   locale = "ja",
   settings,
   onChange,
+  timeZone = JAPAN_TIME_ZONE,
+  onTimeZoneChange,
   standalone = false,
   shared = false,
 }: ClanScheduleSettingsProps) {
   const en = locale === "en";
+  const [timeZones, setTimeZones] = useState(() => [timeZone]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setTimeZones(supportedClanTimeZones(timeZone));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [timeZone]);
   const weekdayLabels = en
     ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     : CLAN_WEEKDAY_LABELS;
@@ -57,6 +76,32 @@ export default function ClanScheduleSettings({
         </div>
       </div>
 
+      <div className="clan-time-zone-setting">
+        <label>
+          <span>{en ? "Clan schedule time zone" : "クラン予定のタイムゾーン"}</span>
+          <select
+            value={timeZone}
+            disabled={!onTimeZoneChange}
+            onChange={(event) => onTimeZoneChange?.(event.target.value)}
+          >
+            {timeZones.map((value) => (
+              <option value={value} key={value}>
+                {formatClanTimeZoneName(value, locale)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <small>
+          {shared
+            ? (en
+                ? "Members see these weekly times in this clan time zone. Official schedules and resets remain in JST."
+                : "メンバーには、このタイムゾーンの毎週予定として表示します。公式予定とリセット時刻はJSTのままです。")
+            : (en
+                ? "This applies only to your user-entered clan plans. Official schedules and daily/weekly resets remain in JST."
+                : "ユーザー入力のクラン予定だけに適用します。公式予定と日次・週次リセットはJSTのままです。")}
+        </small>
+      </div>
+
       <div className="clan-settings-list">
         {CLAN_CONTENT_META.map((meta) => {
           const item = settings.items.find(({ contentId }) => contentId === meta.contentId);
@@ -80,7 +125,7 @@ export default function ClanScheduleSettings({
 
               <div className="clan-setting-controls">
                 <label>
-                  <span>{en ? "Day (JST)" : "曜日（JST）"}</span>
+                  <span>{en ? "Day" : "曜日"}</span>
                   <select
                     value={item.day}
                     disabled={!item.scheduled}
@@ -96,7 +141,7 @@ export default function ClanScheduleSettings({
                   </select>
                 </label>
                 <label>
-                  <span>{en ? "Start time (JST)" : "開始時刻（JST）"}</span>
+                  <span>{en ? "Start time" : "開始時刻"}</span>
                   <input
                     type="time"
                     value={formatTime(item.hour, item.minute)}
@@ -130,7 +175,7 @@ export default function ClanScheduleSettings({
               </div>
               <small>
                 {shared
-                  ? (en ? "Only the day and time are shared. Reminder settings and completion stay on each member's device." : "共有するのは曜日と時刻だけです。リマインダー設定と完了状況は各メンバーの端末に残ります。")
+                  ? (en ? "Only the day, time, and clan time zone are shared. Reminder settings and completion stay on each member's device." : "共有するのは曜日・時刻・クラン予定のタイムゾーンだけです。リマインダー設定と完了状況は各メンバーの端末に残ります。")
                   : (en ? "Reminders use the global notification timing and work only while this site is open." : "リマインダーは全体通知設定と共通の通知タイミングを使い、サイトを開いている間だけ動作します。")}
               </small>
             </fieldset>

@@ -1804,6 +1804,43 @@ summary:focus-visible {
   margin-top: 12px;
 }
 
+.clan-time-zone-setting {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 13px;
+  background: var(--surface);
+}
+
+.clan-time-zone-setting label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 1.2fr);
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.clan-time-zone-setting select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: #101013;
+}
+
+.clan-time-zone-setting small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
 .clan-settings-list {
   display: grid;
   gap: 10px;
@@ -2487,6 +2524,15 @@ summary:focus-visible {
   margin-top: 20px;
 }
 
+.portal-time-zone {
+  margin-top: 6px !important;
+  text-align: left !important;
+}
+
+.portal-time-zone strong {
+  color: var(--text);
+}
+
 .portal-shared-schedule {
   display: flex;
   flex-direction: column;
@@ -2927,6 +2973,10 @@ summary:focus-visible {
   .visibility-grid,
   .custom-form-grid,
   .clan-setting-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .clan-time-zone-setting label {
     grid-template-columns: minmax(0, 1fr);
   }
 
