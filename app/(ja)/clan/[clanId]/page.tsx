@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { isClanPortalId } from "../../clan-portal";
-import { currentRequestTimeMs } from "../../request-time";
-import ClanPortalClient from "./ClanPortalClient";
+import { isClanPortalId } from "../../../clan-portal";
+import { currentRequestTimeMs } from "../../../request-time";
+import ClanPortalClient from "../../../ClanPortalClient";
 
 export const metadata: Metadata = {
   title: "クラン共有ポータル｜VAMPIR 日課ナビ",
@@ -19,5 +19,5 @@ export default async function ClanPortalPage({
   await connection();
   const { clanId } = await params;
   if (!isClanPortalId(clanId)) notFound();
-  return <ClanPortalClient clanId={clanId} initialNowMs={currentRequestTimeMs()} />;
+  return <ClanPortalClient clanId={clanId} initialNowMs={currentRequestTimeMs()} locale="ja" />;
 }

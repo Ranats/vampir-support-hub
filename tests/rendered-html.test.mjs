@@ -17,7 +17,9 @@ test("wires the focused clan settings flow and event detail links", async () => 
   );
   assert.match(pageSource, /item\.scheduled \? "予定を変更" : "クラン予定を設定"/);
   assert.match(pageSource, /mode=\{settingsMode\}/);
-  assert.match(settingsSource, /mode === "clan" \? "クラン予定を設定"/);
+  assert.match(settingsSource, /mode === "clan"/);
+  assert.match(settingsSource, /クラン予定を設定/);
+  assert.match(settingsSource, /Set clan schedule/);
   assert.match(settingsSource, /<ClanScheduleSettings[\s\S]*?standalone/);
   assert.match(clanSettingsSource, /standalone \? null : <span>4<\/span>/);
 
@@ -25,7 +27,7 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(pageSource, /className="event-row event-row-link"/);
   assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
   assert.match(pageSource, /の詳細を外部ページで開く/);
-  assert.match(pageSource, /href="\/clan\/create"/);
+  assert.match(pageSource, /href=\{en \? "\/en\/clan\/create" : "\/clan\/create"\}/);
   assert.match(pageSource, /共有ポータルを作成/);
 });
 
@@ -127,4 +129,34 @@ test("renders finished Japanese site metadata", async () => {
     /<form\b[^>]*\baction=["'][^"']*(?:ko-fi\.com|ofuse\.me)[^"']*["']/i,
   );
   assert.doesNotMatch(html, /\bcodex-preview\b/i);
+});
+
+test("renders a fully localized English home with its own share target", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("english", `${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+  const response = await worker.fetch(
+    new Request("http://localhost/en", { headers: { accept: "text/html" } }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
+  );
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /<html[^>]*\blang=["']en["']/i);
+  assert.match(html, /VAMPIR Daily Navigator/);
+  assert.match(html, /What to do next today/);
+  assert.match(html, /Daily and weekly routines/);
+  assert.match(html, /Open display and checklist settings/);
+  assert.match(html, /English labels are unofficial translations/);
+  assert.match(html, /Official VAMPIR site \(Japanese\)/);
+  assert.match(html, /Clan plans/);
+  assert.match(html, /Create a shared portal/);
+  assert.match(html, /Open .* details on an external page/);
+  assert.match(html, /href="\/"[^>]*hreflang="ja"/i);
+  assert.match(html, /href="\/en"[^>]*hreflang="en"/i);
+  assert.match(html, /manifest-en\.webmanifest/);
+  assert.match(html, /https%3A%2F%2Fvampir\.cilabworks\.com%2Fen/);
+  assert.match(html, /VAMPIR%E6%97%A5%E8%AA%B2%E3%83%8A%E3%83%93%2CVAMPIR/);
+  assert.doesNotMatch(html, /og\.png/);
 });

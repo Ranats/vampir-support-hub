@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import CloudflareWebAnalytics from "../CloudflareWebAnalytics";
+import CloudflareWebAnalytics from "../../CloudflareWebAnalytics";
+import LanguagePreferenceRedirect from "../../LanguagePreferenceRedirect";
+import LanguageSwitch from "../../LanguageSwitch";
 
 const GITHUB_ISSUES_URL =
   "https://github.com/Ranats/vampir-support-hub/issues";
@@ -12,6 +14,7 @@ export const metadata: Metadata = {
     "VAMPIR 日課ナビの運営方針、端末内データ、外部サービス、免責事項、お問い合わせ先をご案内します。",
   alternates: {
     canonical: "/policy",
+    languages: { ja: "/policy", en: "/en/policy" },
   },
   openGraph: {
     type: "website",
@@ -41,6 +44,7 @@ export const metadata: Metadata = {
 export default function PolicyPage() {
   return (
     <div className="policy-shell">
+      <LanguagePreferenceRedirect page="policy" />
       <header className="policy-header">
         <Link className="brand" href="/" aria-label="VAMPIR 日課ナビへ戻る">
           <span className="brand-mark" aria-hidden="true">V</span>
@@ -49,7 +53,13 @@ export default function PolicyPage() {
             <small>日課ナビ</small>
           </span>
         </Link>
-        <Link className="policy-back" href="/">日課ナビへ戻る</Link>
+        <div className="policy-header-actions">
+          <LanguageSwitch locale="ja" page="policy" />
+          <Link className="policy-back" href="/">
+            <span className="policy-back-full">日課ナビへ戻る</span>
+            <span className="policy-back-short">戻る</span>
+          </Link>
+        </div>
       </header>
 
       <main className="policy-main">
@@ -76,7 +86,7 @@ export default function PolicyPage() {
           <section className="policy-card">
             <h2>端末内に保存するデータ</h2>
             <p>
-              レベル、チェック状況、自分で追加した項目、表示設定、お気に入り、通知設定、通知の重複防止記録、
+              レベル、チェック状況、自分で追加した項目、表示設定、お気に入り、通知設定、言語設定、通知の重複防止記録、
               個人用クラン予定、クラン共有ポータルの閲覧・管理キーは、
               利用中のブラウザのローカルストレージに保存されます。
             </p>
@@ -117,14 +127,14 @@ export default function PolicyPage() {
           <section className="policy-card">
             <h2>アクセス解析・広告</h2>
             <p>
-              公開トップページとこの方針ページでは、Cloudflare Web Analyticsを使用しています。
+              日本語・英語の公開トップページと方針ページでは、Cloudflare Web Analyticsを使用しています。
               ページビュー、訪問、参照元、国、端末種別、ブラウザ、OS、ページ読み込み性能、
               Core Web Vitalsを集計し、計測に必要な情報をCloudflareへ送信します。
             </p>
             <p>
               Cloudflare Web Analyticsへ、ゲームアカウント、端末内のチェック状況、レベル、通知設定、
               個人用クラン予定、クラン共有ポータルの閲覧・管理キーは送信しません。
-              クラン共有ポータル（<code>/clan/*</code>）には解析タグを設置していません。
+              クラン共有ポータル（<code>/clan/*</code>、<code>/en/clan/*</code>）には解析タグを設置していません。
               現在、広告配信タグとアフィリエイト追跡タグは設置していません。
             </p>
             <p>
