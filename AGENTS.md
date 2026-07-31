@@ -3,9 +3,9 @@
 ## Project scope
 
 - Repository source of truth: the `main` branch on GitHub. Keep the local `main` branch aligned with it before starting new work.
-- Source of truth: `app/HomeClient.tsx` for displayed schedules and routines; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; linked official VAMPIR pages and dated reference articles for factual values.
-- Read order: `AGENTS.md`, `app/page.tsx`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, `app/layout.tsx`, `app/policy/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, then tests.
-- Supported users and environments: Japanese VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
+- Source of truth: `app/HomeClient.tsx` for displayed schedules, routines, clan plans, and localized UI; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; linked official VAMPIR pages and dated reference articles for factual values.
+- Read order: `AGENTS.md`, localized route pages and layouts under `app/(ja)` and `app/(en)`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, localized policy pages, `app/progress-cycle.ts`, `app/globals.css`, then tests.
+- Supported users and environments: Japanese- and English-speaking VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
 
 ## Change boundaries
 
@@ -18,6 +18,7 @@
 - Preserve: a Today-first experience that works without screen-sharing, OCR, account access, or game-client integration.
 - Preserve: Ko-fi and OFUSE support actions as optional external links. Keep every feature free, do not embed checkout or third-party tracking scripts, and state that support is optional.
 - Preserve: sharing uses the canonical `https://vampir.cilabworks.com/` URL through an X Web Intent or the browser share API with clipboard fallback. Do not embed X widgets or tracking scripts.
+- Preserve: `/` and `/policy` are Japanese; `/en` and `/en/policy` are English. Keep route-specific `html lang`, canonical URLs, JA/EN alternates, localized share targets, and the device-local `vampir-language-v1` preference aligned. Do not add the language preference to the personal-backup schema or translate user-authored routine titles and notes.
 - Preserve: `https://vampir.cilabworks.com/` is the canonical public origin. Keep metadata, `robots.txt`, `sitemap.xml`, and legacy-host redirects aligned with it.
 - Preserve: `/policy` accurately describes current device-local storage, notifications, external services, analytics/advertising status, the public GitHub Issues contact route, and the developer X profile at `https://x.com/Kokonoe_variant`. Update it before introducing analytics, advertising, affiliate tracking, or another data flow.
 - Out of scope: unverified game-menu routes, destination instructions, memory or traffic inspection, automated game input, claims of official affiliation, cloud sync of personal progress/settings, and claims of background scheduled Push without a verified server-side scheduler.
@@ -29,12 +30,13 @@
 - Acceptance criteria: no horizontal page scroll at 390px; the first view shows the next occurrence and up to three unfinished visible tasks; removed OCR and destination copy is absent; existing progress restores without migration.
 - Acceptance criteria: hiding a default routine removes it from Today and progress counts without deleting its completion; custom daily and weekly routines use the existing frequency-specific reset cycles; level settings explain every filtering effect and that no game account is connected.
 - Acceptance criteria: backups round-trip only after whole-file validation; expired imported cycle progress is not restored into the current cycle; same-browser tabs converge without changing the established storage shapes.
-- Acceptance criteria: the manifest includes 192px and 512px raster icons; service-worker requests remain network-first for time-sensitive content; notification permission is never requested on first load; no copy implies notification after the site is closed.
+- Acceptance criteria: Japanese and English manifests use their matching language and start route, and both include 192px and 512px raster icons; service-worker requests remain network-first for time-sensitive content; notification permission is never requested on first load; no copy implies notification after the site is closed.
 - Acceptance criteria: the last verified date and a stale warning are visible while the game client and official notices remain authoritative.
 - Acceptance criteria: both support links open their stated external destinations, are keyboard accessible, and do not load third-party payment code on the Site.
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
 - Acceptance criteria: the footer and `/policy` link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
 - Acceptance criteria: the primary page and `/policy` publish canonical URLs on `vampir.cilabworks.com`; `robots.txt` advertises the canonical sitemap; the sitemap contains both public routes; the legacy `vampir-support-hub.codarrr.chatgpt.site` hostname redirects to the equivalent canonical path and query.
+- Acceptance criteria: all four public routes (`/`, `/policy`, `/en`, `/en/policy`) are in the sitemap; publish social images only after the saved asset passes visual QA in its target language.
 - Acceptance criteria: clan mission and guard plans accept a weekly JST day/time, keep completion in the existing Monday 05:00 weekly cycle, notify only while the site is running, survive backups and same-browser tab sync, and never imply a game-account connection or an official clan timetable.
 - Acceptance criteria: opening clan settings from a clan card shows only the clan schedule controls and restores focus to that card when closed; each visible limited-event card is a keyboard-accessible external link to a verified announcement or details page.
 - Acceptance criteria: the server-rendered initial timestamp is serialized once and reused by the first client render; initial load produces no hydration mismatch from clocks, countdowns, event filtering, or cycle keys.

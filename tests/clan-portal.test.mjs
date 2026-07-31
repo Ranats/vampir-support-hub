@@ -53,6 +53,17 @@ test("keeps capability tokens in URL fragments instead of paths or queries", () 
   assert.equal(url.search, "");
   assert.equal(url.hash, `#viewer=${token}`);
   assert.equal(url.pathname.includes(token), false);
+
+  const englishUrl = new URL(buildClanPortalUrl(
+    "https://vampir.cilabworks.com",
+    id,
+    "admin",
+    token,
+    "en",
+  ));
+  assert.equal(englishUrl.pathname, `/en/clan/${id}`);
+  assert.equal(englishUrl.search, "");
+  assert.equal(englishUrl.hash, `#admin=${token}`);
 });
 
 test("strictly normalizes shared schedule fields and excludes personal reminders", () => {
@@ -122,24 +133,42 @@ test("validates names and stored device access without widening storage", () => 
 });
 
 test("serializes one request timestamp for the first client render", async () => {
-  const [serverSource, clientSource] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+  const [japaneseSource, englishSource, clientSource] = await Promise.all([
+    readFile(new URL("../app/(ja)/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/(en)/en/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/HomeClient.tsx", import.meta.url), "utf8"),
   ]);
 
-  assert.match(serverSource, /await connection\(\)/);
-  assert.match(serverSource, /<HomeClient initialNowMs=\{currentRequestTimeMs\(\)\}/);
+  for (const serverSource of [japaneseSource, englishSource]) {
+    assert.match(serverSource, /await connection\(\)/);
+    assert.match(serverSource, /currentRequestTimeMs\(\)/);
+    assert.match(serverSource, /initialNowMs=\{initialNowMs\}/);
+  }
+  assert.match(japaneseSource, /locale="ja"/);
+  assert.match(englishSource, /locale="en"/);
   assert.match(clientSource, /useState\(\(\) => new Date\(initialNowMs\)\)/);
   assert.doesNotMatch(clientSource, /useState\(\(\) => new Date\(\)\)/);
 });
 
 test("portal APIs keep capability responses private and authorize with bearer tokens", async () => {
-  const [httpSource, routeSource, repositorySource, clientSource, createSource] = await Promise.all([
+  const [
+    httpSource,
+    routeSource,
+    repositorySource,
+    clientSource,
+    createSource,
+    englishPortalPageSource,
+    englishCreatePageSource,
+    homeSource,
+  ] = await Promise.all([
     readFile(new URL("../app/api/clan-portals/http.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/clan-portals/[clanId]/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/clan-portals.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/clan/[clanId]/ClanPortalClient.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/clan/create/ClanPortalCreateClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/ClanPortalClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/ClanPortalCreateClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/(en)/en/clan/[clanId]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/(en)/en/clan/create/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/HomeClient.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(httpSource, /private, no-store/);
@@ -162,4 +191,12 @@ test("portal APIs keep capability responses private and authorize with bearer to
   assert.match(clientSource, /refreshPortal\(token, false, true\)/);
   assert.doesNotMatch(clientSource, /dirtyRef\.current = false;\s*setMessage\(""\);\s*await refreshPortal\(token/);
   assert.match(createSource, /setLinks\(createdLinks\);[\s\S]*?try \{[\s\S]*?localStorage\.setItem/);
+  assert.match(createSource, /buildClanPortalUrl\(origin, portal\.id, "viewer", viewToken, locale\)/);
+  assert.match(clientSource, /buildClanPortalUrl\(window\.location\.origin, clanId, "viewer", payload\.viewToken, locale\)/);
+  assert.match(englishPortalPageSource, /locale="en"/);
+  assert.match(englishPortalPageSource, /await connection\(\)/);
+  assert.match(englishCreatePageSource, /locale="en"/);
+  assert.match(homeSource, /href=\{en \? "\/en\/clan\/create" : "\/clan\/create"\}/);
+  assert.match(clientSource, /Back to VAMPIR Daily Navigator/);
+  assert.match(createSource, /Create a shared clan portal/);
 });

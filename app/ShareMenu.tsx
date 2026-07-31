@@ -1,14 +1,22 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import type { Locale } from "./localization";
 
-const SHARE_URL = "https://vampir.cilabworks.com/";
-const SHARE_TEXT = "VAMPIR 日課ナビで、次の出現時刻・日課・週課をまとめて確認できます。";
-const X_SHARE_URL = `https://twitter.com/intent/tweet?${new URLSearchParams({
-  text: SHARE_TEXT,
-  url: SHARE_URL,
-  hashtags: "VAMPIR日課ナビ,ヴァンピール",
-}).toString()}`;
+const SHARE_CONFIG = {
+  ja: {
+    url: "https://vampir.cilabworks.com/",
+    title: "VAMPIR 日課ナビ",
+    text: "VAMPIR 日課ナビで、次の出現時刻・日課・週課をまとめて確認できます。",
+    hashtags: "VAMPIR日課ナビ,ヴァンピール",
+  },
+  en: {
+    url: "https://vampir.cilabworks.com/en",
+    title: "VAMPIR Daily Navigator",
+    text: "Track upcoming VAMPIR spawns, daily tasks, and weekly tasks in one place.",
+    hashtags: "VAMPIR日課ナビ,VAMPIR",
+  },
+} as const;
 
 function ShareIcon() {
   return (
@@ -27,7 +35,14 @@ function CopyIcon() {
   );
 }
 
-export default function ShareMenu() {
+export default function ShareMenu({ locale = "ja" }: { locale?: Locale }) {
+  const isEnglish = locale === "en";
+  const share = SHARE_CONFIG[locale];
+  const xShareUrl = `https://twitter.com/intent/tweet?${new URLSearchParams({
+    text: share.text,
+    url: share.url,
+    hashtags: share.hashtags,
+  }).toString()}`;
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -56,11 +71,11 @@ export default function ShareMenu() {
 
   async function copyUrl() {
     try {
-      await navigator.clipboard.writeText(SHARE_URL);
-      setMessage("URLをコピーしました");
+      await navigator.clipboard.writeText(share.url);
+      setMessage(isEnglish ? "URL copied" : "URLをコピーしました");
     } catch {
-      window.prompt("このURLをコピーしてください", SHARE_URL);
-      setMessage("URLを表示しました");
+      window.prompt(isEnglish ? "Copy this URL" : "このURLをコピーしてください", share.url);
+      setMessage(isEnglish ? "URL displayed" : "URLを表示しました");
     }
   }
 
@@ -72,11 +87,11 @@ export default function ShareMenu() {
 
     try {
       await navigator.share({
-        title: "VAMPIR 日課ナビ",
-        text: SHARE_TEXT,
-        url: SHARE_URL,
+        title: share.title,
+        text: share.text,
+        url: share.url,
       });
-      setMessage("共有メニューへ送りました");
+      setMessage(isEnglish ? "Sent to the share menu" : "共有メニューへ送りました");
       setOpen(false);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -88,13 +103,13 @@ export default function ShareMenu() {
     <div className="header-share-actions">
       <a
         className="x-share-trigger"
-        href={X_SHARE_URL}
+        href={xShareUrl}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="XでVAMPIR 日課ナビをシェアする（外部サイト）"
+        aria-label={isEnglish ? "Share VAMPIR Daily Navigator on X (external site)" : "XでVAMPIR 日課ナビをシェアする（外部サイト）"}
       >
         <span className="x-share-mark" aria-hidden="true">𝕏</span>
-        <span className="x-share-label">でシェア</span>
+        <span className="x-share-label">{isEnglish ? "Share" : "でシェア"}</span>
       </a>
 
       <div className="share-control" ref={rootRef}>
@@ -102,7 +117,7 @@ export default function ShareMenu() {
           ref={triggerRef}
           className="share-trigger"
           type="button"
-          aria-label="その他の共有メニューを開く"
+          aria-label={isEnglish ? "Open more sharing options" : "その他の共有メニューを開く"}
           aria-expanded={open}
           aria-controls={menuId}
           onClick={() => {
@@ -111,13 +126,13 @@ export default function ShareMenu() {
           }}
         >
           <ShareIcon />
-          <span>その他共有</span>
+          <span>{isEnglish ? "More" : "その他共有"}</span>
         </button>
 
         <div className="share-menu" id={menuId} hidden={!open}>
           <div className="share-menu-heading">
-            <strong>その他の共有</strong>
-            <small>アプリで送るか、URLをコピーできます</small>
+            <strong>{isEnglish ? "More sharing options" : "その他の共有"}</strong>
+            <small>{isEnglish ? "Share with an app or copy the URL" : "アプリで送るか、URLをコピーできます"}</small>
           </div>
           <button
             className="share-menu-item"
@@ -125,7 +140,7 @@ export default function ShareMenu() {
             onClick={shareFromDevice}
           >
             <span className="share-menu-icon"><ShareIcon /></span>
-            <span><strong>端末で共有</strong><small>未対応の場合はURLをコピー</small></span>
+            <span><strong>{isEnglish ? "Share from this device" : "端末で共有"}</strong><small>{isEnglish ? "Copies the URL if unavailable" : "未対応の場合はURLをコピー"}</small></span>
             <span className="share-menu-arrow" aria-hidden="true">›</span>
           </button>
           <button
@@ -134,7 +149,7 @@ export default function ShareMenu() {
             onClick={copyUrl}
           >
             <span className="share-menu-icon"><CopyIcon /></span>
-            <span><strong>URLをコピー</strong><small>{SHARE_URL}</small></span>
+            <span><strong>{isEnglish ? "Copy URL" : "URLをコピー"}</strong><small>{share.url}</small></span>
             <span className="share-menu-arrow" aria-hidden="true">›</span>
           </button>
           {message ? (

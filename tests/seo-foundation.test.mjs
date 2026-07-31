@@ -53,6 +53,35 @@ test("serves robots and sitemap for the canonical domain", async () => {
   assert.equal(sitemapResponse.status, 200);
   assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/<\/loc>/i);
   assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/policy<\/loc>/i);
+  assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/en<\/loc>/i);
+  assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/en\/policy<\/loc>/i);
+});
+
+test("publishes English canonical, language alternates, and text-only social metadata", async () => {
+  const response = await request("/en", { headers: { accept: "text/html" } });
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /rel="canonical"[^>]*href="https:\/\/vampir\.cilabworks\.com\/en"/i);
+  assert.match(html, /hreflang="ja"[^>]*href="https:\/\/vampir\.cilabworks\.com\/"/i);
+  assert.match(html, /hreflang="en"[^>]*href="https:\/\/vampir\.cilabworks\.com\/en"/i);
+  assert.doesNotMatch(html, /property="og:image"/i);
+  assert.doesNotMatch(html, /name="twitter:image"/i);
+});
+
+test("publishes the localized English policy", async () => {
+  const response = await request("/en/policy", { headers: { accept: "text/html" } });
+  const html = await response.text();
+
+  assert.equal(response.status, 200);
+  assert.match(html, /<html[^>]*lang="en"/i);
+  assert.match(html, /Operations and Privacy Policy/);
+  assert.match(html, /We do not connect to your game account or retrieve game data automatically/);
+  assert.match(html, /Shared clan portals/);
+  assert.match(html, /Viewer and administrator links use separate secret keys/);
+  assert.match(html, /verification hashes are stored in the database/);
+  assert.match(html, /rel="canonical"[^>]*href="https:\/\/vampir\.cilabworks\.com\/en\/policy"/i);
+  assert.doesNotMatch(html, /property="og:image"/i);
 });
 
 test("publishes the operation and privacy policy", async () => {

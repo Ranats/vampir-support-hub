@@ -129,6 +129,41 @@ summary:focus-visible {
   gap: 10px;
 }
 
+.language-switch {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.language-switch a {
+  display: grid;
+  min-width: 32px;
+  min-height: 44px;
+  place-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.language-switch a:hover,
+.language-switch a:focus-visible,
+.language-switch a[aria-current="page"] {
+  color: var(--text);
+}
+
+.language-switch a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 4px;
+}
+
 .header-share-actions {
   display: flex;
   align-items: center;
@@ -1293,6 +1328,16 @@ summary:focus-visible {
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
+}
+
+.policy-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.policy-back-short {
+  display: none;
 }
 
 .policy-back:hover {
@@ -2639,6 +2684,14 @@ summary:focus-visible {
     display: none;
   }
 
+  .policy-back-full {
+    display: none;
+  }
+
+  .policy-back-short {
+    display: inline;
+  }
+
   .policy-main,
   .policy-footer {
     width: min(100% - 32px, 860px);
@@ -2656,6 +2709,11 @@ summary:focus-visible {
     align-items: center;
   }
 
+  .site-header .brand > span:last-child,
+  .site-header .settings-trigger small {
+    display: none;
+  }
+
   .brand-mark {
     width: 36px;
     height: 36px;
@@ -2671,7 +2729,15 @@ summary:focus-visible {
   }
 
   .header-tools {
-    gap: 6px;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .header-tools .language-switch {
+    min-height: 34px;
+    gap: 3px;
+    padding-inline: 6px;
+    font-size: 10px;
   }
 
   .verified {

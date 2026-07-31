@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import LanguagePreferenceRedirect from "../../LanguagePreferenceRedirect";
+import LanguageSwitch from "../../LanguageSwitch";
 
 const GITHUB_ISSUES_URL =
   "https://github.com/Ranats/vampir-support-hub/issues";
@@ -11,6 +13,7 @@ export const metadata: Metadata = {
     "VAMPIR 日課ナビの運営方針、端末内データ、外部サービス、免責事項、お問い合わせ先をご案内します。",
   alternates: {
     canonical: "/policy",
+    languages: { ja: "/policy", en: "/en/policy" },
   },
   openGraph: {
     type: "website",
@@ -40,6 +43,7 @@ export const metadata: Metadata = {
 export default function PolicyPage() {
   return (
     <div className="policy-shell">
+      <LanguagePreferenceRedirect page="policy" />
       <header className="policy-header">
         <Link className="brand" href="/" aria-label="VAMPIR 日課ナビへ戻る">
           <span className="brand-mark" aria-hidden="true">V</span>
@@ -48,7 +52,13 @@ export default function PolicyPage() {
             <small>日課ナビ</small>
           </span>
         </Link>
-        <Link className="policy-back" href="/">日課ナビへ戻る</Link>
+        <div className="policy-header-actions">
+          <LanguageSwitch locale="ja" page="policy" />
+          <Link className="policy-back" href="/">
+            <span className="policy-back-full">日課ナビへ戻る</span>
+            <span className="policy-back-short">戻る</span>
+          </Link>
+        </div>
       </header>
 
       <main className="policy-main">
@@ -75,7 +85,7 @@ export default function PolicyPage() {
           <section className="policy-card">
             <h2>端末内に保存するデータ</h2>
             <p>
-              レベル、チェック状況、自分で追加した項目、表示設定、お気に入り、通知設定、通知の重複防止記録、
+              レベル、チェック状況、自分で追加した項目、表示設定、お気に入り、通知設定、言語設定、通知の重複防止記録、
               個人用クラン予定、クラン共有ポータルの閲覧・管理キーは、
               利用中のブラウザのローカルストレージに保存されます。
             </p>

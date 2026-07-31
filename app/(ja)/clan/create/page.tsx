@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ClanPortalCreateClient from "./ClanPortalCreateClient";
+import ClanPortalCreateClient from "../../../ClanPortalCreateClient";
 
 export const metadata: Metadata = {
   title: "クラン共有ポータルを作成｜VAMPIR 日課ナビ",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function ClanPortalCreatePage() {
-  return <ClanPortalCreateClient />;
+  return <ClanPortalCreateClient locale="ja" />;
 }

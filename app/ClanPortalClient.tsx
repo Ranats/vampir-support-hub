@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import ClanScheduleSettings from "../../ClanScheduleSettings";
+import ClanScheduleSettings from "./ClanScheduleSettings";
 import {
   CLAN_CONTENT_META,
   CLAN_SCHEDULE_KEY,
@@ -10,7 +10,7 @@ import {
   DEFAULT_CLAN_SCHEDULE_SETTINGS,
   nextClanOccurrence,
   parseClanScheduleSettings,
-} from "../../clan-schedule";
+} from "./clan-schedule";
 import {
   CLAN_PORTAL_POLL_INTERVAL_MS,
   MAX_CLAN_PORTAL_NAME,
@@ -27,14 +27,15 @@ import {
   type ClanPortalCapability,
   type ClanPortalSnapshot,
   type SharedClanSchedule,
-} from "../../clan-portal";
+} from "./clan-portal";
+import type { Locale } from "./localization";
 
 function formatTime(hour: number, minute: number) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function formatJst(date: Date) {
-  return new Intl.DateTimeFormat("ja-JP", {
+function formatJst(date: Date, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
     timeZone: "Asia/Tokyo",
     month: "numeric",
     day: "numeric",
@@ -45,9 +46,10 @@ function formatJst(date: Date) {
   }).format(date);
 }
 
-function formatUpdatedAt(value: string) {
+function formatUpdatedAt(value: string, locale: Locale) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "更新時刻不明" : `${formatJst(date)} JST更新`;
+  if (Number.isNaN(date.getTime())) return locale === "en" ? "Update time unavailable" : "更新時刻不明";
+  return locale === "en" ? `Updated ${formatJst(date, locale)} JST` : `${formatJst(date, locale)} JST更新`;
 }
 
 async function copyText(value: string) {
@@ -133,10 +135,14 @@ function stripCapabilityFragment() {
 export default function ClanPortalClient({
   clanId,
   initialNowMs,
+  locale = "ja",
 }: {
   clanId: string;
   initialNowMs: number;
+  locale?: Locale;
 }) {
+  const en = locale === "en";
+  const homeHref = en ? "/en" : "/";
   const [token, setToken] = useState<string | null>(null);
   const [tokenReady, setTokenReady] = useState(false);
   const [manualToken, setManualToken] = useState("");
@@ -193,15 +199,23 @@ export default function ClanPortalClient({
           setPortal(null);
           setToken(fallbackToken);
         }
-        throw new Error(typeof payload.error === "string" ? payload.error : "読み込めませんでした。");
+        throw new Error(en
+          ? "The shared schedule could not be loaded."
+          : typeof payload.error === "string" ? payload.error : "読み込めませんでした。");
       }
       const nextPortal = parseClanPortalSnapshot(payload.portal);
-      if (!nextPortal) throw new Error("共有予定を確認できませんでした。");
+      if (!nextPortal) {
+        throw new Error(en ? "The shared schedule response could not be verified." : "共有予定を確認できませんでした。");
+      }
       if (!storeAccess(clanId, activeToken, nextPortal.capability)) {
-        setError("このブラウザへ共有キーを保存できません。元の共有リンクを保管してください。");
+        setError(en
+          ? "The shared key could not be saved in this browser. Keep the original shared link."
+          : "このブラウザへ共有キーを保存できません。元の共有リンクを保管してください。");
       }
       if (!discardDraft && dirtyRef.current && portal && nextPortal.revision !== portal.revision) {
-        setMessage("別の更新が保存されています。手元の編集は未保存です。保存すると競合になるため、最新情報を読み直してください。");
+        setMessage(en
+          ? "Another update has been saved while your edits remain unsaved. Reload the latest schedule before saving to avoid a conflict."
+          : "別の更新が保存されています。手元の編集は未保存です。保存すると競合になるため、最新情報を読み直してください。");
         return;
       }
       setPortal(nextPortal);
@@ -210,9 +224,9 @@ export default function ClanPortalClient({
         setDraftName(nextPortal.displayName);
         setDraftSchedule(nextPortal.schedule);
       }
-      if (silent) setMessage("最新の共有予定へ更新しました。");
+      if (silent) setMessage(en ? "Updated to the latest shared schedule." : "最新の共有予定へ更新しました。");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "読み込めませんでした。");
+      setError(reason instanceof Error ? reason.message : en ? "The shared schedule could not be loaded." : "読み込めませんでした。");
     } finally {
       if (!silent) setLoading(false);
     }
@@ -249,7 +263,7 @@ export default function ClanPortalClient({
 
   function acceptManualToken() {
     if (!isClanPortalToken(manualToken.trim())) {
-      setError("共有キーの形式を確認してください。");
+      setError(en ? "Check the shared key format." : "共有キーの形式を確認してください。");
       return;
     }
     const nextToken = manualToken.trim();
@@ -284,16 +298,22 @@ export default function ClanPortalClient({
         }),
       });
       const payload = await response.json() as Record<string, unknown>;
-      if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "保存できませんでした。");
+      if (!response.ok) {
+        throw new Error(en
+          ? "The shared schedule could not be saved."
+          : typeof payload.error === "string" ? payload.error : "保存できませんでした。");
+      }
       const nextPortal = parseClanPortalSnapshot(payload.portal);
-      if (!nextPortal) throw new Error("保存結果を確認できませんでした。");
+      if (!nextPortal) {
+        throw new Error(en ? "The saved result could not be verified." : "保存結果を確認できませんでした。");
+      }
       dirtyRef.current = false;
       setPortal(nextPortal);
       setDraftName(nextPortal.displayName);
       setDraftSchedule(nextPortal.schedule);
-      setMessage("クランメンバーへ共有する予定を更新しました。");
+      setMessage(en ? "Updated the schedule shared with clan members." : "クランメンバーへ共有する予定を更新しました。");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "保存できませんでした。");
+      setError(reason instanceof Error ? reason.message : en ? "The shared schedule could not be saved." : "保存できませんでした。");
     } finally {
       setSaving(false);
     }
@@ -301,7 +321,9 @@ export default function ClanPortalClient({
 
   async function reloadPortal() {
     if (!token) return;
-    if (dirtyRef.current && !window.confirm("未保存の編集を破棄して、最新の共有予定を読み直しますか？")) {
+    if (dirtyRef.current && !window.confirm(en
+      ? "Discard your unsaved edits and reload the latest shared schedule?"
+      : "未保存の編集を破棄して、最新の共有予定を読み直しますか？")) {
       return;
     }
     setMessage("");
@@ -315,9 +337,13 @@ export default function ClanPortalClient({
       const current = parseClanScheduleSettings(window.localStorage.getItem(CLAN_SCHEDULE_KEY));
       const merged = mergeSharedScheduleIntoLocal(portal.schedule, current);
       window.localStorage.setItem(CLAN_SCHEDULE_KEY, JSON.stringify(merged));
-      setMessage("共有予定をこの端末の日課ナビへ反映しました。個人のリマインダー設定は維持しています。");
+      setMessage(en
+        ? "Copied the shared schedule to Daily Navigator on this device. Your personal reminder settings were kept."
+        : "共有予定をこの端末の日課ナビへ反映しました。個人のリマインダー設定は維持しています。");
     } catch {
-      setError("このブラウザへ予定を保存できません。ストレージ設定を確認してください。");
+      setError(en
+        ? "The schedule could not be saved in this browser. Check your storage settings."
+        : "このブラウザへ予定を保存できません。ストレージ設定を確認してください。");
     }
   }
 
@@ -325,9 +351,11 @@ export default function ClanPortalClient({
     setError("");
     const copied = await copyText(value);
     if (copied) {
-      setMessage("閲覧リンクをコピーしました。");
+      setMessage(en ? "Copied the viewer link." : "閲覧リンクをコピーしました。");
     } else {
-      setError("リンクをコピーできませんでした。入力欄から手動でコピーしてください。");
+      setError(en
+        ? "The link could not be copied. Copy it manually from the field."
+        : "リンクをコピーできませんでした。入力欄から手動でコピーしてください。");
     }
   }
 
@@ -342,13 +370,17 @@ export default function ClanPortalClient({
       });
       const payload = await response.json() as Record<string, unknown>;
       if (!response.ok || !isClanPortalToken(payload.viewToken)) {
-        setError(typeof payload.error === "string" ? payload.error : "閲覧リンクを再発行できませんでした。");
+        setError(en
+          ? "A new viewer link could not be issued."
+          : typeof payload.error === "string" ? payload.error : "閲覧リンクを再発行できませんでした。");
         return;
       }
-      setNewViewUrl(buildClanPortalUrl(window.location.origin, clanId, "viewer", payload.viewToken));
-      setMessage("新しい閲覧リンクを発行しました。以前の閲覧リンクは無効です。");
+      setNewViewUrl(buildClanPortalUrl(window.location.origin, clanId, "viewer", payload.viewToken, locale));
+      setMessage(en
+        ? "Issued a new viewer link. The previous viewer link is now invalid."
+        : "新しい閲覧リンクを発行しました。以前の閲覧リンクは無効です。");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "閲覧リンクを再発行できませんでした。");
+      setError(reason instanceof Error ? reason.message : en ? "A new viewer link could not be issued." : "閲覧リンクを再発行できませんでした。");
     } finally {
       setRotating(false);
     }
@@ -365,15 +397,17 @@ export default function ClanPortalClient({
       });
       if (!response.ok) {
         const payload = await response.json() as Record<string, unknown>;
-        setError(typeof payload.error === "string" ? payload.error : "削除できませんでした。");
+        setError(en
+          ? "The shared portal could not be deleted."
+          : typeof payload.error === "string" ? payload.error : "削除できませんでした。");
         return;
       }
       removeStoredAccess(clanId);
       setPortal(null);
       setToken(null);
-      setMessage("クラン共有ポータルを削除しました。");
+      setMessage(en ? "Deleted the shared clan portal." : "クラン共有ポータルを削除しました。");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "削除できませんでした。");
+      setError(reason instanceof Error ? reason.message : en ? "The shared portal could not be deleted." : "削除できませんでした。");
     } finally {
       setDeleting(false);
     }
@@ -382,34 +416,36 @@ export default function ClanPortalClient({
   return (
     <main className="clan-portal-shell">
       <header className="clan-portal-topbar">
-        <Link className="brand" href="/" aria-label="VAMPIR 日課ナビへ戻る">
+        <Link className="brand" href={homeHref} aria-label={en ? "Back to VAMPIR Daily Navigator" : "VAMPIR 日課ナビへ戻る"}>
           <span className="brand-mark" aria-hidden="true">V</span>
-          <span><strong>VAMPIR</strong><small>日課ナビ</small></span>
+          <span><strong>VAMPIR</strong><small>{en ? "Daily Navigator" : "日課ナビ"}</small></span>
         </Link>
-        <Link className="policy-back" href="/">日課ナビへ戻る</Link>
+        <Link className="policy-back" href={homeHref}>{en ? "Back to Daily Navigator" : "日課ナビへ戻る"}</Link>
       </header>
 
       <div className="clan-portal-main">
-        {!tokenReady || loading ? <p className="portal-loading" role="status">共有予定を読み込んでいます…</p> : null}
+        {!tokenReady || loading ? <p className="portal-loading" role="status">{en ? "Loading the shared schedule…" : "共有予定を読み込んでいます…"}</p> : null}
 
         {tokenReady && !token ? (
           <section className="portal-access-card panel" aria-labelledby="portal-access-title">
             <span className="eyebrow">PRIVATE LINK</span>
-            <h1 id="portal-access-title">共有リンクを確認してください</h1>
-            <p>リンクから共有キーを確認できませんでした。クランマスターから受け取った完全なリンクを開くか、共有キーを入力してください。</p>
-            <label><span>共有キー</span><input value={manualToken} onChange={(event) => setManualToken(event.target.value)} /></label>
-            <button className="primary-action" type="button" onClick={acceptManualToken}>予定を開く</button>
+            <h1 id="portal-access-title">{en ? "Check the shared link" : "共有リンクを確認してください"}</h1>
+            <p>{en
+              ? "No shared key was found in this link. Open the complete link from your clan master or enter the shared key."
+              : "リンクから共有キーを確認できませんでした。クランマスターから受け取った完全なリンクを開くか、共有キーを入力してください。"}</p>
+            <label><span>{en ? "Shared key" : "共有キー"}</span><input value={manualToken} onChange={(event) => setManualToken(event.target.value)} /></label>
+            <button className="primary-action" type="button" onClick={acceptManualToken}>{en ? "Open schedule" : "予定を開く"}</button>
           </section>
         ) : null}
 
         {tokenReady && token && !portal && !loading ? (
           <section className="portal-access-card panel" aria-labelledby="portal-retry-title">
             <span className="eyebrow">CONNECTION</span>
-            <h1 id="portal-retry-title">共有予定を読み込めませんでした</h1>
-            <p>{error || "通信状態を確認して、もう一度お試しください。"}</p>
+            <h1 id="portal-retry-title">{en ? "The shared schedule could not be loaded" : "共有予定を読み込めませんでした"}</h1>
+            <p>{error || (en ? "Check your connection and try again." : "通信状態を確認して、もう一度お試しください。")}</p>
             <div className="inline-confirm">
-              <button className="primary-action" type="button" onClick={() => void refreshPortal(token)}>再試行</button>
-              <button type="button" onClick={forgetAccess}>別の共有キーを使う</button>
+              <button className="primary-action" type="button" onClick={() => void refreshPortal(token)}>{en ? "Try again" : "再試行"}</button>
+              <button type="button" onClick={forgetAccess}>{en ? "Use a different shared key" : "別の共有キーを使う"}</button>
             </div>
           </section>
         ) : null}
@@ -420,11 +456,15 @@ export default function ClanPortalClient({
               <div>
                 <span className="eyebrow">CLAN PORTAL</span>
                 <h1>{portal.displayName}</h1>
-                <p>クラン管理者が共有した開催予定です。ゲーム内の最新案内を優先してください。</p>
+                <p>{en
+                  ? "This schedule was shared by a clan administrator. Always follow the latest in-game information."
+                  : "クラン管理者が共有した開催予定です。ゲーム内の最新案内を優先してください。"}</p>
               </div>
               <div className="portal-revision">
-                <span>{portal.capability === "admin" ? "管理モード" : "閲覧モード"}</span>
-                <small>{formatUpdatedAt(portal.updatedAt)}</small>
+                <span>{portal.capability === "admin"
+                  ? (en ? "Admin mode" : "管理モード")
+                  : (en ? "Viewer mode" : "閲覧モード")}</span>
+                <small>{formatUpdatedAt(portal.updatedAt, locale)}</small>
               </div>
             </div>
 
@@ -434,11 +474,11 @@ export default function ClanPortalClient({
             {portal.capability === "admin" && editableSchedule && draftSchedule ? (
               <section className="clan-portal-admin panel" aria-labelledby="portal-admin-title">
                 <div className="portal-admin-head">
-                  <div><span className="eyebrow">MASTER</span><h2 id="portal-admin-title">共有予定を編集</h2></div>
-                  <button type="button" onClick={() => void reloadPortal()}>最新情報を読み直す</button>
+                  <div><span className="eyebrow">MASTER</span><h2 id="portal-admin-title">{en ? "Edit shared schedule" : "共有予定を編集"}</h2></div>
+                  <button type="button" onClick={() => void reloadPortal()}>{en ? "Reload latest" : "最新情報を読み直す"}</button>
                 </div>
                 <label className="portal-name-field">
-                  <span>クラン名</span>
+                  <span>{en ? "Clan name" : "クラン名"}</span>
                   <input
                     value={draftName}
                     maxLength={MAX_CLAN_PORTAL_NAME}
@@ -451,18 +491,21 @@ export default function ClanPortalClient({
                     dirtyRef.current = true;
                     setDraftSchedule(toSharedClanSchedule(next));
                   }}
+                  locale={locale}
                   standalone
                   shared
                 />
                 <button className="primary-action portal-submit" type="button" disabled={saving} onClick={() => void savePortal()}>
-                  {saving ? "保存中…" : "メンバーへ共有する予定を保存"}
+                  {saving
+                    ? (en ? "Saving…" : "保存中…")
+                    : (en ? "Save schedule for members" : "メンバーへ共有する予定を保存")}
                 </button>
               </section>
             ) : (
               <section className="clan-portal-view" aria-labelledby="portal-schedule-title">
                 <div className="section-heading">
-                  <div><span className="eyebrow">WEEKLY PLAN</span><h2 id="portal-schedule-title">クラン開催予定</h2></div>
-                  <button type="button" onClick={() => void refreshPortal(token)}>更新</button>
+                  <div><span className="eyebrow">WEEKLY PLAN</span><h2 id="portal-schedule-title">{en ? "Clan schedule" : "クラン開催予定"}</h2></div>
+                  <button type="button" onClick={() => void refreshPortal(token)}>{en ? "Refresh" : "更新"}</button>
                 </div>
                 <div className="clan-grid">
                   {CLAN_CONTENT_META.map((meta) => {
@@ -471,13 +514,17 @@ export default function ClanPortalClient({
                     const occurrence = local ? nextClanOccurrence(local, now) : null;
                     return (
                       <article className="clan-card panel" key={meta.contentId}>
-                        <div className="clan-card-head"><div><span>SHARED</span><h3>{meta.name}</h3></div><small>管理者入力</small></div>
+                        <div className="clan-card-head"><div><span>SHARED</span><h3>{en
+                          ? (meta.contentId === "clan-mission" ? "Clan Missions" : "Clan Guard")
+                          : meta.name}</h3></div><small>{en ? "Set by admin" : "管理者入力"}</small></div>
                         {shared?.scheduled && occurrence ? (
                           <div className="portal-shared-schedule">
-                            <strong>毎週{CLAN_WEEKDAY_LABELS[shared.day]}曜 {formatTime(shared.hour, shared.minute)} JST</strong>
-                            <small>次回 {formatJst(occurrence.startsAt)} JST</small>
+                            <strong>{en
+                              ? `Every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][shared.day]} at ${formatTime(shared.hour, shared.minute)} JST`
+                              : `毎週${CLAN_WEEKDAY_LABELS[shared.day]}曜 ${formatTime(shared.hour, shared.minute)} JST`}</strong>
+                            <small>{en ? "Next" : "次回"} {formatJst(occurrence.startsAt, locale)} JST</small>
                           </div>
-                        ) : <p className="portal-unscheduled">開催予定は未登録です。</p>}
+                        ) : <p className="portal-unscheduled">{en ? "No schedule has been added." : "開催予定は未登録です。"}</p>}
                       </article>
                     );
                   })}
@@ -486,34 +533,40 @@ export default function ClanPortalClient({
             )}
 
             <section className="portal-personal-actions panel" aria-labelledby="portal-personal-title">
-              <div><h2 id="portal-personal-title">自分の日課ナビへ反映</h2><p>共有予定だけをこの端末へコピーします。個人のリマインダー設定と完了状況は上書きしません。</p></div>
-              <button type="button" onClick={importToThisDevice}>この端末へ反映</button>
+              <div><h2 id="portal-personal-title">{en ? "Copy to your Daily Navigator" : "自分の日課ナビへ反映"}</h2><p>{en
+                ? "Only the shared schedule is copied to this device. Personal reminders and completion are not overwritten."
+                : "共有予定だけをこの端末へコピーします。個人のリマインダー設定と完了状況は上書きしません。"}</p></div>
+              <button type="button" onClick={importToThisDevice}>{en ? "Copy to this device" : "この端末へ反映"}</button>
             </section>
 
             {portal.capability === "admin" ? (
               <details className="portal-admin-tools panel">
-                <summary>管理リンク・ポータル管理</summary>
+                <summary>{en ? "Admin link and portal management" : "管理リンク・ポータル管理"}</summary>
                 <div className="portal-admin-tool-body">
                   <div>
-                    <strong>メンバー閲覧リンクを再発行</strong>
-                    <p>現在の閲覧リンクを無効にし、新しいリンクを発行します。</p>
-                    <button type="button" disabled={rotating} onClick={() => void rotateViewLink()}>{rotating ? "再発行中…" : "閲覧リンクを再発行"}</button>
+                    <strong>{en ? "Replace the member viewer link" : "メンバー閲覧リンクを再発行"}</strong>
+                    <p>{en ? "Invalidate the current viewer link and issue a new one." : "現在の閲覧リンクを無効にし、新しいリンクを発行します。"}</p>
+                    <button type="button" disabled={rotating} onClick={() => void rotateViewLink()}>{rotating
+                      ? (en ? "Issuing…" : "再発行中…")
+                      : (en ? "Issue new viewer link" : "閲覧リンクを再発行")}</button>
                     {newViewUrl ? (
                       <div className="portal-link-card">
-                        <input readOnly value={newViewUrl} aria-label="新しいメンバー閲覧リンク" />
-                        <button type="button" onClick={() => void copyPortalLink(newViewUrl)}>コピー</button>
+                        <input readOnly value={newViewUrl} aria-label={en ? "New member viewer link" : "新しいメンバー閲覧リンク"} />
+                        <button type="button" onClick={() => void copyPortalLink(newViewUrl)}>{en ? "Copy" : "コピー"}</button>
                       </div>
                     ) : null}
                   </div>
                   <div className="portal-delete-zone">
-                    <strong>ポータルを削除</strong>
-                    <p>共有予定とすべてのリンクを無効にします。元に戻せません。</p>
+                    <strong>{en ? "Delete portal" : "ポータルを削除"}</strong>
+                    <p>{en ? "Invalidate the shared schedule and every link. This cannot be undone." : "共有予定とすべてのリンクを無効にします。元に戻せません。"}</p>
                     {deleteConfirm ? (
                       <div className="inline-confirm">
-                        <button type="button" disabled={deleting} onClick={() => void removePortal()}>{deleting ? "削除中…" : "削除する"}</button>
-                        <button type="button" onClick={() => setDeleteConfirm(false)}>戻る</button>
+                        <button type="button" disabled={deleting} onClick={() => void removePortal()}>{deleting
+                          ? (en ? "Deleting…" : "削除中…")
+                          : (en ? "Delete" : "削除する")}</button>
+                        <button type="button" onClick={() => setDeleteConfirm(false)}>{en ? "Back" : "戻る"}</button>
                       </div>
-                    ) : <button type="button" onClick={() => setDeleteConfirm(true)}>削除を確認</button>}
+                    ) : <button type="button" onClick={() => setDeleteConfirm(true)}>{en ? "Confirm deletion" : "削除を確認"}</button>}
                   </div>
                 </div>
               </details>

@@ -4,8 +4,10 @@ import {
   updateClanScheduleItem,
   type ClanScheduleSettings as ClanScheduleSettingsValue,
 } from "./clan-schedule";
+import type { Locale } from "./localization";
 
 type ClanScheduleSettingsProps = {
+  locale?: Locale;
   settings: ClanScheduleSettingsValue;
   onChange: (settings: ClanScheduleSettingsValue) => void;
   standalone?: boolean;
@@ -17,11 +19,21 @@ function formatTime(hour: number, minute: number) {
 }
 
 export default function ClanScheduleSettings({
+  locale = "ja",
   settings,
   onChange,
   standalone = false,
   shared = false,
 }: ClanScheduleSettingsProps) {
+  const en = locale === "en";
+  const weekdayLabels = en
+    ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    : CLAN_WEEKDAY_LABELS;
+  const contentNames: Record<string, string> = {
+    "clan-mission": "Clan Missions",
+    "clan-guard": "Clan Guard",
+  };
+
   return (
     <section
       className={`settings-section${standalone ? " clan-settings-standalone" : ""}`}
@@ -32,12 +44,14 @@ export default function ClanScheduleSettings({
           {standalone ? null : <span>4</span>}
           <div>
             <h3 id="clan-schedule-settings-title">
-              {standalone ? "開催曜日と時刻" : "クラン予定"}
+              {standalone
+                ? (en ? "Schedule day and time" : "開催曜日と時刻")
+                : (en ? "Clan plans" : "クラン予定")}
             </h3>
             <p>
               {shared
-                ? "保存すると、閲覧リンクを持つクランメンバー全員へ反映されます。"
-                : "クラン内で決めた曜日と時刻を、この端末だけに保存します。"}
+                ? (en ? "Saving updates the schedule for every clan member with the viewer link." : "保存すると、閲覧リンクを持つクランメンバー全員へ反映されます。")
+                : (en ? "Save the day and time agreed by your clan on this device only." : "クラン内で決めた曜日と時刻を、この端末だけに保存します。")}
             </p>
           </div>
         </div>
@@ -50,7 +64,7 @@ export default function ClanScheduleSettings({
 
           return (
             <fieldset className="clan-setting-card" key={meta.contentId}>
-              <legend>{meta.name}</legend>
+              <legend>{en ? contentNames[meta.contentId] : meta.name}</legend>
               <label className="clan-setting-enabled">
                 <input
                   type="checkbox"
@@ -61,12 +75,12 @@ export default function ClanScheduleSettings({
                     { scheduled: event.target.checked },
                   ))}
                 />
-                <span>予定を登録する</span>
+                <span>{en ? "Add this plan" : "予定を登録する"}</span>
               </label>
 
               <div className="clan-setting-controls">
                 <label>
-                  <span>曜日（JST）</span>
+                  <span>{en ? "Day (JST)" : "曜日（JST）"}</span>
                   <select
                     value={item.day}
                     disabled={!item.scheduled}
@@ -76,13 +90,13 @@ export default function ClanScheduleSettings({
                       { day: Number(event.target.value) },
                     ))}
                   >
-                    {CLAN_WEEKDAY_LABELS.map((label, day) => (
-                      <option value={day} key={label}>{label}曜日</option>
+                    {weekdayLabels.map((label, day) => (
+                      <option value={day} key={label}>{en ? label : `${label}曜日`}</option>
                     ))}
                   </select>
                 </label>
                 <label>
-                  <span>開始時刻（JST）</span>
+                  <span>{en ? "Start time (JST)" : "開始時刻（JST）"}</span>
                   <input
                     type="time"
                     value={formatTime(item.hour, item.minute)}
@@ -110,14 +124,14 @@ export default function ClanScheduleSettings({
                         { reminder: event.target.checked },
                       ))}
                     />
-                    <span>リマインダー対象</span>
+                    <span>{en ? "Include in reminders" : "リマインダー対象"}</span>
                   </label>
                 )}
               </div>
               <small>
                 {shared
-                  ? "共有するのは曜日と時刻だけです。リマインダー設定と完了状況は各メンバーの端末に残ります。"
-                  : "リマインダーは全体通知設定と共通の通知タイミングを使い、サイトを開いている間だけ動作します。"}
+                  ? (en ? "Only the day and time are shared. Reminder settings and completion stay on each member's device." : "共有するのは曜日と時刻だけです。リマインダー設定と完了状況は各メンバーの端末に残ります。")
+                  : (en ? "Reminders use the global notification timing and work only while this site is open." : "リマインダーは全体通知設定と共通の通知タイミングを使い、サイトを開いている間だけ動作します。")}
               </small>
             </fieldset>
           );
@@ -125,8 +139,8 @@ export default function ClanScheduleSettings({
       </div>
       <p className="notification-note">
         {shared
-          ? "この予定はクラン管理者による入力です。ゲーム内スケジュールや公式情報としては扱いません。"
-          : "ここで設定する開催時刻はユーザー入力であり、検証済みのゲーム内スケジュールやアカウント連携ではありません。"}
+          ? (en ? "This schedule is entered by a clan administrator and is not an official in-game schedule." : "この予定はクラン管理者による入力です。ゲーム内スケジュールや公式情報としては扱いません。")
+          : (en ? "These times are user-entered, not verified in-game schedules or data from a connected account." : "ここで設定する開催時刻はユーザー入力であり、検証済みのゲーム内スケジュールやアカウント連携ではありません。")}
       </p>
     </section>
   );

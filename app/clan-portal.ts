@@ -4,6 +4,7 @@ import {
   type ClanContentId,
   type ClanScheduleSettings,
 } from "./clan-schedule.ts";
+import type { Locale } from "./localization";
 
 export const CLAN_PORTAL_ACCESS_STORAGE_PREFIX = "vampir-clan-portal-access-v1:";
 export const MAX_CLAN_PORTAL_NAME = 40;
@@ -250,11 +251,12 @@ export function buildClanPortalUrl(
   clanId: string,
   capability: ClanPortalCapability,
   token: string,
+  locale: Locale = "ja",
 ): string {
   if (!isClanPortalId(clanId) || !isClanPortalToken(token)) {
     throw new Error("Invalid clan portal capability");
   }
-  const url = new URL(`/clan/${clanId}`, origin);
+  const url = new URL(`${locale === "en" ? "/en" : ""}/clan/${clanId}`, origin);
   url.hash = `${capability}=${encodeURIComponent(token)}`;
   return url.toString();
 }
