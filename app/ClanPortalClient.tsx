@@ -12,6 +12,13 @@ import {
   parseClanScheduleSettings,
 } from "./clan-schedule";
 import {
+  CLAN_SCHEDULE_TIME_ZONE_KEY,
+  JAPAN_TIME_ZONE,
+  clanScheduleTimeZoneSettings,
+  detectBrowserTimeZone,
+  formatClanTimeZoneName,
+} from "./clan-time-zone";
+import {
   CLAN_PORTAL_POLL_INTERVAL_MS,
   MAX_CLAN_PORTAL_NAME,
   buildClanPortalUrl,
@@ -29,14 +36,15 @@ import {
   type SharedClanSchedule,
 } from "./clan-portal";
 import type { Locale } from "./localization";
+import { replaceStorageValues } from "./storage-transaction";
 
 function formatTime(hour: number, minute: number) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function formatJst(date: Date, locale: Locale) {
+function formatInTimeZone(date: Date, timeZone: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
-    timeZone: "Asia/Tokyo",
+    timeZone,
     month: "numeric",
     day: "numeric",
     weekday: "short",
@@ -49,7 +57,9 @@ function formatJst(date: Date, locale: Locale) {
 function formatUpdatedAt(value: string, locale: Locale) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return locale === "en" ? "Update time unavailable" : "更新時刻不明";
-  return locale === "en" ? `Updated ${formatJst(date, locale)} JST` : `${formatJst(date, locale)} JST更新`;
+  return locale === "en"
+    ? `Updated ${formatInTimeZone(date, JAPAN_TIME_ZONE, locale)} JST`
+    : `${formatInTimeZone(date, JAPAN_TIME_ZONE, locale)} JST更新`;
 }
 
 async function copyText(value: string) {
@@ -158,11 +168,18 @@ export default function ClanPortalClient({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [newViewUrl, setNewViewUrl] = useState("");
   const [now, setNow] = useState(() => new Date(initialNowMs));
+  const [viewerTimeZone, setViewerTimeZone] = useState<string | null>(null);
   const dirtyRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1_000);
-    return () => window.clearInterval(timer);
+    const hydrationTimer = window.setTimeout(() => {
+      setViewerTimeZone(detectBrowserTimeZone());
+    }, 0);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(hydrationTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -336,10 +353,16 @@ export default function ClanPortalClient({
     try {
       const current = parseClanScheduleSettings(window.localStorage.getItem(CLAN_SCHEDULE_KEY));
       const merged = mergeSharedScheduleIntoLocal(portal.schedule, current);
-      window.localStorage.setItem(CLAN_SCHEDULE_KEY, JSON.stringify(merged));
+      replaceStorageValues(window.localStorage, new Map([
+        [CLAN_SCHEDULE_KEY, JSON.stringify(merged)],
+        [
+          CLAN_SCHEDULE_TIME_ZONE_KEY,
+          JSON.stringify(clanScheduleTimeZoneSettings(portal.schedule.timeZone)),
+        ],
+      ]));
       setMessage(en
-        ? "Copied the shared schedule to Daily Navigator on this device. Your personal reminder settings were kept."
-        : "共有予定をこの端末の日課ナビへ反映しました。個人のリマインダー設定は維持しています。");
+        ? "Copied the shared schedule and time zone to Daily Navigator on this device. Your personal reminder settings and completion were kept."
+        : "共有予定とタイムゾーンをこの端末の日課ナビへ反映しました。個人のリマインダー設定と完了状況は維持しています。");
     } catch {
       setError(en
         ? "The schedule could not be saved in this browser. Check your storage settings."
@@ -489,7 +512,12 @@ export default function ClanPortalClient({
                   settings={editableSchedule}
                   onChange={(next) => {
                     dirtyRef.current = true;
-                    setDraftSchedule(toSharedClanSchedule(next));
+                    setDraftSchedule(toSharedClanSchedule(next, draftSchedule.timeZone));
+                  }}
+                  timeZone={draftSchedule.timeZone}
+                  onTimeZoneChange={(timeZone) => {
+                    dirtyRef.current = true;
+                    setDraftSchedule({ ...draftSchedule, timeZone });
                   }}
                   locale={locale}
                   standalone
@@ -504,14 +532,23 @@ export default function ClanPortalClient({
             ) : (
               <section className="clan-portal-view" aria-labelledby="portal-schedule-title">
                 <div className="section-heading">
-                  <div><span className="eyebrow">WEEKLY PLAN</span><h2 id="portal-schedule-title">{en ? "Clan schedule" : "クラン開催予定"}</h2></div>
+                  <div>
+                    <span className="eyebrow">WEEKLY PLAN</span>
+                    <h2 id="portal-schedule-title">{en ? "Clan schedule" : "クラン開催予定"}</h2>
+                    <p className="portal-time-zone">
+                      {en ? "Clan time zone" : "クラン予定のタイムゾーン"}:{" "}
+                      <strong>{formatClanTimeZoneName(portal.schedule.timeZone, locale)}</strong>
+                    </p>
+                  </div>
                   <button type="button" onClick={() => void refreshPortal(token)}>{en ? "Refresh" : "更新"}</button>
                 </div>
                 <div className="clan-grid">
                   {CLAN_CONTENT_META.map((meta) => {
                     const shared = portal.schedule.items.find((item) => item.contentId === meta.contentId);
                     const local = shared ? { ...shared, reminder: false } : null;
-                    const occurrence = local ? nextClanOccurrence(local, now) : null;
+                    const occurrence = local
+                      ? nextClanOccurrence(local, now, portal.schedule.timeZone)
+                      : null;
                     return (
                       <article className="clan-card panel" key={meta.contentId}>
                         <div className="clan-card-head"><div><span>SHARED</span><h3>{en
@@ -520,9 +557,19 @@ export default function ClanPortalClient({
                         {shared?.scheduled && occurrence ? (
                           <div className="portal-shared-schedule">
                             <strong>{en
-                              ? `Every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][shared.day]} at ${formatTime(shared.hour, shared.minute)} JST`
-                              : `毎週${CLAN_WEEKDAY_LABELS[shared.day]}曜 ${formatTime(shared.hour, shared.minute)} JST`}</strong>
-                            <small>{en ? "Next" : "次回"} {formatJst(occurrence.startsAt, locale)} JST</small>
+                              ? `Every ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][shared.day]} at ${formatTime(shared.hour, shared.minute)} · ${portal.schedule.timeZone}`
+                              : `毎週${CLAN_WEEKDAY_LABELS[shared.day]}曜 ${formatTime(shared.hour, shared.minute)}・${portal.schedule.timeZone}`}</strong>
+                            <small>
+                              {en ? "Next in clan time" : "次回（クラン時間）"}{" "}
+                              {formatInTimeZone(occurrence.startsAt, portal.schedule.timeZone, locale)}
+                            </small>
+                            {viewerTimeZone && viewerTimeZone !== portal.schedule.timeZone ? (
+                              <small>
+                                {en ? "Your local time" : "あなたの現地時間"}{" "}
+                                {formatInTimeZone(occurrence.startsAt, viewerTimeZone, locale)}{" "}
+                                ({viewerTimeZone})
+                              </small>
+                            ) : null}
                           </div>
                         ) : <p className="portal-unscheduled">{en ? "No schedule has been added." : "開催予定は未登録です。"}</p>}
                       </article>
@@ -534,8 +581,8 @@ export default function ClanPortalClient({
 
             <section className="portal-personal-actions panel" aria-labelledby="portal-personal-title">
               <div><h2 id="portal-personal-title">{en ? "Copy to your Daily Navigator" : "自分の日課ナビへ反映"}</h2><p>{en
-                ? "Only the shared schedule is copied to this device. Personal reminders and completion are not overwritten."
-                : "共有予定だけをこの端末へコピーします。個人のリマインダー設定と完了状況は上書きしません。"}</p></div>
+                ? "The shared schedule and clan time zone are copied together. Personal reminders and completion are not overwritten."
+                : "共有予定とクラン予定のタイムゾーンを一緒にコピーします。個人のリマインダー設定と完了状況は上書きしません。"}</p></div>
               <button type="button" onClick={importToThisDevice}>{en ? "Copy to this device" : "この端末へ反映"}</button>
             </section>
 

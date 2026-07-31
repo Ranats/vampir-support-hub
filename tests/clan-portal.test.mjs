@@ -14,6 +14,7 @@ import {
   mergeSharedScheduleIntoLocal,
   normalizeClanPortalName,
   parseSharedClanSchedule,
+  parseSharedClanScheduleForWrite,
   parseStoredClanPortalAccess,
   preferredStoredClanPortalToken,
   toSharedClanSchedule,
@@ -66,7 +67,7 @@ test("keeps capability tokens in URL fragments instead of paths or queries", () 
   assert.equal(englishUrl.hash, `#admin=${token}`);
 });
 
-test("strictly normalizes shared schedule fields and excludes personal reminders", () => {
+test("normalizes legacy v1 shared schedules to v2 JST and excludes personal reminders", () => {
   const value = {
     version: 1,
     items: [
@@ -76,6 +77,8 @@ test("strictly normalizes shared schedule fields and excludes personal reminders
   };
   const parsed = parseSharedClanSchedule(value);
   assert.ok(parsed);
+  assert.equal(parsed.version, 2);
+  assert.equal(parsed.timeZone, "Asia/Tokyo");
   assert.deepEqual(parsed.items[0], {
     contentId: "clan-mission",
     scheduled: true,
@@ -87,6 +90,22 @@ test("strictly normalizes shared schedule fields and excludes personal reminders
 
   assert.equal(parseSharedClanSchedule({ ...value, items: [value.items[0], value.items[0]] }), null);
   assert.equal(parseSharedClanSchedule({ ...value, items: [{ ...value.items[0], minute: 60 }, value.items[1]] }), null);
+});
+
+test("round-trips v2 time zones and rejects v1 or invalid-zone writes", () => {
+  const value = {
+    version: 2,
+    timeZone: "America/New_York",
+    items: [
+      { contentId: "clan-mission", scheduled: true, day: 0, hour: 2, minute: 30 },
+      { contentId: "clan-guard", scheduled: false, day: 4, hour: 21, minute: 0 },
+    ],
+  };
+
+  assert.deepEqual(parseSharedClanSchedule(value), value);
+  assert.deepEqual(parseSharedClanScheduleForWrite(value), value);
+  assert.equal(parseSharedClanScheduleForWrite({ ...value, version: 1 }), null);
+  assert.equal(parseSharedClanScheduleForWrite({ ...value, timeZone: "Mars/Olympus" }), null);
 });
 
 test("copies shared times to local storage shape while preserving personal reminder choices", () => {

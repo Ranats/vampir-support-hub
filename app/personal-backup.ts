@@ -3,9 +3,15 @@ import type {
   ClanScheduleItem,
   ClanScheduleSettings,
 } from "./clan-schedule";
+import {
+  JAPAN_TIME_ZONE,
+  clanScheduleTimeZoneSettings,
+  parseClanScheduleTimeZoneSettings,
+  type ClanScheduleTimeZoneSettings,
+} from "./clan-time-zone.ts";
 
 export const BACKUP_FORMAT = "vampir-support-hub-personal-backup";
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 
 type SavedChecks = {
   cycle: string;
@@ -40,6 +46,7 @@ export type PersonalBackupData = {
   routinePreferences: SavedRoutinePreferences;
   favoriteSpawnIds: string[];
   clanSchedule: ClanScheduleSettings;
+  clanScheduleTimeZone: ClanScheduleTimeZoneSettings;
   notificationSettings: SavedNotificationSettings;
 };
 
@@ -223,7 +230,10 @@ function copyClanSchedule(value: unknown): ClanScheduleSettings | null {
   };
 }
 
-function copyBackupData(value: unknown): PersonalBackupData | null {
+function copyBackupData(
+  value: unknown,
+  sourceVersion: 1 | 2,
+): PersonalBackupData | null {
   if (!isObject(value)) return null;
 
   const level = value.level === null
@@ -242,6 +252,13 @@ function copyBackupData(value: unknown): PersonalBackupData | null {
   const routinePreferences = copyRoutinePreferences(value.routinePreferences);
   const favoriteSpawnIds = copyFavoriteSpawnIds(value.favoriteSpawnIds);
   const clanSchedule = copyClanSchedule(value.clanSchedule);
+  const clanScheduleTimeZone = sourceVersion === 1
+    ? clanScheduleTimeZoneSettings(JAPAN_TIME_ZONE)
+    : parseClanScheduleTimeZoneSettings(
+        value.clanScheduleTimeZone === undefined
+          ? null
+          : JSON.stringify(value.clanScheduleTimeZone),
+      );
   const notificationSettings = copyNotificationSettings(value.notificationSettings);
 
   if (!dailyChecks
@@ -250,6 +267,7 @@ function copyBackupData(value: unknown): PersonalBackupData | null {
     || !routinePreferences
     || !favoriteSpawnIds
     || !clanSchedule
+    || !clanScheduleTimeZone
     || !notificationSettings) {
     return null;
   }
@@ -262,12 +280,13 @@ function copyBackupData(value: unknown): PersonalBackupData | null {
     routinePreferences,
     favoriteSpawnIds,
     clanSchedule,
+    clanScheduleTimeZone,
     notificationSettings,
   };
 }
 
 export function createPersonalBackup(input: PersonalBackupData): PersonalBackup {
-  const data = copyBackupData(input);
+  const data = copyBackupData(input, BACKUP_VERSION);
   if (!data) throw new TypeError("Invalid personal backup data");
 
   return {
@@ -284,11 +303,11 @@ export function parsePersonalBackup(raw: string | null): PersonalBackup | null {
     const parsed = JSON.parse(raw) as unknown;
     if (!isObject(parsed)
       || parsed.format !== BACKUP_FORMAT
-      || parsed.version !== BACKUP_VERSION) {
+      || (parsed.version !== 1 && parsed.version !== BACKUP_VERSION)) {
       return null;
     }
 
-    const data = copyBackupData(parsed.data);
+    const data = copyBackupData(parsed.data, parsed.version);
     return data
       ? { format: BACKUP_FORMAT, version: BACKUP_VERSION, data }
       : null;

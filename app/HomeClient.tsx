@@ -58,6 +58,14 @@ import {
   parseClanScheduleSettings,
   type ClanScheduleSettings,
 } from "./clan-schedule";
+import {
+  CLAN_SCHEDULE_TIME_ZONE_KEY,
+  JAPAN_TIME_ZONE,
+  clanScheduleTimeZoneSettings,
+  detectBrowserTimeZone,
+  formatClanTimeZoneName,
+  resolveClanScheduleTimeZone,
+} from "./clan-time-zone";
 
 type SpawnEvent = {
   id: string;
@@ -406,6 +414,22 @@ function formatJst(date: Date, withSeconds = false, locale: Locale = "ja") {
   }).format(date);
 }
 
+function formatClanTime(
+  date: Date,
+  timeZone: string,
+  locale: Locale = "ja",
+) {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
+    timeZone,
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 function formatTime(hour: number, minute: number) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
@@ -559,6 +583,7 @@ export default function HomeClient({
   const [clanSchedule, setClanSchedule] = useState<ClanScheduleSettings>(
     DEFAULT_CLAN_SCHEDULE_SETTINGS,
   );
+  const [clanScheduleTimeZone, setClanScheduleTimeZone] = useState(JAPAN_TIME_ZONE);
   const [notificationSettings, setNotificationSettings] =
     useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [notificationPermission, setNotificationPermission] = useState<
@@ -604,8 +629,8 @@ export default function HomeClient({
   );
   const next = upcoming[0];
   const clanOccurrences = useMemo(
-    () => nextClanOccurrences(clanSchedule, now),
-    [clanSchedule, now],
+    () => nextClanOccurrences(clanSchedule, now, clanScheduleTimeZone),
+    [clanSchedule, clanScheduleTimeZone, now],
   );
   const clanReminderCount = clanSchedule.items.filter((item) => (
     item.scheduled && item.reminder
@@ -661,9 +686,16 @@ export default function HomeClient({
         window.localStorage.getItem(FAVORITE_SPAWNS_KEY),
         spawnEvents.map((event) => event.id),
       ));
-      setClanSchedule(parseClanScheduleSettings(
-        window.localStorage.getItem(CLAN_SCHEDULE_KEY),
-      ));
+      const storedClanSchedule = window.localStorage.getItem(CLAN_SCHEDULE_KEY);
+      setClanSchedule(parseClanScheduleSettings(storedClanSchedule));
+      setClanScheduleTimeZone(
+        resolveClanScheduleTimeZone(
+          locale,
+          storedClanSchedule,
+          window.localStorage.getItem(CLAN_SCHEDULE_TIME_ZONE_KEY),
+          detectBrowserTimeZone(),
+        ),
+      );
       setNotificationSettings(parseNotificationSettings(
         window.localStorage.getItem(NOTIFICATION_SETTINGS_KEY),
       ));
@@ -674,7 +706,7 @@ export default function HomeClient({
       setHydrated(true);
     }, 0);
     return () => window.clearTimeout(hydrationTimer);
-  }, [dailyCycle, dailyTasks, spawnEvents, weeklyCycle, weeklyTasks]);
+  }, [dailyCycle, dailyTasks, locale, spawnEvents, weeklyCycle, weeklyTasks]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -735,6 +767,14 @@ export default function HomeClient({
     if (!hydrated) return;
     window.localStorage.setItem(CLAN_SCHEDULE_KEY, JSON.stringify(clanSchedule));
   }, [clanSchedule, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(
+      CLAN_SCHEDULE_TIME_ZONE_KEY,
+      JSON.stringify(clanScheduleTimeZoneSettings(clanScheduleTimeZone)),
+    );
+  }, [clanScheduleTimeZone, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -824,6 +864,14 @@ export default function HomeClient({
         setClanSchedule((current) => (
           JSON.stringify(current) === JSON.stringify(nextSettings) ? current : nextSettings
         ));
+      } else if (event.key === CLAN_SCHEDULE_TIME_ZONE_KEY) {
+        const nextTimeZone = resolveClanScheduleTimeZone(
+          locale,
+          window.localStorage.getItem(CLAN_SCHEDULE_KEY),
+          event.newValue,
+          detectBrowserTimeZone(),
+        );
+        setClanScheduleTimeZone(nextTimeZone);
       } else if (event.key === NOTIFICATION_SETTINGS_KEY) {
         const nextSettings = parseNotificationSettings(event.newValue);
         setNotificationSettings((current) => (
@@ -833,7 +881,7 @@ export default function HomeClient({
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [dailyCycle, dailyTasks, hydrated, spawnEvents, weeklyCycle, weeklyTasks]);
+  }, [dailyCycle, dailyTasks, hydrated, locale, spawnEvents, weeklyCycle, weeklyTasks]);
 
   useEffect(() => {
     if (
@@ -864,7 +912,11 @@ export default function HomeClient({
           : `${formatJst(event.at)} JST開始予定。ゲーム内時刻表を優先してください。`,
         url: en ? "/en#schedule" : "/#schedule",
       }));
-    const clanCandidates: ReminderCandidate[] = nextClanOccurrences(clanSchedule, now)
+    const clanCandidates: ReminderCandidate[] = nextClanOccurrences(
+      clanSchedule,
+      now,
+      clanScheduleTimeZone,
+    )
       .filter((occurrence) => {
         const item = clanSchedule.items.find(({ contentId }) => (
           contentId === occurrence.contentId
@@ -886,8 +938,8 @@ export default function HomeClient({
             ? (meta.contentId === "clan-mission" ? "Clan Missions" : "Clan Guard")
             : meta.name,
           body: en
-            ? `This is your saved clan schedule (${formatJst(occurrence.startsAt, false, locale)} JST). Check your clan's latest notice.`
-            : `あなたが登録したクラン予定（${formatJst(occurrence.startsAt)} JST）です。クラン内の案内を確認してください。`,
+            ? `This is your saved clan schedule (${formatClanTime(occurrence.startsAt, clanScheduleTimeZone, locale)} ${clanScheduleTimeZone}). Check your clan's latest notice.`
+            : `あなたが登録したクラン予定（${formatClanTime(occurrence.startsAt, clanScheduleTimeZone)} ${clanScheduleTimeZone}）です。クラン内の案内を確認してください。`,
           url: en ? "/en#clan" : "/#clan",
         };
       });
@@ -937,6 +989,7 @@ export default function HomeClient({
     effectiveLevel,
     favoriteSpawnIds,
     clanSchedule,
+    clanScheduleTimeZone,
     hydrated,
     notificationPermission,
     notificationSettings,
@@ -1091,6 +1144,7 @@ export default function HomeClient({
       routinePreferences,
       favoriteSpawnIds,
       clanSchedule,
+      clanScheduleTimeZone: clanScheduleTimeZoneSettings(clanScheduleTimeZone),
       notificationSettings,
     });
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -1126,6 +1180,7 @@ export default function HomeClient({
         [ROUTINE_PREFERENCES_KEY, JSON.stringify(data.routinePreferences)],
         [FAVORITE_SPAWNS_KEY, JSON.stringify(data.favoriteSpawnIds)],
         [CLAN_SCHEDULE_KEY, JSON.stringify(data.clanSchedule)],
+        [CLAN_SCHEDULE_TIME_ZONE_KEY, JSON.stringify(data.clanScheduleTimeZone)],
         [NOTIFICATION_SETTINGS_KEY, JSON.stringify(data.notificationSettings)],
       ]);
       replaceStorageValues(window.localStorage, nextValues);
@@ -1145,6 +1200,7 @@ export default function HomeClient({
         spawnEvents.map((event) => event.id),
       ));
       setClanSchedule(data.clanSchedule);
+      setClanScheduleTimeZone(data.clanScheduleTimeZone.timeZone);
       setNotificationSettings(data.notificationSettings);
       setDataMessage(en ? "Backup restored. Checks from expired cycles were reset for the current cycle." : "バックアップを復元しました。期限切れのチェックは現在の周期に合わせて未完了に戻しました。");
       setDataMessageIsError(false);
@@ -1383,8 +1439,8 @@ export default function HomeClient({
             </div>
             <p>
               {en
-                ? "Days and times are saved only on this device as arrangements made within your clan. They are neither verified in-game times nor linked to a game account."
-                : "曜日・時刻は、あなたのクラン内の取り決めとしてこの端末だけに保存します。検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません。"}
+                ? "Days, times, and the clan time zone are saved only on this device as arrangements made within your clan. They are neither verified in-game times nor linked to a game account."
+                : "曜日・時刻・クラン予定のタイムゾーンは、あなたのクラン内の取り決めとしてこの端末だけに保存します。検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません。"}
             </p>
           </div>
 
@@ -1440,15 +1496,17 @@ export default function HomeClient({
                       <div className="clan-schedule-status">
                         <strong>
                           {en
-                            ? `Every ${new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2026, 7, 2 + item.day)))} at ${formatTime(item.hour, item.minute)} JST`
-                            : `毎週${CLAN_WEEKDAY_LABELS[item.day]}曜 ${formatTime(item.hour, item.minute)} JST`}
+                            ? `Every ${new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2026, 7, 2 + item.day)))} at ${formatTime(item.hour, item.minute)} · ${formatClanTimeZoneName(clanScheduleTimeZone, locale)}`
+                            : `毎週${CLAN_WEEKDAY_LABELS[item.day]}曜 ${formatTime(item.hour, item.minute)}・${formatClanTimeZoneName(clanScheduleTimeZone, locale)}`}
                         </strong>
                         <small>{en ? `User setting · ${reminderState}` : `ユーザー設定・${reminderState}`}</small>
                       </div>
                       <div className="clan-countdown">
                         <span>{en ? "Starts in" : "次回まで"}</span>
                         <b>{formatCountdown(occurrence.startsAt, now, locale)}</b>
-                        <time dateTime={occurrence.startsAt.toISOString()}>{formatJst(occurrence.startsAt, false, locale)} JST</time>
+                        <time dateTime={occurrence.startsAt.toISOString()}>
+                          {formatClanTime(occurrence.startsAt, clanScheduleTimeZone, locale)} {clanScheduleTimeZone}
+                        </time>
                       </div>
                       <button
                         className={`clan-complete${done ? " done" : ""}`}
@@ -1635,6 +1693,7 @@ export default function HomeClient({
           hiddenDefaultIds={routinePreferences.hiddenDefaultIds}
           customRoutines={customRoutines}
           clanSchedule={clanSchedule}
+          clanScheduleTimeZone={clanScheduleTimeZone}
           favoriteSpawnCount={favoriteSpawnIds.length}
           clanReminderCount={clanReminderCount}
           notificationPermission={notificationPermission}
@@ -1656,6 +1715,7 @@ export default function HomeClient({
           onResetChecks={resetChecks}
           onDeleteAllCustom={deleteAllCustomRoutines}
           onUpdateClanSchedule={setClanSchedule}
+          onUpdateClanScheduleTimeZone={setClanScheduleTimeZone}
           onUpdateNotificationSettings={updateNotificationSettings}
           onRequestNotificationPermission={requestNotificationPermission}
           onTestNotification={showTestNotification}

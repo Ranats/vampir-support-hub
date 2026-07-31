@@ -193,6 +193,72 @@ test("uses fixed UTC+9 in winter and summer and builds stable occurrence keys", 
   assert.equal(summer?.occurrenceKey, "clan-guard:2026-07-05T00:00:00.000Z");
 });
 
+test("moves a New York spring gap forward with compatible Temporal semantics", () => {
+  const sundayAtTwoThirty = {
+    contentId: "clan-mission",
+    scheduled: true,
+    day: 0,
+    hour: 2,
+    minute: 30,
+    reminder: true,
+  };
+
+  const occurrence = nextClanOccurrence(
+    sundayAtTwoThirty,
+    new Date("2026-03-08T05:00:00.000Z"),
+    "America/New_York",
+  );
+  assert.equal(occurrence?.startsAt.toISOString(), "2026-03-08T07:30:00.000Z");
+  assert.equal(
+    occurrence?.occurrenceKey,
+    "clan-mission:2026-03-08T07:30:00.000Z",
+  );
+});
+
+test("uses the earlier New York fall-overlap instant", () => {
+  const sundayAtOneThirty = {
+    contentId: "clan-guard",
+    scheduled: true,
+    day: 0,
+    hour: 1,
+    minute: 30,
+    reminder: true,
+  };
+
+  assert.equal(
+    nextClanOccurrence(
+      sundayAtOneThirty,
+      new Date("2026-11-01T04:00:00.000Z"),
+      "America/New_York",
+    )?.startsAt.toISOString(),
+    "2026-11-01T05:30:00.000Z",
+  );
+});
+
+test("adds calendar weeks while preserving wall-clock time across DST", () => {
+  const sundayAtTwoThirty = {
+    contentId: "clan-mission",
+    scheduled: true,
+    day: 0,
+    hour: 2,
+    minute: 30,
+    reminder: true,
+  };
+
+  assert.equal(
+    nextClanOccurrence(
+      sundayAtTwoThirty,
+      new Date("2026-03-08T07:30:00.001Z"),
+      "America/New_York",
+    )?.startsAt.toISOString(),
+    "2026-03-15T06:30:00.000Z",
+  );
+  assert.equal(
+    nextClanOccurrence(sundayAtTwoThirty, new Date(), "Mars/Olympus"),
+    null,
+  );
+});
+
 test("excludes unscheduled items and orders notification candidates by occurrence", () => {
   let settings = parseClanScheduleSettings(null);
   settings = updateClanScheduleItem(settings, "clan-mission", {
