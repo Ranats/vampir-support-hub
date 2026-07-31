@@ -38,6 +38,19 @@ Pushは使っていないため、ページを閉じた後の通知は保証し�
 - GitHub: https://github.com/Ranats/vampir-support-hub
 - Developer X: https://x.com/Kokonoe_variant
 
+## Traffic and monetization
+
+The current traffic state is unmeasured. The source of truth for PV stages,
+promotion and demotion rules, monetization work, and the private-data boundary is
+[docs/TRAFFIC_MONETIZATION_ROADMAP.md](docs/TRAFFIC_MONETIZATION_ROADMAP.md).
+
+Classify a completed monthly PV value without storing credentials or traffic
+history in the repository:
+
+```sh
+npm run traffic:phase -- --pageviews 12345 --period 2026-06 --source "Cloudflare Web Analytics"
+```
+
 Bundled font licensing is documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). No license is granted for the project source code unless a project license is added separately.
 
 ## Prerequisites

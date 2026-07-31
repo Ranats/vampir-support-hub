@@ -3,8 +3,8 @@
 ## Project scope
 
 - Repository source of truth: the `main` branch on GitHub. Keep the local `main` branch aligned with it before starting new work.
-- Source of truth: `app/HomeClient.tsx` for displayed schedules and routines; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; linked official VAMPIR pages and dated reference articles for factual values.
-- Read order: `AGENTS.md`, `app/page.tsx`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, `app/layout.tsx`, `app/policy/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, then tests.
+- Source of truth: `app/HomeClient.tsx` for displayed schedules and routines; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; `docs/TRAFFIC_MONETIZATION_ROADMAP.md` for PV stages and monetization decisions; linked official VAMPIR pages and dated reference articles for factual values.
+- Read order: `AGENTS.md`, `app/page.tsx`, `app/HomeClient.tsx`, `app/clan-portal.ts`, `db/schema.ts`, `app/layout.tsx`, `app/policy/page.tsx`, `app/progress-cycle.ts`, `app/globals.css`, `docs/TRAFFIC_MONETIZATION_ROADMAP.md`, then tests.
 - Supported users and environments: Japanese VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
 
 ## Change boundaries
@@ -20,6 +20,7 @@
 - Preserve: sharing uses the canonical `https://vampir.cilabworks.com/` URL through an X Web Intent or the browser share API with clipboard fallback. Do not embed X widgets or tracking scripts.
 - Preserve: `https://vampir.cilabworks.com/` is the canonical public origin. Keep metadata, `robots.txt`, `sitemap.xml`, and legacy-host redirects aligned with it.
 - Preserve: `/policy` accurately describes current device-local storage, notifications, external services, analytics/advertising status, the public GitHub Issues contact route, and the developer X profile at `https://x.com/Kokonoe_variant`. Update it before introducing analytics, advertising, affiliate tracking, or another data flow.
+- Preserve: Cloudflare analytics credentials, identifiers, and PV history stay outside the public site, client JavaScript, D1, Git history, and public CI logs. Use only a least-privilege read-only secret in a private operations context after validating its metric against the Cloudflare dashboard.
 - Out of scope: unverified game-menu routes, destination instructions, memory or traffic inspection, automated game input, claims of official affiliation, cloud sync of personal progress/settings, and claims of background scheduled Push without a verified server-side scheduler.
 - Display only schedule times, limits, deadlines, and unlock conditions that have a dated source. Keep the game client's current schedule and official notices authoritative.
 
