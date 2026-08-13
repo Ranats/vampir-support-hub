@@ -19,8 +19,11 @@ hosting="${SITES_PROJECT_ROOT}/dist/.openai/hosting.json"
   exit 66
 }
 
+# sites-env.sh always runs this script from the project root. Keeping the
+# loader relative avoids Git Bash rewriting it to a bare C:/ path, which
+# Node treats as an unsupported URL scheme for --import on Windows.
 node \
-  --import "${SITES_PROJECT_ROOT}/scripts/register-cloudflare-loader.mjs" \
+  --import "./scripts/register-cloudflare-loader.mjs" \
   --input-type=module \
   - "${worker}" "${hosting}" <<'NODE'
 import { readFile } from "node:fs/promises";
