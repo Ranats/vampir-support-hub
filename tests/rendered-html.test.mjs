@@ -88,6 +88,8 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /og\.png\?v=20260730-2/);
   assert.match(html, /favicon\.png\?v=20260730-1/);
   assert.match(html, /manifest\.webmanifest/);
+  assert.match(html, /\/assets\/[^"']+\.woff2/);
+  assert.doesNotMatch(html, /\/\.vinext\/fonts\//);
   assert.match(html, /https:\/\/vampir\.cilabworks\.com\//);
   assert.match(html, /情報源を見る/);
   assert.match(html, /公式：(?:<!-- -->)?VAMPIR 公式サイト/);

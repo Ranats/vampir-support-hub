@@ -19,6 +19,17 @@ hosting="${SITES_PROJECT_ROOT}/dist/.openai/hosting.json"
   exit 66
 }
 
+if grep -Fq "/.vinext/fonts/" "${worker}"; then
+  echo "Sites Worker contains a build-machine font path instead of a public asset URL." >&2
+  exit 65
+fi
+
+font_count="$({ find "${SITES_PROJECT_ROOT}/dist/client/assets" -type f -name '*.woff2' -print 2>/dev/null || true; } | wc -l | tr -d '[:space:]')"
+if [[ "${font_count}" -lt 2 ]]; then
+  echo "Expected the bundled Geist and Geist Mono webfonts in dist/client/assets." >&2
+  exit 66
+fi
+
 # sites-env.sh always runs this script from the project root. Keeping the
 # loader relative avoids Git Bash rewriting it to a bare C:/ path, which
 # Node treats as an unsupported URL scheme for --import on Windows.

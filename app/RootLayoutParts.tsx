@@ -1,14 +1,20 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import PwaRegistration from "./PwaRegistration";
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: "./fonts/geist-latin.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  display: "swap",
+  style: "normal",
+  weight: "100 900",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  style: "normal",
+  weight: "100 900",
 });
 
 export const bodyClassName = `${geistSans.variable} ${geistMono.variable} antialiased`;
