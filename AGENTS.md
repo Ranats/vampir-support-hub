@@ -3,8 +3,8 @@
 ## Project scope
 
 - Repository source of truth: the `main` branch on GitHub. Keep the local `main` branch aligned with it before starting new work.
-- Source of truth: `app/HomeClient.tsx` for displayed schedules, routines, clan plans, and localized UI; `app/clan-time-zone.ts` for personal clan time-zone storage and defaults; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; `docs/TRAFFIC_MONETIZATION_ROADMAP.md` for PV stages and monetization decisions; linked official VAMPIR pages and dated reference articles for factual values.
-- Read order: `AGENTS.md`, localized route pages and layouts under `app/(ja)` and `app/(en)`, `app/HomeClient.tsx`, `app/clan-time-zone.ts`, `app/clan-portal.ts`, `db/schema.ts`, localized policy pages, `app/progress-cycle.ts`, `app/globals.css`, `docs/TRAFFIC_MONETIZATION_ROADMAP.md`, then tests.
+- Source of truth: `app/game-content.ts` for displayed schedules, routines, source classifications, verification dates, and validators; `app/HomeClient.tsx` for clan plans and localized UI; `app/clan-time-zone.ts` for personal clan time-zone storage and defaults; `db/schema.ts` and `app/clan-portal.ts` for shared clan portal data; `docs/TRAFFIC_MONETIZATION_ROADMAP.md` for PV stages and monetization decisions; linked official VAMPIR pages and dated reference articles for factual values.
+- Read order: `AGENTS.md`, localized route pages and layouts under `app/(ja)` and `app/(en)`, `app/game-content.ts`, `app/HomeClient.tsx`, `app/clan-time-zone.ts`, `app/clan-portal.ts`, `db/schema.ts`, localized policy pages, `app/progress-cycle.ts`, `app/globals.css`, `docs/TRAFFIC_MONETIZATION_ROADMAP.md`, then tests.
 - Supported users and environments: Japanese- and English-speaking VAMPIR players using current desktop or mobile browsers; the production site is publicly accessible without sign-in.
 
 ## Change boundaries
@@ -35,6 +35,7 @@
 - Acceptance criteria: backup v2 round-trips the separate clan time zone only after whole-file validation; backup v1 migrates to `Asia/Tokyo`; an invalid v2 time zone rejects the whole file; expired imported cycle progress is not restored into the current cycle; same-browser tabs converge without changing established storage shapes.
 - Acceptance criteria: Japanese and English manifests use their matching language and start route, and both include 192px and 512px raster icons; service-worker requests remain network-first for time-sensitive content; notification permission is never requested on first load; no copy implies notification after the site is closed.
 - Acceptance criteria: the last verified date and a stale warning are visible while the game client and official notices remain authoritative.
+- Acceptance criteria: every game-content definition has a dated source reference; sources are labelled official or supplementary in both locales; invalid content definitions fail closed before rendering.
 - Acceptance criteria: both support links open their stated external destinations, are keyboard accessible, and do not load third-party payment code on the Site.
 - Acceptance criteria: the X share link prepopulates the canonical URL and introduction text; the general share action uses the browser share menu when available and otherwise copies the canonical URL.
 - Acceptance criteria: the localized footers and policy pages link to `https://x.com/Kokonoe_variant` as the developer and update-information contact without embedding X widgets or tracking scripts.
