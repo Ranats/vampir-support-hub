@@ -65,7 +65,7 @@ export default function EnglishPolicyPage() {
 
           <section className="policy-card">
             <h2>Data saved on your device</h2>
-            <p>Your level, daily, weekly, and event-mission checklist progress, personal tasks, display preferences, favorites, notification settings, language preference, notification deduplication records, personal clan plans and their time zone, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
+            <p>Your level, daily, weekly, and event-mission checklist progress, personal tasks, display preferences, spawn alert targets, notification settings, language preference, notification deduplication records, personal clan plans and their time zone, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
             <ul>
               <li>We do not connect to your game account or retrieve game data automatically.</li>
               <li>When you create or update a shared clan portal, its clan name, weekday, time, and clan schedule time zone are sent to the API. The corresponding secret key is sent for authentication when viewing or administering the portal.</li>

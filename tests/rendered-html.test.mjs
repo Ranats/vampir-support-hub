@@ -31,6 +31,9 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(pageSource, /次にやること/);
   assert.match(pageSource, /残り \$\{remaining\.toLocaleString\(\)\}/);
   assert.match(pageSource, /EVENT_PROGRESS_KEY/);
+  assert.match(pageSource, /event-day-tabs/);
+  assert.match(pageSource, /activeLimitedEventsInProgressOrder/);
+  assert.match(pageSource, /通知対象/);
   assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
   assert.match(pageSource, /公式詳細を見る/);
   assert.match(pageSource, /href=\{en \? "\/en\/clan\/create" : "\/clan\/create"\}/);
@@ -94,7 +97,7 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /情報源を見る/);
   assert.match(html, /公式：(?:<!-- -->)?VAMPIR 公式サイト/);
   assert.match(html, /補足：(?:<!-- -->)?ゲヘナ時刻/);
-  assert.match(html, /お気に入り/);
+  assert.match(html, /通知する/);
   assert.match(html, /このツールを応援する/);
   assert.match(html, /https:\/\/ko-fi\.com\/ranats/);
   assert.match(html, /https:\/\/ofuse\.me\/d2c3aa65/);

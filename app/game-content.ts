@@ -35,6 +35,7 @@ export type Routine = {
 export type EventObjective = {
   id: string;
   metricId?: string;
+  day?: number;
   title: string;
   titleEn: string;
   action: string;
@@ -146,9 +147,11 @@ function missionCount(
 ): EventObjective {
   const jaGoal = unit === "Lv" ? `Lv${target.toLocaleString()}` : `${target.toLocaleString()}${unit}`;
   const enGoal = unitEn === "Lv" ? `Lv${target.toLocaleString()}` : `${target.toLocaleString()}${unitEn}`;
+  const dayMatch = id.match(/^day-(\d+)-/);
   return {
     id,
     metricId,
+    ...(dayMatch ? { day: Number(dayMatch[1]) } : {}),
     title,
     titleEn,
     action: `${jaGoal}を達成し、イベント画面で報酬を受け取る`,
@@ -164,17 +167,19 @@ function missionCount(
 export const LIMITED_EVENTS = [
   {
     id: "sigil-red-moon", campaignId: "sigil-red-moon-2026-08", title: "シギルのレッドムーン闇取引シーズン", titleEn: "Sigil Red Moon Dark Trade Season",
-    summary: "狩りとワールドボスでイベント装備を集め、強化して闇取引します。", summaryEn: "Collect event gear from hunting and World Bosses, enhance it, then use Dark Trade.",
+    summary: "装備ごとの交換済み個数を記録します（合計最大15個）。", summaryEn: "Track completed exchanges for each item (up to 15 items total).",
     deadline: eventEnd0826, detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/227",
     milestones: [
       { id: "drops-end", label: "フィールド・ゲヘナのドロップ終了", labelEn: "Field and Gehenna drops end", deadline: eventEnd0819 },
       { id: "trade-end", label: "ワールドボス獲得・闇取引・箱使用終了", labelEn: "World Boss rewards, trade, and box use end", deadline: eventEnd0826 },
     ],
     objectives: [
-      { id: "collect-gear", title: "イベント装備を集める", titleEn: "Collect event gear", action: "フィールド・ゲヘナで狩りをする", actionEn: "Hunt in the field or Gehenna", kind: "check", cadence: "once" },
-      { id: "world-boss", title: "ワールドボス報酬を受け取る", titleEn: "Claim World Boss gear", action: "開催時刻にワールドボスを討伐する", actionEn: "Defeat a World Boss at its scheduled time", kind: "check", cadence: "once" },
-      { id: "dark-trade", title: "闇取引を進める", titleEn: "Use Dark Trade", action: "装備を強化し、レッドムーンの宝箱へ交換する", actionEn: "Enhance gear and exchange it for Red Moon boxes", kind: "check", cadence: "once" },
-      { id: "use-boxes", title: "イベント箱を使用する", titleEn: "Use event boxes", action: "8月26日04:59までに残った箱を開封する", actionEn: "Open remaining boxes before Aug 26 at 04:59 JST", kind: "check", cadence: "once" },
+      { id: "sword-plus-11", title: "+11 シギルのレッドムーン剣", titleEn: "+11 Sigil Red Moon Sword", action: "交換済み個数を記録する（最大1個）", actionEn: "Record completed exchanges (maximum 1)", kind: "count", target: 1, unit: "個", unitEn: "", cadence: "once" },
+      { id: "armor-plus-10", title: "+10 シギルのレッドムーンアーマー", titleEn: "+10 Sigil Red Moon Armor", action: "交換済み個数を記録する（最大1個）", actionEn: "Record completed exchanges (maximum 1)", kind: "count", target: 1, unit: "個", unitEn: "", cadence: "once" },
+      { id: "ring-plus-6", title: "+6 シギルのレッドムーンリング", titleEn: "+6 Sigil Red Moon Ring", action: "交換済み個数を記録する（最大1個）", actionEn: "Record completed exchanges (maximum 1)", kind: "count", target: 1, unit: "個", unitEn: "", cadence: "once" },
+      { id: "sword-plus-9", title: "+9 シギルのレッドムーン剣", titleEn: "+9 Sigil Red Moon Sword", action: "交換済み個数を記録する（最大4個）", actionEn: "Record completed exchanges (maximum 4)", kind: "count", target: 4, unit: "個", unitEn: "", cadence: "once" },
+      { id: "armor-plus-8", title: "+8 シギルのレッドムーンアーマー", titleEn: "+8 Sigil Red Moon Armor", action: "交換済み個数を記録する（最大4個）", actionEn: "Record completed exchanges (maximum 4)", kind: "count", target: 4, unit: "個", unitEn: "", cadence: "once" },
+      { id: "ring-plus-4", title: "+4 シギルのレッドムーンリング", titleEn: "+4 Sigil Red Moon Ring", action: "交換済み個数を記録する（最大4個）", actionEn: "Record completed exchanges (maximum 4)", kind: "count", target: 4, unit: "個", unitEn: "", cadence: "once" },
     ], sourceIds: ["event-sigil", "event-overview"], verifiedAt: EVENT_VERIFIED_AT,
   },
   {
@@ -452,6 +457,7 @@ export function validateGameContent(content: GameContentDefinition) {
       assert(Boolean(objective.id.trim()) && !objectiveIds.has(objective.id), `invalid or duplicate objective for ${event.id}`);
       objectiveIds.add(objective.id);
       if (objective.metricId !== undefined) assert(Boolean(objective.metricId.trim()), `invalid metric id for ${event.id}`);
+      if (objective.day !== undefined) assert(Number.isInteger(objective.day) && objective.day >= 1 && objective.day <= 7, `invalid objective day for ${event.id}`);
       assert(Boolean(objective.title.trim()) && Boolean(objective.titleEn.trim()) && Boolean(objective.action.trim()) && Boolean(objective.actionEn.trim()), `missing objective copy for ${event.id}`);
       assert(["check", "count"].includes(objective.kind) && ["once", "daily", "weekly"].includes(objective.cadence), `invalid objective type for ${event.id}`);
       if (objective.kind === "count") assert(Number.isInteger(objective.target) && (objective.target ?? 0) > 0, `invalid objective target for ${event.id}`);

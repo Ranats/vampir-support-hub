@@ -1410,10 +1410,67 @@ summary:focus-visible {
   opacity: 0.62;
 }
 
+.event-day-tabs {
+  display: flex;
+  gap: 7px;
+  margin: 0 0 10px;
+  overflow-x: auto;
+  padding: 2px 0 7px;
+  scrollbar-width: thin;
+}
+
+.event-day-tabs button {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 76px;
+  min-height: 48px;
+  place-items: center;
+  padding: 7px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.event-day-tabs button span {
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.event-day-tabs button small {
+  color: inherit;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+}
+
+.event-day-tabs button:hover,
+.event-day-tabs button.active {
+  border-color: rgba(255, 90, 100, 0.58);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.event-day-tabs button.active {
+  box-shadow: inset 0 -2px 0 var(--accent-strong);
+}
+
 .event-objective-list {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 12px;
+}
+
+.event-objective-extras {
+  margin-top: 14px;
+}
+
+.event-objective-extras h4 {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
 .event-objective {

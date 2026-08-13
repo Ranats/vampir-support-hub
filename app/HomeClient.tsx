@@ -88,6 +88,7 @@ import {
   setEventObjectiveProgress,
   type EventProgress,
 } from "./event-progress";
+import { activeLimitedEventsInProgressOrder } from "./event-order";
 
 type Routine = Omit<GameRoutine, "sourceIds" | "verifiedAt">;
 
@@ -414,6 +415,89 @@ function EventProgressCard({
   const completed = objectiveStates.filter(({ done }) => done).length;
   const nextObjective = objectiveStates.find(({ done }) => !done);
   const percent = Math.round((completed / event.objectives.length) * 100);
+  const tabDays = Array.from(new Set(objectiveStates.flatMap(({ objective }) => (
+    objective.day === undefined ? [] : [objective.day]
+  )))).sort((left, right) => left - right);
+  const [selectedDay, setSelectedDay] = useState<number | null>(tabDays[0] ?? null);
+  const selectedObjectiveStates = tabDays.length
+    ? objectiveStates.filter(({ objective }) => objective.day === selectedDay)
+    : objectiveStates;
+  const extraObjectiveStates = tabDays.length
+    ? objectiveStates.filter(({ objective }) => objective.day === undefined)
+    : [];
+
+  function renderObjective({ objective, value, maximum, done }: (typeof objectiveStates)[number]) {
+    const remaining = Math.max(0, maximum - value);
+    const fullTitle = en ? objective.titleEn : objective.title;
+    const title = objective.day === undefined
+      ? fullTitle
+      : fullTitle.replace(en ? /^Day \d+:\s*/ : /^\d+日目：/, "");
+    const action = en ? objective.actionEn : objective.action;
+    const unit = en ? objective.unitEn ?? "" : objective.unit ?? "";
+    return (
+      <article className={`event-objective${done ? " done" : ""}`} key={objective.id}>
+        <div className="event-objective-copy">
+          <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
+          <span>
+            <strong>{title}</strong>
+            <small>{action}</small>
+            <em>
+              {done
+                ? (en ? "Completed" : "達成済み")
+                : objective.kind === "count"
+                  ? (en ? `${remaining.toLocaleString()}${unit} remaining` : `残り ${remaining.toLocaleString()}${unit}`)
+                  : (en ? "Not completed" : "未達成")}
+            </em>
+          </span>
+        </div>
+
+        {objective.kind === "check" ? (
+          <button
+            className="event-check-action"
+            type="button"
+            aria-pressed={done}
+            onClick={() => onChange(event, objective, done ? 0 : 1)}
+          >
+            {done ? (en ? "Undo" : "未完了に戻す") : (en ? "Mark complete" : "達成にする")}
+          </button>
+        ) : (
+          <div className="event-count-control">
+            <button
+              type="button"
+              aria-label={en ? `Decrease ${fullTitle}` : `${fullTitle}を減らす`}
+              disabled={value === 0}
+              onClick={() => onChange(event, objective, value - objectiveStep(objective))}
+            >−</button>
+            <label>
+              <span className="sr-only">{en ? `Current progress for ${fullTitle}` : `${fullTitle}の現在値`}</span>
+              <input
+                type="number"
+                min="0"
+                max={maximum}
+                step="1"
+                inputMode="numeric"
+                value={value}
+                onChange={(input) => onChange(event, objective, Number(input.currentTarget.value))}
+              />
+              <small>/ {maximum.toLocaleString()}{unit}</small>
+            </label>
+            <button
+              type="button"
+              aria-label={en ? `Increase ${fullTitle}` : `${fullTitle}を増やす`}
+              disabled={done}
+              onClick={() => onChange(event, objective, value + objectiveStep(objective))}
+            >＋</button>
+            <button
+              className="event-count-complete"
+              type="button"
+              disabled={done}
+              onClick={() => onChange(event, objective, maximum)}
+            >{en ? "Complete" : "達成"}</button>
+          </div>
+        )}
+      </article>
+    );
+  }
 
   return (
     <details
@@ -462,77 +546,39 @@ function EventProgressCard({
           })}
         </div>
 
-        <div className="event-objective-list">
-          {objectiveStates.map(({ objective, value, maximum, done }) => {
-            const remaining = Math.max(0, maximum - value);
-            const title = en ? objective.titleEn : objective.title;
-            const action = en ? objective.actionEn : objective.action;
-            const unit = en ? objective.unitEn ?? "" : objective.unit ?? "";
-            return (
-              <article className={`event-objective${done ? " done" : ""}`} key={objective.id}>
-                <div className="event-objective-copy">
-                  <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{action}</small>
-                    <em>
-                      {done
-                        ? (en ? "Completed" : "達成済み")
-                        : objective.kind === "count"
-                          ? (en ? `${remaining.toLocaleString()}${unit} remaining` : `残り ${remaining.toLocaleString()}${unit}`)
-                          : (en ? "Not completed" : "未達成")}
-                    </em>
-                  </span>
-                </div>
+        {tabDays.length ? (
+          <div className="event-day-tabs" aria-label={en ? "Mission day" : "ミッション日"}>
+            {tabDays.map((day) => {
+              const dayStates = objectiveStates.filter(({ objective }) => objective.day === day);
+              const dayCompleted = dayStates.filter(({ done }) => done).length;
+              return (
+                <button
+                  type="button"
+                  aria-pressed={selectedDay === day}
+                  className={selectedDay === day ? "active" : ""}
+                  key={day}
+                  onClick={() => setSelectedDay(day)}
+                >
+                  <span>{en ? `Day ${day}` : `${day}日目`}</span>
+                  <small>{dayCompleted}/{dayStates.length}</small>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
 
-                {objective.kind === "check" ? (
-                  <button
-                    className="event-check-action"
-                    type="button"
-                    aria-pressed={done}
-                    onClick={() => onChange(event, objective, done ? 0 : 1)}
-                  >
-                    {done ? (en ? "Undo" : "未完了に戻す") : (en ? "Mark complete" : "達成にする")}
-                  </button>
-                ) : (
-                  <div className="event-count-control">
-                    <button
-                      type="button"
-                      aria-label={en ? `Decrease ${title}` : `${title}を減らす`}
-                      disabled={value === 0}
-                      onClick={() => onChange(event, objective, value - objectiveStep(objective))}
-                    >−</button>
-                    <label>
-                      <span className="sr-only">{en ? `Current progress for ${title}` : `${title}の現在値`}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max={maximum}
-                        step="1"
-                        inputMode="numeric"
-                        value={value}
-                        onChange={(input) => onChange(event, objective, Number(input.currentTarget.value))}
-                      />
-                      <small>/ {maximum.toLocaleString()}{unit}</small>
-                    </label>
-                    <button
-                      type="button"
-                      aria-label={en ? `Increase ${title}` : `${title}を増やす`}
-                      disabled={done}
-                      onClick={() => onChange(event, objective, value + objectiveStep(objective))}
-                    >＋</button>
-                    <button
-                      className="event-count-complete"
-                      type="button"
-                      disabled={done}
-                      onClick={() => onChange(event, objective, maximum)}
-                    >{en ? "Complete" : "達成"}</button>
-                  </div>
-                )}
-              </article>
-            );
-          })}
+        <div className="event-objective-list">
+          {selectedObjectiveStates.map(renderObjective)}
         </div>
+
+        {extraObjectiveStates.length ? (
+          <div className="event-objective-extras">
+            <h4>{en ? "Before the deadline" : "期限までに確認"}</h4>
+            <div className="event-objective-list">
+              {extraObjectiveStates.map(renderObjective)}
+            </div>
+          </div>
+        ) : null}
 
         <div className="event-card-foot">
           <small>{en ? "Progress is entered manually and saved only on this device." : "進捗は手動入力で、この端末だけに保存されます。"}</small>
@@ -638,11 +684,13 @@ export default function HomeClient({
   const visibleDefaultCount = [...dailyTasks, ...weeklyTasks].filter(
     (routine) => !routinePreferences.hiddenDefaultIds.includes(routine.id),
   ).length;
-  const activeEvents = limitedEvents.filter((event) => event.deadline > now).sort((a, b) => {
-    const aNext = a.milestones.find((milestone) => milestone.deadline > now)?.deadline ?? a.deadline;
-    const bNext = b.milestones.find((milestone) => milestone.deadline > now)?.deadline ?? b.deadline;
-    return aNext.getTime() - bNext.getTime();
-  });
+  const activeEvents = activeLimitedEventsInProgressOrder(
+    limitedEvents,
+    eventProgress,
+    dailyCycle,
+    weeklyCycle,
+    now,
+  );
   const incompleteEventObjectives = activeEvents.reduce((total, event) => total + event.objectives.filter((objective) => (
     eventObjectiveValue(eventProgress, event, objective, dailyCycle, weeklyCycle) < objectiveMaximum(objective)
   )).length, 0);
@@ -1138,7 +1186,7 @@ export default function HomeClient({
     }));
     setNotificationMessage(
       permission === "granted"
-        ? (en ? "Notifications are on. Favorite spawns and saved clan schedules will be announced while the site is open." : "通知を有効にしました。お気に入りと登録済みのクラン予定をサイト表示中にお知らせします。")
+        ? (en ? "Notifications are on. Selected spawn alerts and saved clan schedules will be announced while the site is open." : "通知を有効にしました。通知対象の出現予定と登録済みのクラン予定をサイト表示中にお知らせします。")
         : permission === "denied"
           ? (en ? "Notifications are blocked. You can change this in your browser's site settings." : "通知が拒否されています。ブラウザのサイト設定から変更できます。")
           : (en ? "Notifications were not enabled." : "通知は有効になりませんでした。"),
@@ -1338,11 +1386,11 @@ export default function HomeClient({
                         className={`favorite-button${favoriteSpawnIds.includes(next.id) ? " active" : ""}`}
                         type="button"
                         aria-pressed={favoriteSpawnIds.includes(next.id)}
-                        aria-label={en ? `${favoriteSpawnIds.includes(next.id) ? "Remove" : "Add"} ${next.title} at ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")} ${favoriteSpawnIds.includes(next.id) ? "from" : "to"} favorites` : `${next.title} ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")}をお気に入り${favoriteSpawnIds.includes(next.id) ? "から外す" : "に追加"}`}
+                        aria-label={en ? `${favoriteSpawnIds.includes(next.id) ? "Remove" : "Add"} the ${next.title} spawn at ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")} ${favoriteSpawnIds.includes(next.id) ? "from" : "to"} alert targets` : `${next.title} ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")}を通知対象${favoriteSpawnIds.includes(next.id) ? "から外す" : "に追加"}`}
                         onClick={() => toggleFavoriteSpawn(next.id)}
                       >
-                        <span aria-hidden="true">{favoriteSpawnIds.includes(next.id) ? "★" : "☆"}</span>
-                        {favoriteSpawnIds.includes(next.id) ? (en ? "Alert on" : "通知対象") : (en ? "Favorite" : "お気に入り")}
+                        <span aria-hidden="true">{favoriteSpawnIds.includes(next.id) ? "🔔" : "🔕"}</span>
+                        {favoriteSpawnIds.includes(next.id) ? (en ? "Alert target" : "通知対象") : (en ? "Alert me" : "通知する")}
                       </button>
                     </div>
                   </div>
@@ -1615,7 +1663,7 @@ export default function HomeClient({
               {level
                 ? (en ? `Showing JST schedules available at Lv${level}.` : `Lv${level}で参加できる予定をJSTで表示しています。`)
                 : (en ? "No level set — showing all schedules in JST." : "レベル未設定のため、すべての予定をJSTで表示しています。")}
-              {favoriteSpawnIds.length ? (en ? ` ${favoriteSpawnIds.length} favorite${favoriteSpawnIds.length === 1 ? "" : "s"}.` : ` お気に入り${favoriteSpawnIds.length}件。`) : ""}
+              {favoriteSpawnIds.length ? (en ? ` ${favoriteSpawnIds.length} spawn alert target${favoriteSpawnIds.length === 1 ? "" : "s"}.` : ` 出現通知対象${favoriteSpawnIds.length}件。`) : ""}
             </p>
           </div>
           <div className={`information-status${informationIsStale ? " stale" : ""}`}>
@@ -1635,10 +1683,10 @@ export default function HomeClient({
                   className={`schedule-favorite${favoriteSpawnIds.includes(event.id) ? " active" : ""}`}
                   type="button"
                   aria-pressed={favoriteSpawnIds.includes(event.id)}
-                  aria-label={en ? `${favoriteSpawnIds.includes(event.id) ? "Remove" : "Add"} ${event.title} at ${formatJst(event.at, false, locale)} ${favoriteSpawnIds.includes(event.id) ? "from" : "to"} favorites` : `${event.title} ${formatJst(event.at)}をお気に入り${favoriteSpawnIds.includes(event.id) ? "から外す" : "に追加"}`}
+                  aria-label={en ? `${favoriteSpawnIds.includes(event.id) ? "Remove" : "Add"} ${event.title} at ${formatJst(event.at, false, locale)} ${favoriteSpawnIds.includes(event.id) ? "from" : "to"} alert targets` : `${event.title} ${formatJst(event.at)}を通知対象${favoriteSpawnIds.includes(event.id) ? "から外す" : "に追加"}`}
                   onClick={() => toggleFavoriteSpawn(event.id)}
                 >
-                  <span aria-hidden="true">{favoriteSpawnIds.includes(event.id) ? "★" : "☆"}</span>
+                  <span aria-hidden="true">{favoriteSpawnIds.includes(event.id) ? "🔔" : "🔕"}</span>
                 </button>
               </article>
             ))}

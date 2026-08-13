@@ -50,6 +50,24 @@ test("game content retains the published IDs, counts, times, and deadlines", () 
   assert.equal(LIMITED_EVENTS.find(({ id }) => id === "release-growth")?.objectives.length, 32);
   assert.equal(LIMITED_EVENTS.find(({ id }) => id === "daily-double")?.objectives[0].target, 10);
   assert.match(LIMITED_EVENTS.find(({ id }) => id === "daily-double")?.objectives[0].title ?? "", /基本/);
+
+  const sigilTrade = LIMITED_EVENTS.find(({ id }) => id === "sigil-red-moon");
+  assert.equal(sigilTrade?.campaignId, "sigil-red-moon-2026-08");
+  assert.deepEqual(sigilTrade?.objectives.map(({ id, target }) => [id, target]), [
+    ["sword-plus-11", 1],
+    ["armor-plus-10", 1],
+    ["ring-plus-6", 1],
+    ["sword-plus-9", 4],
+    ["armor-plus-8", 4],
+    ["ring-plus-4", 4],
+  ]);
+
+  const sevenDay = LIMITED_EVENTS.find(({ id }) => id === "seven-day-growth");
+  assert.deepEqual([...new Set(sevenDay?.objectives.flatMap(({ day }) => day === undefined ? [] : [day]))], [1, 2, 3, 4, 5, 6, 7]);
+  for (let day = 1; day <= 7; day += 1) {
+    assert.equal(sevenDay?.objectives.filter((objective) => objective.day === day).length, 5);
+  }
+  assert.equal(sevenDay?.objectives.filter(({ day }) => day === undefined).length, 2);
 });
 
 test("sources are explicitly classified and every published item is dated and sourced", () => {
@@ -101,6 +119,7 @@ for (const [name, mutate] of [
   ["duplicate campaign IDs", (content) => { content.limitedEvents[1].campaignId = content.limitedEvents[0].campaignId; }],
   ["duplicate objective IDs", (content) => { content.limitedEvents[0].objectives[1].id = content.limitedEvents[0].objectives[0].id; }],
   ["invalid objective targets", (content) => { content.limitedEvents[1].objectives[0].target = 0; }],
+  ["invalid objective days", (content) => { content.limitedEvents[3].objectives[0].day = 8; }],
   ["milestones after the event deadline", (content) => { content.limitedEvents[0].milestones[0].deadline = new Date("2026-09-01T00:00:00Z"); }],
   ["empty source registries", (content) => { content.sources = []; }],
   ["empty spawn event collections", (content) => { content.spawnEvents = []; }],

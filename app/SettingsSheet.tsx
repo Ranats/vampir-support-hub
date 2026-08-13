@@ -430,7 +430,7 @@ export default function SettingsSheet({
                 <span>5</span>
                 <div>
                   <h3 id="notification-settings-title">{en ? "Home screen and notifications" : "ホーム画面と通知"}</h3>
-                  <p>{en ? "Get alerts for favorite spawns and saved clan plans while this site is open." : "お気に入りの出現予定と登録したクラン予定を、サイトを開いている間にお知らせします。"}</p>
+                  <p>{en ? "Get alerts for selected spawns and saved clan plans while this site is open." : "通知対象にした出現予定と登録したクラン予定を、サイトを開いている間にお知らせします。"}</p>
                 </div>
               </div>
             </div>
@@ -461,8 +461,8 @@ export default function SettingsSheet({
                   <strong>{en ? "Pre-spawn alerts" : "出現前の通知"}</strong>
                   <small>
                     {en
-                      ? `${favoriteSpawnCount} favorite${favoriteSpawnCount === 1 ? "" : "s"} · ${clanReminderCount} clan reminder${clanReminderCount === 1 ? "" : "s"} · Scheduled alerts are unavailable after you close the page.`
-                      : `お気に入り ${favoriteSpawnCount}件・クラン予定 ${clanReminderCount}件・ページを閉じた後の定刻通知には対応していません。`}
+                      ? `${favoriteSpawnCount} spawn alert target${favoriteSpawnCount === 1 ? "" : "s"} · ${clanReminderCount} clan reminder${clanReminderCount === 1 ? "" : "s"} · Scheduled alerts are unavailable after you close the page.`
+                      : `出現通知対象 ${favoriteSpawnCount}件・クラン予定 ${clanReminderCount}件・ページを閉じた後の定刻通知には対応していません。`}
                   </small>
                 </div>
                 {notificationPermission === "unsupported" ? (
@@ -511,7 +511,7 @@ export default function SettingsSheet({
               </div>
             ) : null}
             <p className="notification-note">
-              {en ? "We never request permission on first load. Choose alert targets with the stars under Upcoming spawns and in each saved clan plan." : "初回表示で勝手に許可を求めません。出現予定の☆と、登録したクラン予定ごとに通知対象を選べます。"}
+              {en ? "We never request permission on first load. Choose alert targets with the bell buttons under Upcoming spawns and in each saved clan plan." : "初回表示で勝手に許可を求めません。出現予定のベルボタンと、登録したクラン予定ごとに通知対象を選べます。"}
             </p>
             {notificationMessage ? (
               <p
