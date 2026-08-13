@@ -145,7 +145,7 @@ export function validateGameContent(content: GameContentDefinition) {
     sourceIds.add(source.id);
     assert(isValidUrl(source.url), `invalid source URL for ${source.id}`);
     assert(source.authority === "official" || source.authority === "supplementary", `invalid source authority for ${source.id}`);
-    assert(Boolean(source.label.ja) && Boolean(source.label.en), `missing source label for ${source.id}`);
+    assert(Boolean(source.label.ja.trim()) && Boolean(source.label.en.trim()), `missing source label for ${source.id}`);
   }
 
   const itemIds = new Set<string>();
@@ -155,6 +155,7 @@ export function validateGameContent(content: GameContentDefinition) {
     ...content.weeklyTasks,
     ...content.limitedEvents,
   ];
+  assert(content.spawnEvents.length > 0, "at least one spawn event is required");
   assert(allItems.length > 0, "at least one game-content item is required");
   const validateItem = (item: { id: string; sourceIds: readonly string[]; verifiedAt: string }) => {
     assert(Boolean(item.id.trim()), "item id must not be empty");

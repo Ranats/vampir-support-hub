@@ -71,6 +71,7 @@ for (const [name, mutate] of [
   ["unknown source IDs", (content) => { content.dailyTasks[0].sourceIds = ["missing"]; }],
   ["duplicate source IDs", (content) => { content.dailyTasks[0].sourceIds = ["routines", "routines"]; }],
   ["invalid source URLs", (content) => { content.sources[0].url = "http://example.test"; }],
+  ["whitespace-only source labels", (content) => { content.sources[0].label.ja = "   "; }],
   ["invalid verification dates", (content) => { content.dailyTasks[0].verifiedAt = "2026-07-30"; }],
   ["rolled-over calendar dates", (content) => { content.dailyTasks[0].verifiedAt = "2026-02-31T00:00:00+09:00"; }],
   ["rolled-over hours", (content) => { content.dailyTasks[0].verifiedAt = "2026-01-01T24:00:00+09:00"; }],
@@ -81,6 +82,7 @@ for (const [name, mutate] of [
   ["invalid deadlines", (content) => { content.limitedEvents[0].deadline = new Date("invalid"); }],
   ["unreferenced details URLs", (content) => { content.limitedEvents[0].detailsUrl = "https://example.test/details"; }],
   ["empty source registries", (content) => { content.sources = []; }],
+  ["empty spawn event collections", (content) => { content.spawnEvents = []; }],
   ["empty content collections", (content) => {
     content.spawnEvents = [];
     content.dailyTasks = [];
