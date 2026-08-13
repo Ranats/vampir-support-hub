@@ -53,7 +53,7 @@ export default function EnglishPolicyPage() {
           <span className="eyebrow">SITE INFORMATION</span>
           <h1>Operations and Privacy Policy</h1>
           <p>This page explains the information this site provides and how it handles user data.</p>
-          <time dateTime="2026-07-31">Last updated: July 31, 2026</time>
+          <time dateTime="2026-08-14">Last updated: August 14, 2026</time>
         </div>
 
         <div className="policy-sections">
@@ -65,11 +65,11 @@ export default function EnglishPolicyPage() {
 
           <section className="policy-card">
             <h2>Data saved on your device</h2>
-            <p>Your level, checklist progress, personal tasks, display preferences, favorites, notification settings, language preference, notification deduplication records, personal clan plans and their time zone, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
+            <p>Your level, daily, weekly, and event-mission checklist progress, personal tasks, display preferences, favorites, notification settings, language preference, notification deduplication records, personal clan plans and their time zone, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
             <ul>
               <li>We do not connect to your game account or retrieve game data automatically.</li>
               <li>When you create or update a shared clan portal, its clan name, weekday, time, and clan schedule time zone are sent to the API. The corresponding secret key is sent for authentication when viewing or administering the portal.</li>
-              <li>Other device-local settings—including level, checklist progress, personal reminders, and notification settings—are not sent to the operator&apos;s server.</li>
+              <li>Other device-local settings—including level, daily, weekly, and event-mission checklist progress, personal reminders, and notification settings—are not sent to the operator&apos;s server.</li>
               <li>Backups are exported or imported only when you explicitly request those actions.</li>
               <li>Deleting browser data may also delete content saved on this device.</li>
             </ul>
@@ -95,7 +95,7 @@ export default function EnglishPolicyPage() {
           <section className="policy-card">
             <h2>Analytics and advertising</h2>
             <p>We use Cloudflare Web Analytics on the Japanese and English public home and policy pages. It aggregates page views, visits, referrers, country, device type, browser, operating system, page-load performance, and Core Web Vitals. Information required for measurement is sent to Cloudflare.</p>
-            <p>Cloudflare Web Analytics does not receive your game account, device-local checklist progress, level, notification settings, personal clan plans, or clan portal viewer or administrator keys. Shared clan portal routes (<code>/clan/*</code> and <code>/en/clan/*</code>) do not include the analytics tag. We currently do not install advertising tags or affiliate-tracking tags.</p>
+            <p>Cloudflare Web Analytics does not receive your game account, device-local daily, weekly, or event-mission checklist progress, level, notification settings, personal clan plans, or clan portal viewer or administrator keys. Shared clan portal routes (<code>/clan/*</code> and <code>/en/clan/*</code>) do not include the analytics tag. We currently do not install advertising tags or affiliate-tracking tags.</p>
             <p>If other analytics or advertising is introduced in the future, we will add its purpose and handling to this page first. Sponsorships and advertisements will be clearly distinguished from normal site guidance.</p>
           </section>
 

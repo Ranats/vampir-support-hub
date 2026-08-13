@@ -75,8 +75,19 @@ import {
   WEEKLY_TASKS,
   oldestGameContentVerifiedAt,
   type Routine as GameRoutine,
+  type EventObjective,
+  type LimitedEvent,
   type SpawnEvent,
 } from "./game-content";
+import {
+  EMPTY_EVENT_PROGRESS,
+  EVENT_PROGRESS_KEY,
+  eventObjectiveValue,
+  normalizeEventProgress,
+  parseEventProgress,
+  setEventObjectiveProgress,
+  type EventProgress,
+} from "./event-progress";
 
 type Routine = Omit<GameRoutine, "sourceIds" | "verifiedAt">;
 
@@ -113,7 +124,6 @@ const DEVELOPER_X_URL = "https://x.com/Kokonoe_variant";
 type SpawnEventId = (typeof SPAWN_EVENTS)[number]["id"];
 type DailyTaskId = (typeof DAILY_TASKS)[number]["id"];
 type WeeklyTaskId = (typeof WEEKLY_TASKS)[number]["id"];
-type LimitedEventId = (typeof LIMITED_EVENTS)[number]["id"];
 const EN_SPAWN_COPY: Record<SpawnEventId, Pick<SpawnEvent, "title" | "label">> = {
   "world-noon": { title: "World Boss", label: "Daily" },
   "gehenna-13": { title: "Gehenna ★1 & ★2", label: "Daily" },
@@ -139,14 +149,6 @@ const EN_WEEKLY_COPY: Record<WeeklyTaskId, Pick<Routine, "title" | "note"> & { u
   "clan-guard": { title: "Check Clan Guard", note: "Requires clan membership and Clan Lv3+" },
   "farm-diamond": { title: "Farm 1,000 Diamonds", note: "Standard weekly limit; 2,000 with a blessing" },
   "gehenna-weekly": { title: "Check weekly Gehenna points", note: "Review current points and planned exchanges" },
-};
-
-const EN_EVENT_COPY: Record<LimitedEventId, string> = {
-  "red-login-7": "Red Moon Eve Festival — 7-Day Special Login",
-  "red-growth": "Red Moon Eve Festival — Growth Support Missions",
-  "red-payback": "Enhancement Support Payback",
-  "daily-double": "Daily Quest Double Rewards",
-  "region-growth": "New Region Opening — Growth Support",
 };
 
 function localizedRoutines(
@@ -371,6 +373,178 @@ function RoutineRow({
   );
 }
 
+function objectiveMaximum(objective: EventObjective) {
+  return objective.kind === "check" ? 1 : objective.target ?? 1;
+}
+
+function objectiveStep(objective: EventObjective) {
+  const maximum = objectiveMaximum(objective);
+  if (maximum <= 25) return 1;
+  if (maximum <= 500) return 5;
+  if (maximum <= 5_000) return 100;
+  return 1_000;
+}
+
+function EventProgressCard({
+  event,
+  progress,
+  dailyCycle,
+  weeklyCycle,
+  now,
+  locale,
+  initiallyOpen,
+  onChange,
+}: {
+  event: LimitedEvent;
+  progress: EventProgress;
+  dailyCycle: string;
+  weeklyCycle: string;
+  now: Date;
+  locale: Locale;
+  initiallyOpen: boolean;
+  onChange: (event: LimitedEvent, objective: EventObjective, value: number) => void;
+}) {
+  const en = locale === "en";
+  const [expanded, setExpanded] = useState(initiallyOpen);
+  const objectiveStates = event.objectives.map((objective) => {
+    const value = eventObjectiveValue(progress, event, objective, dailyCycle, weeklyCycle);
+    const maximum = objectiveMaximum(objective);
+    return { objective, value, maximum, done: value >= maximum };
+  });
+  const completed = objectiveStates.filter(({ done }) => done).length;
+  const nextObjective = objectiveStates.find(({ done }) => !done);
+  const percent = Math.round((completed / event.objectives.length) * 100);
+
+  return (
+    <details
+      className={`event-progress-card panel${completed === event.objectives.length ? " done" : ""}`}
+      open={expanded}
+      onToggle={(toggleEvent) => setExpanded(toggleEvent.currentTarget.open)}
+    >
+      <summary>
+        <span className="event-summary-copy">
+          <small>{en ? "EVENT PROGRESS" : "イベント進捗"}</small>
+          <strong>{en ? event.titleEn : event.title}</strong>
+          <span>{en ? event.summaryEn : event.summary}</span>
+        </span>
+        <span className="event-summary-status">
+          <b>{completed}/{event.objectives.length}</b>
+          <small>{en ? "complete" : "達成"}</small>
+        </span>
+      </summary>
+
+      <div className="event-progress-body">
+        <div className="event-progress-overview">
+          <div>
+            <span>{en ? "NEXT ACTION" : "次にやること"}</span>
+            <strong>
+              {nextObjective
+                ? (en ? nextObjective.objective.actionEn : nextObjective.objective.action)
+                : (en ? "All tracked objectives are complete" : "追跡中の目標はすべて達成済みです")}
+            </strong>
+          </div>
+          <div className="event-progress-meter">
+            <span><b>{percent}%</b><small>{en ? "tracked" : "記録済み"}</small></span>
+            <progress value={completed} max={event.objectives.length}>{percent}%</progress>
+          </div>
+        </div>
+
+        <div className="event-milestones" aria-label={en ? "Event deadlines" : "イベント期限"}>
+          {event.milestones.map((milestone) => {
+            const expired = milestone.deadline <= now;
+            return (
+              <div className={expired ? "expired" : ""} key={milestone.id}>
+                <span>{en ? milestone.labelEn : milestone.label}</span>
+                <strong>{formatJst(milestone.deadline, false, locale)} JST</strong>
+                <small>{expired ? (en ? "Ended" : "終了") : `${en ? "In " : "あと"}${formatCountdown(milestone.deadline, now, locale)}`}</small>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="event-objective-list">
+          {objectiveStates.map(({ objective, value, maximum, done }) => {
+            const remaining = Math.max(0, maximum - value);
+            const title = en ? objective.titleEn : objective.title;
+            const action = en ? objective.actionEn : objective.action;
+            const unit = en ? objective.unitEn ?? "" : objective.unit ?? "";
+            return (
+              <article className={`event-objective${done ? " done" : ""}`} key={objective.id}>
+                <div className="event-objective-copy">
+                  <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
+                  <span>
+                    <strong>{title}</strong>
+                    <small>{action}</small>
+                    <em>
+                      {done
+                        ? (en ? "Completed" : "達成済み")
+                        : objective.kind === "count"
+                          ? (en ? `${remaining.toLocaleString()}${unit} remaining` : `残り ${remaining.toLocaleString()}${unit}`)
+                          : (en ? "Not completed" : "未達成")}
+                    </em>
+                  </span>
+                </div>
+
+                {objective.kind === "check" ? (
+                  <button
+                    className="event-check-action"
+                    type="button"
+                    aria-pressed={done}
+                    onClick={() => onChange(event, objective, done ? 0 : 1)}
+                  >
+                    {done ? (en ? "Undo" : "未完了に戻す") : (en ? "Mark complete" : "達成にする")}
+                  </button>
+                ) : (
+                  <div className="event-count-control">
+                    <button
+                      type="button"
+                      aria-label={en ? `Decrease ${title}` : `${title}を減らす`}
+                      disabled={value === 0}
+                      onClick={() => onChange(event, objective, value - objectiveStep(objective))}
+                    >−</button>
+                    <label>
+                      <span className="sr-only">{en ? `Current progress for ${title}` : `${title}の現在値`}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max={maximum}
+                        step="1"
+                        inputMode="numeric"
+                        value={value}
+                        onChange={(input) => onChange(event, objective, Number(input.currentTarget.value))}
+                      />
+                      <small>/ {maximum.toLocaleString()}{unit}</small>
+                    </label>
+                    <button
+                      type="button"
+                      aria-label={en ? `Increase ${title}` : `${title}を増やす`}
+                      disabled={done}
+                      onClick={() => onChange(event, objective, value + objectiveStep(objective))}
+                    >＋</button>
+                    <button
+                      className="event-count-complete"
+                      type="button"
+                      disabled={done}
+                      onClick={() => onChange(event, objective, maximum)}
+                    >{en ? "Complete" : "達成"}</button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="event-card-foot">
+          <small>{en ? "Progress is entered manually and saved only on this device." : "進捗は手動入力で、この端末だけに保存されます。"}</small>
+          <a href={event.detailsUrl} target="_blank" rel="noopener noreferrer">
+            {en ? "Open official details" : "公式詳細を見る"} <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+    </details>
+  );
+}
+
 export default function HomeClient({
   locale = "ja",
   initialNowMs,
@@ -384,9 +558,7 @@ export default function HomeClient({
     : SPAWN_EVENTS, [locale]);
   const dailyTasks = useMemo(() => localizedRoutines(DAILY_TASKS, EN_DAILY_COPY, locale), [locale]);
   const weeklyTasks = useMemo(() => localizedRoutines(WEEKLY_TASKS, EN_WEEKLY_COPY, locale), [locale]);
-  const limitedEvents = useMemo(() => locale === "en"
-    ? LIMITED_EVENTS.map((event) => ({ ...event, title: EN_EVENT_COPY[event.id] }))
-    : LIMITED_EVENTS, [locale]);
+  const limitedEvents = LIMITED_EVENTS;
   const [now, setNow] = useState(() => new Date(initialNowMs));
   const dailyCycle = dailyCycleKey(now);
   const weeklyCycle = weeklyCycleKey(now);
@@ -395,6 +567,7 @@ export default function HomeClient({
   const [level, setLevel] = useState<number | null>(null);
   const [dailyDone, setDailyDone] = useState<string[]>([]);
   const [weeklyDone, setWeeklyDone] = useState<string[]>([]);
+  const [eventProgress, setEventProgress] = useState<EventProgress>(EMPTY_EVENT_PROGRESS);
   const [customRoutines, setCustomRoutines] = useState<CustomRoutine[]>([]);
   const [routinePreferences, setRoutinePreferences] = useState<RoutinePreferences>(
     DEFAULT_ROUTINE_PREFERENCES,
@@ -465,9 +638,14 @@ export default function HomeClient({
   const visibleDefaultCount = [...dailyTasks, ...weeklyTasks].filter(
     (routine) => !routinePreferences.hiddenDefaultIds.includes(routine.id),
   ).length;
-  const activeEvents = limitedEvents.filter((event) => event.deadline > now).sort(
-    (a, b) => a.deadline.getTime() - b.deadline.getTime(),
-  );
+  const activeEvents = limitedEvents.filter((event) => event.deadline > now).sort((a, b) => {
+    const aNext = a.milestones.find((milestone) => milestone.deadline > now)?.deadline ?? a.deadline;
+    const bNext = b.milestones.find((milestone) => milestone.deadline > now)?.deadline ?? b.deadline;
+    return aNext.getTime() - bNext.getTime();
+  });
+  const incompleteEventObjectives = activeEvents.reduce((total, event) => total + event.objectives.filter((objective) => (
+    eventObjectiveValue(eventProgress, event, objective, dailyCycle, weeklyCycle) < objectiveMaximum(objective)
+  )).length, 0);
   const informationAgeDays = Math.max(
     0,
     Math.floor((now.getTime() - new Date(VERIFIED_AT_ISO).getTime()) / 86_400_000),
@@ -495,6 +673,12 @@ export default function HomeClient({
       if (weekly.cycle === weeklyCycle && Array.isArray(weekly.completed)) {
         setWeeklyDone(weekly.completed);
       }
+      setEventProgress(parseEventProgress(
+        window.localStorage.getItem(EVENT_PROGRESS_KEY),
+        limitedEvents,
+        dailyCycle,
+        weeklyCycle,
+      ));
       setCustomRoutines(
         parseCustomRoutines(window.localStorage.getItem(CUSTOM_ROUTINES_KEY)),
       );
@@ -526,7 +710,7 @@ export default function HomeClient({
       setHydrated(true);
     }, 0);
     return () => window.clearTimeout(hydrationTimer);
-  }, [dailyCycle, dailyTasks, locale, spawnEvents, weeklyCycle, weeklyTasks]);
+  }, [dailyCycle, dailyTasks, limitedEvents, locale, spawnEvents, weeklyCycle, weeklyTasks]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -545,9 +729,15 @@ export default function HomeClient({
         setWeeklyDone([]);
         setActiveWeeklyCycle(weeklyCycle);
       }
+      setEventProgress((current) => normalizeEventProgress(
+        current,
+        limitedEvents,
+        dailyCycle,
+        weeklyCycle,
+      ));
     }, 0);
     return () => window.clearTimeout(resetTimer);
-  }, [activeDailyCycle, activeWeeklyCycle, dailyCycle, weeklyCycle, hydrated]);
+  }, [activeDailyCycle, activeWeeklyCycle, dailyCycle, weeklyCycle, hydrated, limitedEvents]);
 
   useEffect(() => {
     if (!hydrated || activeDailyCycle !== dailyCycle) return;
@@ -564,6 +754,11 @@ export default function HomeClient({
       JSON.stringify({ cycle: activeWeeklyCycle, completed: weeklyDone }),
     );
   }, [activeWeeklyCycle, hydrated, weeklyCycle, weeklyDone]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(EVENT_PROGRESS_KEY, JSON.stringify(eventProgress));
+  }, [eventProgress, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -658,6 +853,16 @@ export default function HomeClient({
         setWeeklyDone((current) => (
           JSON.stringify(current) === JSON.stringify(nextCompleted) ? current : nextCompleted
         ));
+      } else if (event.key === EVENT_PROGRESS_KEY) {
+        const nextProgress = parseEventProgress(
+          event.newValue,
+          limitedEvents,
+          dailyCycle,
+          weeklyCycle,
+        );
+        setEventProgress((current) => (
+          JSON.stringify(current) === JSON.stringify(nextProgress) ? current : nextProgress
+        ));
       } else if (event.key === CUSTOM_ROUTINES_KEY) {
         const nextRoutines = parseCustomRoutines(event.newValue);
         setCustomRoutines((current) => (
@@ -701,7 +906,7 @@ export default function HomeClient({
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
-  }, [dailyCycle, dailyTasks, hydrated, locale, spawnEvents, weeklyCycle, weeklyTasks]);
+  }, [dailyCycle, dailyTasks, hydrated, limitedEvents, locale, spawnEvents, weeklyCycle, weeklyTasks]);
 
   useEffect(() => {
     if (
@@ -829,6 +1034,21 @@ export default function HomeClient({
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
+  }
+
+  function updateEventObjective(
+    event: LimitedEvent,
+    objective: EventObjective,
+    value: number,
+  ) {
+    setEventProgress((current) => setEventObjectiveProgress(
+      current,
+      event,
+      objective,
+      Number.isFinite(value) ? Math.round(value) : 0,
+      dailyCycle,
+      weeklyCycle,
+    ));
   }
 
   function saveLevel(value: number) {
@@ -966,6 +1186,7 @@ export default function HomeClient({
       clanSchedule,
       clanScheduleTimeZone: clanScheduleTimeZoneSettings(clanScheduleTimeZone),
       notificationSettings,
+      eventProgress,
     });
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: "application/json",
@@ -992,6 +1213,12 @@ export default function HomeClient({
       const normalizedWeeklyChecks = data.weeklyChecks.cycle === weeklyCycle
         ? data.weeklyChecks
         : { cycle: weeklyCycle, completed: [] };
+      const normalizedEventProgress = normalizeEventProgress(
+        data.eventProgress,
+        limitedEvents,
+        dailyCycle,
+        weeklyCycle,
+      );
       const nextValues = new Map<string, string | null>([
         ["vampir-level", data.level === null ? null : String(data.level)],
         ["vampir-daily-checks", JSON.stringify(normalizedDailyChecks)],
@@ -1002,6 +1229,7 @@ export default function HomeClient({
         [CLAN_SCHEDULE_KEY, JSON.stringify(data.clanSchedule)],
         [CLAN_SCHEDULE_TIME_ZONE_KEY, JSON.stringify(data.clanScheduleTimeZone)],
         [NOTIFICATION_SETTINGS_KEY, JSON.stringify(data.notificationSettings)],
+        [EVENT_PROGRESS_KEY, JSON.stringify(normalizedEventProgress)],
       ]);
       replaceStorageValues(window.localStorage, nextValues);
 
@@ -1022,6 +1250,7 @@ export default function HomeClient({
       setClanSchedule(data.clanSchedule);
       setClanScheduleTimeZone(data.clanScheduleTimeZone.timeZone);
       setNotificationSettings(data.notificationSettings);
+      setEventProgress(normalizedEventProgress);
       setDataMessage(en ? "Backup restored. Checks from expired cycles were reset for the current cycle." : "バックアップを復元しました。期限切れのチェックは現在の周期に合わせて未完了に戻しました。");
       setDataMessageIsError(false);
     } catch {
@@ -1159,6 +1388,20 @@ export default function HomeClient({
             <span>{en ? "Daily reset at 05:00 in" : "日次05:00まで"} <strong>{formatCountdown(nextDailyReset(now), now, locale)}</strong></span>
             <span>{en ? "Weekly reset Monday at 05:00 in" : "週次・月曜05:00まで"} <strong>{formatCountdown(nextWeeklyReset(now), now, locale)}</strong></span>
           </div>
+
+          {activeEvents.length ? (
+            <a className="event-focus-strip" href="#events">
+              <span>
+                <small>{en ? "ACTIVE EVENT MISSIONS" : "開催中イベント"}</small>
+                <strong>
+                  {incompleteEventObjectives
+                    ? (en ? `${incompleteEventObjectives} tracked objectives remaining` : `追跡中の目標 残り${incompleteEventObjectives}件`)
+                    : (en ? "All tracked event objectives are complete" : "追跡中のイベント目標はすべて達成済み")}
+                </strong>
+              </span>
+              <b>{en ? "Review progress" : "進捗を確認"} <span aria-hidden="true">↓</span></b>
+            </a>
+          ) : null}
 
           <div className="personalization-strip">
             <div>
@@ -1407,27 +1650,24 @@ export default function HomeClient({
           <section className="event-section section-block" id="events" aria-labelledby="event-title">
             <div className="section-heading">
               <div>
-                <span className="eyebrow">DEADLINES</span>
-                <h2 id="event-title">{en ? "Events ending soon" : "期限が近いイベント"}</h2>
+                <span className="eyebrow">EVENT MISSIONS</span>
+                <h2 id="event-title">{en ? "Event and mission progress" : "イベント・ミッション進捗"}</h2>
               </div>
-              <p>{en ? "Select a card to view event details and rewards on an external page." : "カードを選ぶと、各イベントの内容と報酬を外部ページで確認できます。"}</p>
+              <p>{en ? "Record what you have completed, see what remains, and check the next action. Entries are stored only on this device." : "達成できたことを記録すると、残りと次にやることが分かります。入力内容はこの端末だけに保存されます。"}</p>
             </div>
-            <div className="event-list panel">
-              {activeEvents.map((event) => (
-                <a
-                  className="event-row event-row-link"
-                  href={event.detailsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={en ? `Open ${event.title} details on an external page` : `${event.title}の詳細を外部ページで開く`}
-                  key={event.id}
-                >
-                  <div><strong>{event.title}</strong><small>{en ? "Ends" : "終了"} {formatJst(event.deadline, false, locale)} JST</small></div>
-                  <span className="event-row-meta">
-                    <b>{en ? "In" : "あと"} {formatCountdown(event.deadline, now, locale)}</b>
-                    <small>{en ? "View details" : "詳細を見る"} <span aria-hidden="true">↗</span></small>
-                  </span>
-                </a>
+            <div className="event-progress-list">
+              {activeEvents.map((event, index) => (
+                <EventProgressCard
+                  key={event.campaignId}
+                  event={event}
+                  progress={eventProgress}
+                  dailyCycle={dailyCycle}
+                  weeklyCycle={weeklyCycle}
+                  now={now}
+                  locale={locale}
+                  initiallyOpen={index === 0}
+                  onChange={updateEventObjective}
+                />
               ))}
             </div>
           </section>

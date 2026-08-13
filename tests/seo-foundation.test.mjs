@@ -107,7 +107,7 @@ test("publishes the localized English policy", async () => {
   assert.match(html, /We use Cloudflare Web Analytics on the Japanese and English public home and policy pages/);
   assert.match(html, /page views, visits, referrers, country, device type, browser, operating system, page-load performance, and Core Web Vitals/);
   assert.match(html, /Information required for measurement is sent to Cloudflare/);
-  assert.match(html, /does not receive your game account, device-local checklist progress, level, notification settings/);
+  assert.match(html, /does not receive your game account, device-local daily, weekly, or event-mission checklist progress, level, notification settings/);
   assert.match(html, /Shared clan portal routes \(<code>\/clan\/\*<\/code> and <code>\/en\/clan\/\*<\/code>\) do not include the analytics tag/);
   assert.match(html, /We currently do not install advertising tags or affiliate-tracking tags/);
   assert.match(html, /rel="canonical"[^>]*href="https:\/\/vampir\.cilabworks\.com\/en\/policy"/i);
@@ -135,7 +135,7 @@ test("publishes the operation and privacy policy", async () => {
   assert.match(html, /Cloudflare Web Analyticsを使用しています/);
   assert.match(html, /ページビュー、訪問、参照元、国、端末種別、ブラウザ、OS、ページ読み込み性能/);
   assert.match(html, /計測に必要な情報をCloudflareへ送信します/);
-  assert.match(html, /ゲームアカウント、端末内のチェック状況、レベル、通知設定/);
+  assert.match(html, /ゲームアカウント、端末内の日課・週課・イベントミッションのチェック状況、レベル、通知設定/);
   assert.match(html, /クラン共有ポータル（<code>\/clan\/\*<\/code>、<code>\/en\/clan\/\*<\/code>）には解析タグを設置していません/);
   assert.match(html, /現在、広告配信タグとアフィリエイト追跡タグは設置していません/);
   assert.match(html, /https:\/\/github\.com\/Ranats\/vampir-support-hub\/issues/);

@@ -34,7 +34,7 @@ test("restores an English preference from the Japanese entry routes", () => {
   assert.equal(preferredEnglishPath("broken", "home"), null);
 });
 
-test("language preference remains outside the version 2 personal backup schema", () => {
+test("language preference remains outside the version 3 personal backup schema", () => {
   const backup = createPersonalBackup({
     level: null,
     dailyChecks: { cycle: "2026-7-31", completed: [] },
@@ -45,6 +45,7 @@ test("language preference remains outside the version 2 personal backup schema",
     clanScheduleTimeZone: clanScheduleTimeZoneSettings("Asia/Tokyo"),
     favoriteSpawnIds: [],
     notificationSettings: { version: 1, enabled: false, leadMinutes: 10 },
+    eventProgress: { version: 1, campaigns: {} },
   });
 
   assert.equal(Object.hasOwn(backup.data, "language"), false);

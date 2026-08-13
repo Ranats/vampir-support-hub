@@ -532,7 +532,7 @@ export default function SettingsSheet({
             </div>
             <div className="data-actions">
               <div>
-                <div><strong>{en ? "Backup" : "バックアップ"}</strong><small>{en ? "Export level, checks, display settings, personal tasks, clan plans, and notification settings" : "レベル、チェック、表示設定、自分の項目、クラン予定、通知設定を書き出す"}</small></div>
+                <div><strong>{en ? "Backup" : "バックアップ"}</strong><small>{en ? "Export level, routine and event progress, display settings, personal tasks, clan plans, and notification settings" : "レベル、日課・イベント進捗、表示設定、自分の項目、クラン予定、通知設定を書き出す"}</small></div>
                 <button type="button" onClick={onExportData}>{en ? "Export" : "書き出す"}</button>
               </div>
               <div>
@@ -588,7 +588,7 @@ export default function SettingsSheet({
 
           <aside className="local-data-note">
             <strong>{en ? "Saved only on this device" : "この端末だけに保存"}</strong>
-            <p>{en ? "Your level, checks, display settings, personal tasks, clan plans, and notification settings are not sent elsewhere. They sync across tabs in the same browser, but not across devices. Export a backup before changing devices. Do not enter personal information." : "レベル、チェック、表示設定、自分の項目、クラン予定、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。"}</p>
+            <p>{en ? "Your level, routine and event progress, display settings, personal tasks, clan plans, and notification settings are not sent elsewhere. They sync across tabs in the same browser, but not across devices. Export a backup before changing devices. Do not enter personal information." : "レベル、日課・イベント進捗、表示設定、自分の項目、クラン予定、通知設定は外部送信されません。同じブラウザのタブ間では反映されますが、端末間では同期されません。機種変更前はバックアップを書き出してください。個人情報は入力しないでください。"}</p>
           </aside>
             </>
           )}
