@@ -18,7 +18,6 @@ import {
 } from "./progress-cycle";
 import SettingsSheet from "./SettingsSheet";
 import ShareMenu from "./ShareMenu";
-import SectionMenu from "./SectionMenu";
 import {
   CUSTOM_ROUTINES_KEY,
   DEFAULT_ROUTINE_PREFERENCES,
@@ -1339,7 +1338,6 @@ export default function HomeClient({
           <span><strong>VAMPIR</strong><small>{en ? "Daily Navigator" : "日課ナビ"}</small></span>
         </a>
         <div className="header-tools">
-          <SectionMenu locale={locale} />
           <a
             className={`verified${informationIsStale ? " stale" : ""}`}
             href="#info"
@@ -1838,7 +1836,7 @@ export default function HomeClient({
         />
       ) : null}
 
-      <nav className="mobile-nav" aria-label={en ? "Mobile navigation" : "モバイルナビゲーション"}>
+      <nav className="bottom-nav" aria-label={en ? "Section navigation" : "セクションナビゲーション"}>
         <a href="#today">{en ? "Today" : "今日"}</a>
         <a href="#checklists">{en ? "Check" : "チェック"}</a>
         <a href="#clan">{en ? "Clan" : "クラン"}</a>
