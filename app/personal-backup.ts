@@ -9,9 +9,11 @@ import {
   parseClanScheduleTimeZoneSettings,
   type ClanScheduleTimeZoneSettings,
 } from "./clan-time-zone.ts";
+// @ts-expect-error Node's strip-types test runner requires the explicit extension.
+import { copyEventProgress, type EventProgress } from "./event-progress.ts";
 
 export const BACKUP_FORMAT = "vampir-support-hub-personal-backup";
-export const BACKUP_VERSION = 2;
+export const BACKUP_VERSION = 3;
 
 type SavedChecks = {
   cycle: string;
@@ -48,6 +50,7 @@ export type PersonalBackupData = {
   clanSchedule: ClanScheduleSettings;
   clanScheduleTimeZone: ClanScheduleTimeZoneSettings;
   notificationSettings: SavedNotificationSettings;
+  eventProgress: EventProgress;
 };
 
 export type PersonalBackup = {
@@ -232,7 +235,7 @@ function copyClanSchedule(value: unknown): ClanScheduleSettings | null {
 
 function copyBackupData(
   value: unknown,
-  sourceVersion: 1 | 2,
+  sourceVersion: 1 | 2 | 3,
 ): PersonalBackupData | null {
   if (!isObject(value)) return null;
 
@@ -260,6 +263,9 @@ function copyBackupData(
           : JSON.stringify(value.clanScheduleTimeZone),
       );
   const notificationSettings = copyNotificationSettings(value.notificationSettings);
+  const eventProgress = sourceVersion < 3 && value.eventProgress === undefined
+    ? { version: 1 as const, campaigns: {} }
+    : copyEventProgress(value.eventProgress);
 
   if (!dailyChecks
     || !weeklyChecks
@@ -268,7 +274,8 @@ function copyBackupData(
     || !favoriteSpawnIds
     || !clanSchedule
     || !clanScheduleTimeZone
-    || !notificationSettings) {
+    || !notificationSettings
+    || !eventProgress) {
     return null;
   }
 
@@ -282,6 +289,7 @@ function copyBackupData(
     clanSchedule,
     clanScheduleTimeZone,
     notificationSettings,
+    eventProgress,
   };
 }
 
@@ -303,7 +311,7 @@ export function parsePersonalBackup(raw: string | null): PersonalBackup | null {
     const parsed = JSON.parse(raw) as unknown;
     if (!isObject(parsed)
       || parsed.format !== BACKUP_FORMAT
-      || (parsed.version !== 1 && parsed.version !== BACKUP_VERSION)) {
+      || (parsed.version !== 1 && parsed.version !== 2 && parsed.version !== BACKUP_VERSION)) {
       return null;
     }
 

@@ -61,9 +61,17 @@ const validData = {
     enabled: true,
     leadMinutes: 10,
   },
+  eventProgress: {
+    version: 1,
+    campaigns: {
+      "red-moon": {
+        objectives: { "world-boss": { value: 2, cycle: "2026-7-27" } },
+      },
+    },
+  },
 };
 
-test("creates a deterministic version 2 backup without mutating saved shapes", () => {
+test("creates a deterministic version 3 backup without mutating saved shapes", () => {
   const backup = createPersonalBackup(validData);
 
   assert.equal(backup.format, BACKUP_FORMAT);
@@ -82,6 +90,7 @@ test("migrates a legacy version 1 backup without a clan schedule or time zone to
   const legacyData = { ...validData };
   delete legacyData.clanSchedule;
   delete legacyData.clanScheduleTimeZone;
+  delete legacyData.eventProgress;
   const parsed = parsePersonalBackup(JSON.stringify({
     format: BACKUP_FORMAT,
     version: 1,
@@ -113,13 +122,26 @@ test("migrates a legacy version 1 backup without a clan schedule or time zone to
     version: 1,
     timeZone: "Asia/Tokyo",
   });
+  assert.deepEqual(parsed?.data.eventProgress, { version: 1, campaigns: {} });
+});
+
+test("migrates version 2 backups without event progress", () => {
+  const legacyData = { ...validData };
+  delete legacyData.eventProgress;
+  const parsed = parsePersonalBackup(JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: 2,
+    data: legacyData,
+  }));
+  assert.equal(parsed?.version, BACKUP_VERSION);
+  assert.deepEqual(parsed?.data.eventProgress, { version: 1, campaigns: {} });
 });
 
 test("rejects broken JSON and unsupported versions", () => {
   assert.equal(parsePersonalBackup("{broken"), null);
   assert.equal(parsePersonalBackup(JSON.stringify({
     format: BACKUP_FORMAT,
-    version: 3,
+    version: 4,
     data: validData,
   })), null);
 });
@@ -175,6 +197,15 @@ test("rejects malformed progress and settings without partially importing", () =
     data: {
       ...validData,
       notificationSettings: { version: 1, enabled: true, leadMinutes: 60 },
+    },
+  })), null);
+
+  assert.equal(parsePersonalBackup(JSON.stringify({
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    data: {
+      ...validData,
+      eventProgress: { version: 1, campaigns: { bad: { objectives: { x: { value: 1.5 } } } } },
     },
   })), null);
 });

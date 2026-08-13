@@ -24,13 +24,23 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(settingsSource, /<ClanScheduleSettings[\s\S]*?standalone/);
   assert.match(clanSettingsSource, /standalone \? null : <span>4<\/span>/);
 
-  assert.equal(
-    gameContentSource.match(/detailsUrl: "https:\/\/gamewith\.jp\/vampir\/567177"/g)?.length,
-    5,
-  );
-  assert.match(pageSource, /className="event-row event-row-link"/);
+  assert.equal(gameContentSource.match(/id: "[^"]+", campaignId:/g)?.length, 13);
+  assert.equal(gameContentSource.match(/detailsUrl: "https:\/\/forum\.netmarble\.com\/vampir_jp\/view\/20\//g)?.length, 13);
+  assert.match(pageSource, /className={`event-progress-card panel/);
+  assert.match(pageSource, /イベント・ミッション進捗/);
+  assert.match(pageSource, /次にやること/);
+  assert.match(pageSource, /残り \$\{remaining\.toLocaleString\(\)\}/);
+  assert.match(pageSource, /EVENT_PROGRESS_KEY/);
+  assert.match(pageSource, /event-day-tabs/);
+  assert.match(pageSource, /activeLimitedEventsInProgressOrder/);
+  assert.match(pageSource, /通知対象/);
+  assert.match(pageSource, /className="bottom-nav"/);
+  for (const href of ["#today", "#checklists", "#clan", "#schedule", "#events", "#info"]) {
+    assert.match(pageSource, new RegExp(`<a href="${href}">`));
+  }
+  assert.doesNotMatch(pageSource, /SectionMenu/);
   assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
-  assert.match(pageSource, /の詳細を外部ページで開く/);
+  assert.match(pageSource, /公式詳細を見る/);
   assert.match(pageSource, /href=\{en \? "\/en\/clan\/create" : "\/clan\/create"\}/);
   assert.match(pageSource, /共有ポータルを作成/);
 });
@@ -76,6 +86,8 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /クラン予定のタイムゾーン/);
   assert.match(html, /共有ポータルを作成/);
   assert.match(html, /この端末だけに保存/);
+  assert.match(html, /イベント・ミッション進捗/);
+  assert.match(html, /次にやること/);
   assert.match(html, /検証済みのゲーム開催時刻でも、ゲームアカウント連携でもありません/);
   assert.match(html, /https:\/\/guide\.netmarble\.com\/thered\/110/);
   assert.match(html, /クラン機能 公式ガイド（韓国語）/);
@@ -84,11 +96,13 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /og\.png\?v=20260730-2/);
   assert.match(html, /favicon\.png\?v=20260730-1/);
   assert.match(html, /manifest\.webmanifest/);
+  assert.match(html, /\/assets\/[^"']+\.woff2/);
+  assert.doesNotMatch(html, /\/\.vinext\/fonts\//);
   assert.match(html, /https:\/\/vampir\.cilabworks\.com\//);
   assert.match(html, /情報源を見る/);
-  assert.match(html, /公式：(?:<!-- -->)?VAMPIR公式/);
+  assert.match(html, /公式：(?:<!-- -->)?VAMPIR 公式サイト/);
   assert.match(html, /補足：(?:<!-- -->)?ゲヘナ時刻/);
-  assert.match(html, /お気に入り/);
+  assert.match(html, /通知する/);
   assert.match(html, /このツールを応援する/);
   assert.match(html, /https:\/\/ko-fi\.com\/ranats/);
   assert.match(html, /https:\/\/ofuse\.me\/d2c3aa65/);
@@ -163,7 +177,8 @@ test("renders a fully localized English home with its own share target", async (
   assert.match(html, /Clan plans/);
   assert.match(html, /clan time zone/i);
   assert.match(html, /Create a shared portal/);
-  assert.match(html, /Open .* details on an external page/);
+  assert.match(html, /Event and mission progress/);
+  assert.match(html, /Open official details/);
   assert.match(html, /href="\/"[^>]*hreflang="ja"/i);
   assert.match(html, /href="\/en"[^>]*hreflang="en"/i);
   assert.match(html, /manifest-en\.webmanifest/);
