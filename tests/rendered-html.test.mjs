@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("wires the focused clan settings flow and event detail links", async () => {
-  const [pageSource, settingsSource, clanSettingsSource, gameContentSource] = await Promise.all([
+  const [pageSource, settingsSource, clanSettingsSource, gameContentSource, sectionMenuSource] = await Promise.all([
     readFile(new URL("../app/HomeClient.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/SettingsSheet.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/ClanScheduleSettings.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/game-content.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/SectionMenu.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(pageSource, /const openClanSettings = useCallback/);
@@ -34,6 +35,13 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(pageSource, /event-day-tabs/);
   assert.match(pageSource, /activeLimitedEventsInProgressOrder/);
   assert.match(pageSource, /通知対象/);
+  assert.match(pageSource, /<SectionMenu locale=\{locale\}/);
+  assert.match(pageSource, /<a href="#events">\{en \? "Events" : "イベント"\}<\/a>/);
+  for (const href of ["#today", "#checklists", "#clan", "#schedule", "#events", "#info"]) {
+    assert.match(sectionMenuSource, new RegExp(`href: "${href}"`));
+  }
+  assert.match(sectionMenuSource, /aria-expanded=\{open\}/);
+  assert.match(sectionMenuSource, /event\.key !== "Escape"/);
   assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
   assert.match(pageSource, /公式詳細を見る/);
   assert.match(pageSource, /href=\{en \? "\/en\/clan\/create" : "\/clan\/create"\}/);
