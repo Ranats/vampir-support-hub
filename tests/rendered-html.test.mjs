@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("wires the focused clan settings flow and event detail links", async () => {
-  const [pageSource, settingsSource, clanSettingsSource] = await Promise.all([
+  const [pageSource, settingsSource, clanSettingsSource, gameContentSource] = await Promise.all([
     readFile(new URL("../app/HomeClient.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/SettingsSheet.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/ClanScheduleSettings.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/game-content.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(pageSource, /const openClanSettings = useCallback/);
@@ -23,7 +24,10 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(settingsSource, /<ClanScheduleSettings[\s\S]*?standalone/);
   assert.match(clanSettingsSource, /standalone \? null : <span>4<\/span>/);
 
-  assert.equal(pageSource.match(/detailsUrl: SOURCE_URLS\.events/g)?.length, 5);
+  assert.equal(
+    gameContentSource.match(/detailsUrl: "https:\/\/gamewith\.jp\/vampir\/567177"/g)?.length,
+    5,
+  );
   assert.match(pageSource, /className="event-row event-row-link"/);
   assert.match(pageSource, /target="_blank"[\s\S]*?rel="noopener noreferrer"/);
   assert.match(pageSource, /の詳細を外部ページで開く/);
@@ -82,6 +86,8 @@ test("renders finished Japanese site metadata", async () => {
   assert.match(html, /manifest\.webmanifest/);
   assert.match(html, /https:\/\/vampir\.cilabworks\.com\//);
   assert.match(html, /情報源を見る/);
+  assert.match(html, /公式：(?:<!-- -->)?VAMPIR公式/);
+  assert.match(html, /補足：(?:<!-- -->)?ゲヘナ時刻/);
   assert.match(html, /お気に入り/);
   assert.match(html, /このツールを応援する/);
   assert.match(html, /https:\/\/ko-fi\.com\/ranats/);
@@ -142,6 +148,9 @@ test("renders a fully localized English home with its own share target", async (
     { waitUntil() {}, passThroughOnException() {} },
   );
   const html = await response.text();
+
+  assert.match(html, /Official: (?:<!-- -->)?Official VAMPIR site \(Japanese\)/);
+  assert.match(html, /Supplementary: (?:<!-- -->)?Gehenna schedule \(Japanese\)/);
 
   assert.equal(response.status, 200);
   assert.match(html, /<html[^>]*\blang=["']en["']/i);

@@ -66,16 +66,19 @@ import {
   formatClanTimeZoneName,
   resolveClanScheduleTimeZone,
 } from "./clan-time-zone";
+import {
+  DAILY_TASKS,
+  GAME_CONTENT,
+  LIMITED_EVENTS,
+  SPAWN_EVENTS,
+  STALE_AFTER_DAYS,
+  WEEKLY_TASKS,
+  oldestGameContentVerifiedAt,
+  type Routine as GameRoutine,
+  type SpawnEvent,
+} from "./game-content";
 
-type SpawnEvent = {
-  id: string;
-  title: string;
-  hour: number;
-  minute: number;
-  days?: number[];
-  minLevel?: number;
-  label: string;
-};
+type Routine = Omit<GameRoutine, "sourceIds" | "verifiedAt">;
 
 type Occurrence = SpawnEvent & { at: Date };
 
@@ -87,40 +90,17 @@ type ReminderCandidate = {
   url: string;
 };
 
-type Routine = {
-  id: string;
-  title: string;
-  note: string;
-  priority: number;
-  minLevel?: number;
-  unlock?: string;
-  custom?: boolean;
-};
-
-type LimitedEvent = {
-  id: string;
-  title: string;
-  deadline: Date;
-  detailsUrl: string;
-};
-
 const JST_OFFSET = 9 * 60 * 60 * 1000;
-const VERIFIED_AT = "2026年7月30日";
-const VERIFIED_AT_ISO = "2026-07-30T00:00:00+09:00";
-const STALE_AFTER_DAYS = 14;
 const NOTIFIED_OCCURRENCES_KEY = "vampir-notified-occurrences-v1";
+const oldestVerifiedAt = oldestGameContentVerifiedAt();
+
+if (!oldestVerifiedAt) throw new Error("Game content must include a verification date.");
+
+const VERIFIED_AT_ISO = oldestVerifiedAt;
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
-
-const SOURCE_URLS = {
-  official: "https://vampirjp.netmarble.com/landing",
-  routines: "https://gamewith.jp/vampir/567160",
-  clanOfficial: "https://guide.netmarble.com/thered/110",
-  gehenna: "https://gamewith.jp/vampir/569771",
-  events: "https://gamewith.jp/vampir/567177",
 };
 
 const SUPPORT_URLS = {
@@ -130,179 +110,10 @@ const SUPPORT_URLS = {
 
 const DEVELOPER_X_URL = "https://x.com/Kokonoe_variant";
 
-const SPAWN_EVENTS = [
-  {
-    id: "world-noon",
-    title: "ワールドボス",
-    hour: 12,
-    minute: 0,
-    label: "毎日",
-  },
-  {
-    id: "gehenna-13",
-    title: "ゲヘナ ★1・★2",
-    hour: 13,
-    minute: 0,
-    minLevel: 52,
-    label: "毎日",
-  },
-  {
-    id: "gehenna-17",
-    title: "ゲヘナ ★1",
-    hour: 17,
-    minute: 0,
-    minLevel: 52,
-    label: "毎日",
-  },
-  {
-    id: "world-night",
-    title: "ワールドボス",
-    hour: 20,
-    minute: 0,
-    label: "毎日",
-  },
-  {
-    id: "gehenna-21",
-    title: "ゲヘナ ★1・★2",
-    hour: 21,
-    minute: 0,
-    minLevel: 52,
-    label: "毎日",
-  },
-  {
-    id: "gehenna-sat-22",
-    title: "ゲヘナ ★3",
-    hour: 22,
-    minute: 0,
-    days: [6],
-    minLevel: 64,
-    label: "土曜",
-  },
-] as const satisfies readonly SpawnEvent[];
-
-const DAILY_TASKS = [
-  {
-    id: "daily-quest",
-    title: "デイリークエスト 10件",
-    note: "オルガの恩寵がある場合は12件",
-    priority: 5,
-    unlock: "解放：エピソード1 act3-101",
-  },
-  {
-    id: "creation-abyss",
-    title: "創造の深淵 1時間",
-    note: "1日最大1時間",
-    priority: 5,
-    minLevel: 32,
-  },
-  {
-    id: "faded-legacy",
-    title: "褪せた遺産 1時間",
-    note: "1日最大1時間",
-    priority: 5,
-    minLevel: 34,
-  },
-  {
-    id: "death-recovery",
-    title: "戦闘不能ペナルティを確認",
-    note: "発生した日に確認。24時間以内、最初の5回は無料",
-    priority: 4,
-  },
-  {
-    id: "gold-shop",
-    title: "ゴールド交換を確認",
-    note: "ゴールドに余裕がある場合",
-    priority: 3,
-  },
-] as const satisfies readonly Routine[];
-
-const WEEKLY_TASKS = [
-  {
-    id: "epic-dungeon",
-    title: "エピックダンジョン 3回",
-    note: "週3回まで無料入場",
-    priority: 5,
-    unlock: "解放：対応エピソードの進行",
-  },
-  {
-    id: "ancient-workshop",
-    title: "古代の工房 8時間",
-    note: "1週間で最大8時間",
-    priority: 5,
-    minLevel: 41,
-  },
-  {
-    id: "dark-trade",
-    title: "闇取引を確認",
-    note: "対象アイテムと交換上限は毎週更新",
-    priority: 5,
-    minLevel: 38,
-  },
-  {
-    id: "clan-mission",
-    title: "クラン任務を確認",
-    note: "クラン加入・クランLv3以上が対象",
-    priority: 4,
-  },
-  {
-    id: "clan-guard",
-    title: "クラン守護を確認",
-    note: "クラン加入・クランLv3以上が対象",
-    priority: 4,
-  },
-  {
-    id: "farm-diamond",
-    title: "ファームダイヤ 1,000",
-    note: "通常の週間上限。恩寵がある場合は2,000",
-    priority: 4,
-  },
-  {
-    id: "gehenna-weekly",
-    title: "ゲヘナ週間ポイントを確認",
-    note: "現在のポイントと交換予定を確認",
-    priority: 3,
-    minLevel: 52,
-  },
-] as const satisfies readonly Routine[];
-
-const LIMITED_EVENTS = [
-  {
-    id: "red-login-7",
-    title: "レッドムーン前夜祭 7日間特別ログイン",
-    deadline: makeJstDate(2026, 7, 12, 4, 59),
-    detailsUrl: SOURCE_URLS.events,
-  },
-  {
-    id: "red-growth",
-    title: "レッドムーン前夜祭 成長支援ミッション",
-    deadline: makeJstDate(2026, 7, 12, 4, 59),
-    detailsUrl: SOURCE_URLS.events,
-  },
-  {
-    id: "red-payback",
-    title: "強化支援ペイバック",
-    deadline: makeJstDate(2026, 7, 12, 4, 59),
-    detailsUrl: SOURCE_URLS.events,
-  },
-  {
-    id: "daily-double",
-    title: "デイリークエスト W報酬",
-    deadline: makeJstDate(2026, 7, 26, 4, 59),
-    detailsUrl: SOURCE_URLS.events,
-  },
-  {
-    id: "region-growth",
-    title: "新地域オープン記念 成長支援",
-    deadline: makeJstDate(2026, 8, 16, 4, 59),
-    detailsUrl: SOURCE_URLS.events,
-  },
-] as const satisfies readonly LimitedEvent[];
-
 type SpawnEventId = (typeof SPAWN_EVENTS)[number]["id"];
 type DailyTaskId = (typeof DAILY_TASKS)[number]["id"];
 type WeeklyTaskId = (typeof WEEKLY_TASKS)[number]["id"];
 type LimitedEventId = (typeof LIMITED_EVENTS)[number]["id"];
-
 const EN_SPAWN_COPY: Record<SpawnEventId, Pick<SpawnEvent, "title" | "label">> = {
   "world-noon": { title: "World Boss", label: "Daily" },
   "gehenna-13": { title: "Gehenna ★1 & ★2", label: "Daily" },
@@ -512,6 +323,15 @@ function freshnessLabel(now: Date, locale: Locale = "ja") {
   if (elapsedDays === 0) return locale === "en" ? "verified today" : "本日確認";
   if (elapsedDays === 1) return locale === "en" ? "verified 1 day ago" : "1日前に確認";
   return locale === "en" ? `verified ${elapsedDays} days ago` : `${elapsedDays}日前に確認`;
+}
+
+function verifiedAtLabel(locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date(VERIFIED_AT_ISO));
 }
 
 function RoutineRow({
@@ -1244,7 +1064,7 @@ export default function HomeClient({
           <a
             className={`verified${informationIsStale ? " stale" : ""}`}
             href="#info"
-            title={en ? "Last verified July 30, 2026. Follow in-game information and official notices." : `最終確認 ${VERIFIED_AT}。ゲーム内表示と公式告知を優先してください。`}
+            title={en ? `Last verified ${verifiedAtLabel("en")}. Follow in-game information and official notices.` : `最終確認 ${verifiedAtLabel("ja")}。ゲーム内表示と公式告知を優先してください。`}
           >
             {informationIsStale ? (en ? "Needs review" : "要再確認") : freshnessLabel(now, locale)}
           </a>
@@ -1558,7 +1378,7 @@ export default function HomeClient({
           <div className={`information-status${informationIsStale ? " stale" : ""}`}>
             <div>
               <strong>{informationIsStale ? (en ? "Published information may be outdated" : "掲載情報が古い可能性があります") : (en ? `Information ${freshnessLabel(now, locale)}` : `掲載情報は${freshnessLabel(now)}です`)}</strong>
-              <small>{en ? "Last verified July 30, 2026. Follow the in-game schedule if times change." : `最終確認 ${VERIFIED_AT}・時刻変更時はゲーム内時刻表を正本とします。`}</small>
+              <small>{en ? `Last verified ${verifiedAtLabel("en")}. Follow the in-game schedule if times change.` : `最終確認 ${verifiedAtLabel("ja")}・時刻変更時はゲーム内時刻表を正本とします。`}</small>
             </div>
             <a href="#info">{en ? "View sources" : "情報源を見る"}</a>
           </div>
@@ -1669,15 +1489,18 @@ export default function HomeClient({
           <details>
             <summary>{en ? "Sources and verification date" : "情報源と確認日"}</summary>
             <p>
-              {en ? `Last verified: July 30, 2026 (${freshnessLabel(now, locale)})` : `最終確認：${VERIFIED_AT}（${freshnessLabel(now)}）`}
+              {en ? `Last verified: ${verifiedAtLabel("en")} (${freshnessLabel(now, locale)})` : `最終確認：${verifiedAtLabel("ja")}（${freshnessLabel(now)}）`}
               {informationIsStale ? (en ? " · A new review is needed." : "・現在は再確認が必要です。") : ""}
             </p>
             <nav aria-label={en ? "Sources" : "情報源"}>
-              <a href={SOURCE_URLS.official} target="_blank" rel="noreferrer">{en ? "Official VAMPIR site (Japanese)" : "VAMPIR公式"}</a>
-              <a href={SOURCE_URLS.clanOfficial} target="_blank" rel="noreferrer">{en ? "Official clan feature guide (Korean)" : "クラン機能 公式ガイド（韓国語）"}</a>
-              <a href={SOURCE_URLS.routines} target="_blank" rel="noreferrer">{en ? "Daily, weekly, and clan overview (Japanese)" : "日課・週課・クラン概要（日本語解説）"}</a>
-              <a href={SOURCE_URLS.gehenna} target="_blank" rel="noreferrer">{en ? "Gehenna schedule (Japanese)" : "ゲヘナ時刻"}</a>
-              <a href={SOURCE_URLS.events} target="_blank" rel="noreferrer">{en ? "Event list (Japanese)" : "イベント一覧"}</a>
+              {GAME_CONTENT.sources.map((source) => (
+                <a href={source.url} target="_blank" rel="noreferrer" key={source.id}>
+                  {source.authority === "official"
+                    ? (en ? "Official: " : "公式：")
+                    : (en ? "Supplementary: " : "補足：")}
+                  {source.label[en ? "en" : "ja"]}
+                </a>
+              ))}
             </nav>
           </details>
         </footer>
