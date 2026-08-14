@@ -31,6 +31,20 @@ test("updates only known objectives and clamps count/check values", () => {
   assert.equal(eventObjectiveValue(progress, event, claim, "2026-8-14", "2026-8-10"), 0);
 });
 
+test("checkbox-style updates complete, persist, and reset count and check objectives", () => {
+  let progress = setEventObjectiveProgress({ version: 1, campaigns: {} }, event, worldBoss, 2, "2026-8-14", "2026-8-10");
+  progress = setEventObjectiveProgress(progress, event, worldBoss, 4, "2026-8-14", "2026-8-10");
+  progress = setEventObjectiveProgress(progress, event, login, 1, "2026-8-14", "2026-8-10");
+
+  const restored = parseEventProgress(JSON.stringify(progress), events, "2026-8-14", "2026-8-10");
+  assert.equal(eventObjectiveValue(restored, event, worldBoss, "2026-8-14", "2026-8-10"), 4);
+  assert.equal(eventObjectiveValue(restored, event, login, "2026-8-14", "2026-8-10"), 1);
+
+  progress = setEventObjectiveProgress(restored, event, worldBoss, 0, "2026-8-14", "2026-8-10");
+  progress = setEventObjectiveProgress(progress, event, login, 0, "2026-8-14", "2026-8-10");
+  assert.deepEqual(progress, { version: 1, campaigns: {} });
+});
+
 test("resets daily and weekly values while retaining once-only progress", () => {
   const progress = { version: 1, campaigns: { "red-moon": { objectives: {
     "world-boss": { value: 2, cycle: "2026-8-3" }, login: { value: 1, cycle: "2026-8-13" }, claim: { value: 1 },
@@ -76,4 +90,8 @@ test("one cumulative metric automatically completes every reached reward tier", 
   assert.equal(eventObjectiveValue(progress, tieredEvent, lowerTier, "2026-8-14", "2026-8-10"), 1_500_000);
   assert.equal(eventObjectiveValue(progress, tieredEvent, upperTier, "2026-8-14", "2026-8-10"), 3_000_000);
   assert.deepEqual(normalizeEventProgress(progress, [tieredEvent], "2026-8-14", "2026-8-10"), progress);
+
+  const reset = setEventObjectiveProgress(progress, tieredEvent, lowerTier, 0, "2026-8-14", "2026-8-10");
+  assert.equal(eventObjectiveValue(reset, tieredEvent, lowerTier, "2026-8-14", "2026-8-10"), 0);
+  assert.equal(eventObjectiveValue(reset, tieredEvent, upperTier, "2026-8-14", "2026-8-10"), 0);
 });

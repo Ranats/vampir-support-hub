@@ -1506,6 +1506,29 @@ summary:focus-visible {
   min-width: 0;
 }
 
+.event-objective-check-toggle {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  margin: -4px;
+  place-items: center;
+  cursor: pointer;
+}
+
+.event-objective-checkbox:checked + .check-box {
+  border-color: var(--success);
+  background: var(--success);
+}
+
+.event-objective-check-toggle:hover .check-box {
+  border-color: var(--accent-strong);
+}
+
+.event-objective-checkbox:focus-visible + .check-box {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 3px;
+}
+
 .event-objective-copy strong,
 .event-objective-copy small,
 .event-objective-copy em {
