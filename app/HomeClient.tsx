@@ -437,7 +437,20 @@ function EventProgressCard({
     return (
       <article className={`event-objective${done ? " done" : ""}`} key={objective.id}>
         <div className="event-objective-copy">
-          <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
+          <label className="event-objective-check-toggle">
+            <input
+              className="sr-only event-objective-checkbox"
+              type="checkbox"
+              checked={done}
+              aria-label={en ? `Completion status for ${fullTitle}` : `${fullTitle}の達成状況`}
+              onChange={(input) => onChange(
+                event,
+                objective,
+                input.currentTarget.checked ? maximum : 0,
+              )}
+            />
+            <span className="check-box" aria-hidden="true">{done ? "✓" : ""}</span>
+          </label>
           <span>
             <strong>{title}</strong>
             <small>{action}</small>

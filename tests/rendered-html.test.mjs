@@ -33,6 +33,9 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(pageSource, /EVENT_PROGRESS_KEY/);
   assert.match(pageSource, /event-day-tabs/);
   assert.match(pageSource, /activeLimitedEventsInProgressOrder/);
+  assert.match(pageSource, /className="event-objective-check-toggle"/);
+  assert.match(pageSource, /className="sr-only event-objective-checkbox"/);
+  assert.match(pageSource, /type="checkbox"[\s\S]*?checked=\{done\}[\s\S]*?input\.currentTarget\.checked \? maximum : 0/);
   assert.match(pageSource, /通知対象/);
   assert.match(pageSource, /className="bottom-nav"/);
   for (const href of ["#today", "#checklists", "#clan", "#schedule", "#events", "#info"]) {
