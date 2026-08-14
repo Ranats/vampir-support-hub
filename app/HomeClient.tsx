@@ -69,11 +69,14 @@ import {
 import {
   DAILY_TASKS,
   GAME_CONTENT,
+  LAST_CONTENT_UPDATE_CHECKED_AT,
   LIMITED_EVENTS,
   SPAWN_EVENTS,
-  STALE_AFTER_DAYS,
+  UPDATE_PENDING_REVIEW_AFTER_DAYS,
   WEEKLY_TASKS,
   oldestGameContentVerifiedAt,
+  oldestPendingGameContentUpdateAt,
+  pendingUpdateNeedsReview,
   type Routine as GameRoutine,
   type EventObjective,
   type LimitedEvent,
@@ -109,6 +112,7 @@ const oldestVerifiedAt = oldestGameContentVerifiedAt();
 if (!oldestVerifiedAt) throw new Error("Game content must include a verification date.");
 
 const VERIFIED_AT_ISO = oldestVerifiedAt;
+const PENDING_UPDATE_AT_ISO = oldestPendingGameContentUpdateAt();
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -318,24 +322,29 @@ function safeNotifiedOccurrences() {
   }
 }
 
-function freshnessLabel(now: Date, locale: Locale = "ja") {
+function elapsedDateLabel(now: Date, iso: string, locale: Locale, action: "checked" | "verified") {
   const elapsedDays = Math.max(
     0,
-    Math.floor((now.getTime() - new Date(VERIFIED_AT_ISO).getTime()) / 86_400_000),
+    Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000),
   );
-  if (elapsedDays === 0) return locale === "en" ? "verified today" : "本日確認";
-  if (elapsedDays === 1) return locale === "en" ? "verified 1 day ago" : "1日前に確認";
-  return locale === "en" ? `verified ${elapsedDays} days ago` : `${elapsedDays}日前に確認`;
+  if (elapsedDays === 0) return locale === "en" ? `${action} today` : "本日確認";
+  if (elapsedDays === 1) return locale === "en" ? `${action} 1 day ago` : "1日前に確認";
+  return locale === "en" ? `${action} ${elapsedDays} days ago` : `${elapsedDays}日前に確認`;
 }
 
-function verifiedAtLabel(locale: Locale) {
+function dateLabel(iso: string, locale: Locale) {
   return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
     timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "long",
     day: "numeric",
-  }).format(new Date(VERIFIED_AT_ISO));
+  }).format(new Date(iso));
 }
+
+const updateCheckedAtLabel = (locale: Locale) => dateLabel(LAST_CONTENT_UPDATE_CHECKED_AT, locale);
+const verifiedAtLabel = (locale: Locale) => dateLabel(VERIFIED_AT_ISO, locale);
+const updateCheckAgeLabel = (now: Date, locale: Locale) => elapsedDateLabel(now, LAST_CONTENT_UPDATE_CHECKED_AT, locale, "checked");
+const pendingUpdateAtLabel = (locale: Locale) => PENDING_UPDATE_AT_ISO ? dateLabel(PENDING_UPDATE_AT_ISO, locale) : null;
 
 function RoutineRow({
   task,
@@ -707,11 +716,8 @@ export default function HomeClient({
   const incompleteEventObjectives = activeEvents.reduce((total, event) => total + event.objectives.filter((objective) => (
     eventObjectiveValue(eventProgress, event, objective, dailyCycle, weeklyCycle) < objectiveMaximum(objective)
   )).length, 0);
-  const informationAgeDays = Math.max(
-    0,
-    Math.floor((now.getTime() - new Date(VERIFIED_AT_ISO).getTime()) / 86_400_000),
-  );
-  const informationIsStale = informationAgeDays >= STALE_AFTER_DAYS;
+  const hasPendingUpdate = PENDING_UPDATE_AT_ISO !== null;
+  const pendingUpdateIsOverdue = pendingUpdateNeedsReview(now, PENDING_UPDATE_AT_ISO);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -1352,11 +1358,17 @@ export default function HomeClient({
         </a>
         <div className="header-tools">
           <a
-            className={`verified${informationIsStale ? " stale" : ""}`}
+            className={`verified${pendingUpdateIsOverdue ? " stale" : ""}`}
             href="#info"
-            title={en ? `Last verified ${verifiedAtLabel("en")}. Follow in-game information and official notices.` : `最終確認 ${verifiedAtLabel("ja")}。ゲーム内表示と公式告知を優先してください。`}
+            title={en
+              ? `Sources checked ${updateCheckedAtLabel("en")}. ${hasPendingUpdate ? "A confirmed update is waiting to be published." : "No confirmed updates are waiting to be published."} Follow in-game information and official notices.`
+              : `更新チェック ${updateCheckedAtLabel("ja")}。${hasPendingUpdate ? "確認済みの更新を反映中です。" : "未反映の更新はありません。"}ゲーム内表示と公式告知を優先してください。`}
           >
-            {informationIsStale ? (en ? "Needs review" : "要再確認") : freshnessLabel(now, locale)}
+            {pendingUpdateIsOverdue
+              ? (en ? "Needs review" : "要確認")
+              : hasPendingUpdate
+                ? (en ? "Update pending" : "更新対応中")
+                : updateCheckAgeLabel(now, locale)}
           </a>
           <LanguageSwitch locale={locale} page="home" />
           <ShareMenu locale={locale} />
@@ -1679,10 +1691,16 @@ export default function HomeClient({
               {favoriteSpawnIds.length ? (en ? ` ${favoriteSpawnIds.length} spawn alert target${favoriteSpawnIds.length === 1 ? "" : "s"}.` : ` 出現通知対象${favoriteSpawnIds.length}件。`) : ""}
             </p>
           </div>
-          <div className={`information-status${informationIsStale ? " stale" : ""}`}>
+          <div className={`information-status${pendingUpdateIsOverdue ? " stale" : ""}`}>
             <div>
-              <strong>{informationIsStale ? (en ? "Published information may be outdated" : "掲載情報が古い可能性があります") : (en ? `Information ${freshnessLabel(now, locale)}` : `掲載情報は${freshnessLabel(now)}です`)}</strong>
-              <small>{en ? `Last verified ${verifiedAtLabel("en")}. Follow the in-game schedule if times change.` : `最終確認 ${verifiedAtLabel("ja")}・時刻変更時はゲーム内時刻表を正本とします。`}</small>
+              <strong>{pendingUpdateIsOverdue
+                ? (en ? `A confirmed update has been unpublished for ${UPDATE_PENDING_REVIEW_AFTER_DAYS}+ days` : `確認済みの更新が${UPDATE_PENDING_REVIEW_AFTER_DAYS}日以上未反映です`)
+                : hasPendingUpdate
+                  ? (en ? "A confirmed update is being prepared" : "確認済みの更新を反映中です")
+                  : (en ? "Sources checked · no unpublished updates" : "更新チェック済み・未反映の更新なし")}</strong>
+              <small>{en
+                ? `Checked ${updateCheckedAtLabel("en")} · oldest published value verified ${verifiedAtLabel("en")}. Follow the in-game schedule if times change.`
+                : `更新チェック ${updateCheckedAtLabel("ja")}・掲載値の最古確認 ${verifiedAtLabel("ja")}。時刻変更時はゲーム内時刻表を正本とします。`}</small>
             </div>
             <a href="#info">{en ? "View sources" : "情報源を見る"}</a>
           </div>
@@ -1788,10 +1806,14 @@ export default function HomeClient({
             </nav>
           </div>
           <details>
-            <summary>{en ? "Sources and verification date" : "情報源と確認日"}</summary>
+            <summary>{en ? "Sources and update status" : "情報源と更新状況"}</summary>
             <p>
-              {en ? `Last verified: ${verifiedAtLabel("en")} (${freshnessLabel(now, locale)})` : `最終確認：${verifiedAtLabel("ja")}（${freshnessLabel(now)}）`}
-              {informationIsStale ? (en ? " · A new review is needed." : "・現在は再確認が必要です。") : ""}
+              {en
+                ? `Source update check: ${updateCheckedAtLabel("en")} (${updateCheckAgeLabel(now, locale)}) · ${hasPendingUpdate ? `confirmed update pending since ${pendingUpdateAtLabel("en")}` : "no unpublished updates"}.`
+                : `更新チェック：${updateCheckedAtLabel("ja")}（${updateCheckAgeLabel(now, locale)}）・${hasPendingUpdate ? `確認済み更新は${pendingUpdateAtLabel("ja")}から反映待ち` : "未反映の更新なし"}。`}
+              {pendingUpdateIsOverdue ? (en ? " Needs review." : " 要確認です。") : ""}
+              <br />
+              {en ? `Oldest published-value verification: ${verifiedAtLabel("en")}.` : `掲載値の最古確認：${verifiedAtLabel("ja")}。`}
             </p>
             <nav aria-label={en ? "Sources" : "情報源"}>
               {GAME_CONTENT.sources.map((source) => (
