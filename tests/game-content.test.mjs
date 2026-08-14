@@ -3,10 +3,14 @@ import test from "node:test";
 import {
   DAILY_TASKS,
   GAME_CONTENT,
+  LAST_CONTENT_UPDATE_CHECKED_AT,
   LIMITED_EVENTS,
   SPAWN_EVENTS,
+  UPDATE_PENDING_REVIEW_AFTER_DAYS,
   WEEKLY_TASKS,
   oldestGameContentVerifiedAt,
+  oldestPendingGameContentUpdateAt,
+  pendingUpdateNeedsReview,
   validateGameContent,
 } from "../app/game-content.ts";
 
@@ -94,11 +98,25 @@ test("validator accepts the published definition", () => {
   assert.equal(validateGameContent(copyContent()).sources.length, 19);
 });
 
-test("overall freshness uses the oldest item date so stale content cannot be hidden", () => {
+test("oldest published-value verification keeps the earliest item date visible", () => {
   const content = copyContent();
   content.dailyTasks[0].verifiedAt = "2026-08-01T00:00:00+09:00";
   content.weeklyTasks[0].verifiedAt = "2026-07-20T00:00:00+09:00";
   assert.equal(oldestGameContentVerifiedAt(content), "2026-07-20T00:00:00+09:00");
+});
+
+test("update review status is based only on confirmed unapplied updates", () => {
+  assert.equal(LAST_CONTENT_UPDATE_CHECKED_AT, "2026-08-14T12:30:00+09:00");
+  assert.equal(UPDATE_PENDING_REVIEW_AFTER_DAYS, 14);
+  assert.equal(oldestPendingGameContentUpdateAt(), null);
+  assert.equal(pendingUpdateNeedsReview(new Date("2026-08-30T00:00:00+09:00")), false);
+
+  const content = copyContent();
+  content.dailyTasks[0].updateRequiredAt = "2026-08-14T09:15:00+09:00";
+  content.weeklyTasks[0].updateRequiredAt = "2026-08-13T09:15:00+09:00";
+  assert.equal(oldestPendingGameContentUpdateAt(content), "2026-08-13T09:15:00+09:00");
+  assert.equal(pendingUpdateNeedsReview(new Date("2026-08-27T09:14:59+09:00"), oldestPendingGameContentUpdateAt(content)), false);
+  assert.equal(pendingUpdateNeedsReview(new Date("2026-08-27T09:15:00+09:00"), oldestPendingGameContentUpdateAt(content)), true);
 });
 
 for (const [name, mutate] of [
@@ -108,6 +126,9 @@ for (const [name, mutate] of [
   ["invalid source URLs", (content) => { content.sources[0].url = "http://example.test"; }],
   ["whitespace-only source labels", (content) => { content.sources[0].label.ja = "   "; }],
   ["invalid verification dates", (content) => { content.dailyTasks[0].verifiedAt = "2026-07-30"; }],
+  ["invalid pending-update dates", (content) => { content.dailyTasks[0].updateRequiredAt = "2026-08-14"; }],
+  ["pending updates before verification", (content) => { content.dailyTasks[0].updateRequiredAt = "2026-07-29T00:00:00+09:00"; }],
+  ["pending updates after the latest check", (content) => { content.dailyTasks[0].updateRequiredAt = "2026-08-14T12:30:01+09:00"; }],
   ["rolled-over calendar dates", (content) => { content.dailyTasks[0].verifiedAt = "2026-02-31T00:00:00+09:00"; }],
   ["rolled-over hours", (content) => { content.dailyTasks[0].verifiedAt = "2026-01-01T24:00:00+09:00"; }],
   ["invalid weekdays", (content) => { content.spawnEvents[5].days = [7]; }],

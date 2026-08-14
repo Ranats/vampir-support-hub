@@ -103,6 +103,9 @@ test("renders finished Japanese site metadata", async () => {
   assert.doesNotMatch(html, /\/\.vinext\/fonts\//);
   assert.match(html, /https:\/\/vampir\.cilabworks\.com\//);
   assert.match(html, /情報源を見る/);
+  assert.match(html, /更新チェック済み・未反映の更新なし/);
+  assert.match(html, /掲載値の最古確認/);
+  assert.doesNotMatch(html, />要確認</);
   assert.match(html, /公式：(?:<!-- -->)?VAMPIR 公式サイト/);
   assert.match(html, /補足：(?:<!-- -->)?ゲヘナ時刻/);
   assert.match(html, /通知する/);
@@ -168,6 +171,9 @@ test("renders a fully localized English home with its own share target", async (
 
   assert.match(html, /Official: (?:<!-- -->)?Official VAMPIR site \(Japanese\)/);
   assert.match(html, /Supplementary: (?:<!-- -->)?Gehenna schedule \(Japanese\)/);
+  assert.match(html, /Sources checked · no unpublished updates/);
+  assert.match(html, /Oldest published-value verification/);
+  assert.doesNotMatch(html, />Needs review</);
 
   assert.equal(response.status, 200);
   assert.match(html, /<html[^>]*\blang=["']en["']/i);

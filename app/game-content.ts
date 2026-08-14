@@ -18,6 +18,7 @@ export type SpawnEvent = {
   label: string;
   sourceIds: readonly string[];
   verifiedAt: string;
+  updateRequiredAt?: string;
 };
 
 export type Routine = {
@@ -30,6 +31,7 @@ export type Routine = {
   custom?: boolean;
   sourceIds: readonly string[];
   verifiedAt: string;
+  updateRequiredAt?: string;
 };
 
 export type EventObjective = {
@@ -67,6 +69,7 @@ export type LimitedEvent = {
   objectives: readonly EventObjective[];
   sourceIds: readonly string[];
   verifiedAt: string;
+  updateRequiredAt?: string;
 };
 
 export type GameContentDefinition = {
@@ -79,7 +82,8 @@ export type GameContentDefinition = {
 
 const BASE_VERIFIED_AT = "2026-07-30T00:00:00+09:00";
 const EVENT_VERIFIED_AT = "2026-08-14T00:00:00+09:00";
-export const STALE_AFTER_DAYS = 14;
+export const LAST_CONTENT_UPDATE_CHECKED_AT = "2026-08-14T12:30:00+09:00";
+export const UPDATE_PENDING_REVIEW_AFTER_DAYS = 14;
 
 export const GAME_CONTENT_SOURCES = [
   { id: "official", url: "https://vampirjp.netmarble.com/landing", authority: "official", label: { ja: "VAMPIR 公式サイト", en: "Official VAMPIR site (Japanese)" } },
@@ -408,7 +412,7 @@ export function validateGameContent(content: GameContentDefinition) {
   const allItems = [...content.spawnEvents, ...content.dailyTasks, ...content.weeklyTasks, ...content.limitedEvents];
   assert(content.spawnEvents.length > 0, "at least one spawn event is required");
   assert(allItems.length > 0, "at least one game-content item is required");
-  const validateItem = (item: { id: string; sourceIds: readonly string[]; verifiedAt: string }) => {
+  const validateItem = (item: { id: string; sourceIds: readonly string[]; verifiedAt: string; updateRequiredAt?: string }) => {
     assert(Boolean(item.id.trim()), "item id must not be empty");
     assert(!itemIds.has(item.id), `duplicate item id ${item.id}`);
     itemIds.add(item.id);
@@ -416,6 +420,11 @@ export function validateGameContent(content: GameContentDefinition) {
     assert(new Set(item.sourceIds).size === item.sourceIds.length, `duplicate source ids for ${item.id}`);
     for (const sourceId of item.sourceIds) assert(sourceIds.has(sourceId), `unknown source id ${sourceId} for ${item.id}`);
     assert(isValidVerifiedAt(item.verifiedAt), `invalid verifiedAt for ${item.id}`);
+    if (item.updateRequiredAt !== undefined) {
+      assert(isValidVerifiedAt(item.updateRequiredAt), `invalid updateRequiredAt for ${item.id}`);
+      assert(Date.parse(item.updateRequiredAt) >= Date.parse(item.verifiedAt), `updateRequiredAt predates verifiedAt for ${item.id}`);
+      assert(Date.parse(item.updateRequiredAt) <= Date.parse(LAST_CONTENT_UPDATE_CHECKED_AT), `updateRequiredAt follows the latest content check for ${item.id}`);
+    }
   };
 
   for (const event of content.spawnEvents) {
@@ -467,10 +476,28 @@ export function validateGameContent(content: GameContentDefinition) {
   return content;
 }
 
+assert(isValidVerifiedAt(LAST_CONTENT_UPDATE_CHECKED_AT), "invalid last content update check date");
 validateGameContent(GAME_CONTENT);
 
 export function oldestGameContentVerifiedAt(content: GameContentDefinition = GAME_CONTENT) {
   return [...content.spawnEvents, ...content.dailyTasks, ...content.weeklyTasks, ...content.limitedEvents]
     .map((item) => item.verifiedAt)
     .reduce<string | null>((oldest, verifiedAt) => oldest === null || Date.parse(verifiedAt) < Date.parse(oldest) ? verifiedAt : oldest, null);
+}
+
+export function oldestPendingGameContentUpdateAt(content: GameContentDefinition = GAME_CONTENT) {
+  return [...content.spawnEvents, ...content.dailyTasks, ...content.weeklyTasks, ...content.limitedEvents]
+    .flatMap((item) => item.updateRequiredAt ? [item.updateRequiredAt] : [])
+    .reduce<string | null>((oldest, updateRequiredAt) => oldest === null || Date.parse(updateRequiredAt) < Date.parse(oldest) ? updateRequiredAt : oldest, null);
+}
+
+export function pendingUpdateNeedsReview(
+  now: Date,
+  pendingSince: string | null = oldestPendingGameContentUpdateAt(),
+  reviewAfterDays = UPDATE_PENDING_REVIEW_AFTER_DAYS,
+) {
+  if (!pendingSince) return false;
+  if (!isValidVerifiedAt(pendingSince)) return true;
+  const elapsedDays = Math.max(0, Math.floor((now.getTime() - Date.parse(pendingSince)) / 86_400_000));
+  return elapsedDays >= reviewAfterDays;
 }
