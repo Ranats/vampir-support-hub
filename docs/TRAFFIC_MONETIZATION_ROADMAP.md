@@ -5,7 +5,7 @@
 2026年7月31日時点の段階は **未計測・未確認** です。独自ドメイン、canonical、
 `robots.txt`、`sitemap.xml`、運営方針、任意の支援リンクは公開済みですが、
 完了月のPV実績はまだありません。Cloudflare Web Analyticsの手動ビーコンは、公開
-4ルート（`/`、`/policy`、`/en`、`/en/policy`）だけに設置し、
+6ルート（`/`、`/schedule`、`/policy`、`/en`、`/en/schedule`、`/en/policy`）だけに設置し、
 `/clan/*` と `/en/clan/*` は計測対象外としています。
 広告タグとアフィリエイト追跡タグは設置していません。
 
@@ -16,7 +16,7 @@ PVを取得できるまでは「1万PV未満」とは判定しません。現在
 ## 判定に使うPV
 
 - 対象: `vampir.cilabworks.com` のインデックス可能な公開コンテンツのページ表示
-- 現在の計測対象: `/`、`/policy`、`/en`、`/en/policy` の初期ページ表示
+- 現在の計測対象: `/`、`/schedule`、`/policy`、`/en`、`/en/schedule`、`/en/policy` の初期ページ表示
 - 除外: `/clan/*`、`/en/clan/*`、API、静的ファイル、旧ホスト
 - 直近30日PV: 日々の傾向を見る参考値
 - 確定月間PV: 毎月1日から末日までの値。段階変更の正式判定に使用
@@ -44,15 +44,15 @@ PVだけで広告導入を自動決定しません。情報の正確性、表示
 ## 今すぐ完了できること
 
 - この文書を収益化判断の正本にする
-- Cloudflare Web Analyticsを日英4公開ルートだけに設置し、両言語の方針ページへ取り扱いを明記する
+- Cloudflare Web Analyticsを日英6公開ルートだけに設置し、両言語の方針ページへ取り扱いを明記する
 - 手入力した確定PVの段階、昇格、降格を同じ規則で判定する
 - 秘密情報やPV履歴を公開サイト、D1、Git履歴に保存しない境界を固定する
 - 将来の月次レポート出力先を `.traffic-reports/` としてGit対象外にする
 
 ## 利用者による設定・確認が必要なこと
 
-1. 本番反映後、Cloudflare Web Analyticsで `/`、`/policy`、`/en`、
-   `/en/policy` の受信を確認する。`/clan/*` と `/en/clan/*` が記録されていないことも確認する。
+1. 本番反映後、Cloudflare Web Analyticsで `/`、`/schedule`、`/policy`、
+   `/en`、`/en/schedule`、`/en/policy` の受信を確認する。`/clan/*` と `/en/clan/*` が記録されていないことも確認する。
 2. Google Search Consoleでドメイン所有権を確認し、
    `https://vampir.cilabworks.com/sitemap.xml` を送信する。
 3. 自動取得へ進む場合だけ、Cloudflareの読取専用トークンを秘密管理へ登録する。

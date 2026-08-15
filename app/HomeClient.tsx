@@ -71,7 +71,6 @@ import {
   GAME_CONTENT,
   LAST_CONTENT_UPDATE_CHECKED_AT,
   LIMITED_EVENTS,
-  SPAWN_EVENTS,
   UPDATE_PENDING_REVIEW_AFTER_DAYS,
   WEEKLY_TASKS,
   oldestGameContentVerifiedAt,
@@ -80,8 +79,13 @@ import {
   type Routine as GameRoutine,
   type EventObjective,
   type LimitedEvent,
-  type SpawnEvent,
 } from "./game-content";
+import {
+  formatSpawnCountdown as formatCountdown,
+  formatSpawnJst as formatJst,
+  localizedSpawnEvents,
+  upcomingSpawnOccurrences as upcomingOccurrences,
+} from "./spawn-schedule";
 import {
   EMPTY_EVENT_PROGRESS,
   EVENT_PROGRESS_KEY,
@@ -94,8 +98,6 @@ import {
 import { activeLimitedEventsInProgressOrder } from "./event-order";
 
 type Routine = Omit<GameRoutine, "sourceIds" | "verifiedAt">;
-
-type Occurrence = SpawnEvent & { at: Date };
 
 type ReminderCandidate = {
   occurrenceKey: string;
@@ -126,17 +128,8 @@ const SUPPORT_URLS = {
 
 const DEVELOPER_X_URL = "https://x.com/Kokonoe_variant";
 
-type SpawnEventId = (typeof SPAWN_EVENTS)[number]["id"];
 type DailyTaskId = (typeof DAILY_TASKS)[number]["id"];
 type WeeklyTaskId = (typeof WEEKLY_TASKS)[number]["id"];
-const EN_SPAWN_COPY: Record<SpawnEventId, Pick<SpawnEvent, "title" | "label">> = {
-  "world-noon": { title: "World Boss", label: "Daily" },
-  "gehenna-13": { title: "Gehenna ★1 & ★2", label: "Daily" },
-  "gehenna-17": { title: "Gehenna ★1", label: "Daily" },
-  "world-night": { title: "World Boss", label: "Daily" },
-  "gehenna-21": { title: "Gehenna ★1 & ★2", label: "Daily" },
-  "gehenna-sat-22": { title: "Gehenna ★3", label: "Saturday" },
-};
 
 const EN_DAILY_COPY: Record<DailyTaskId, Pick<Routine, "title" | "note"> & { unlock?: string }> = {
   "daily-quest": { title: "Complete 10 Daily Quests", note: "12 with Olga's Blessing", unlock: "Unlocks: Episode 1 act3-101" },
@@ -177,59 +170,6 @@ function makeJstDate(
 
 function shiftedToJst(date: Date) {
   return new Date(date.getTime() + JST_OFFSET);
-}
-
-function upcomingOccurrences(events: readonly SpawnEvent[], now: Date, level: number, take = 6) {
-  const items: Occurrence[] = [];
-  const jst = shiftedToJst(now);
-
-  for (let offset = 0; offset < 8; offset += 1) {
-    const cursor = new Date(jst);
-    cursor.setUTCDate(cursor.getUTCDate() + offset);
-
-    for (const event of events) {
-      if (event.days && !event.days.includes(cursor.getUTCDay())) continue;
-      if (event.minLevel && event.minLevel > level) continue;
-
-      const at = makeJstDate(
-        cursor.getUTCFullYear(),
-        cursor.getUTCMonth(),
-        cursor.getUTCDate(),
-        event.hour,
-        event.minute,
-      );
-      if (at.getTime() >= now.getTime() - 30_000) items.push({ ...event, at });
-    }
-  }
-
-  return items
-    .sort((a, b) => a.at.getTime() - b.at.getTime())
-    .slice(0, take);
-}
-
-function formatCountdown(target: Date, now: Date, locale: Locale = "ja") {
-  const total = Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000));
-  const days = Math.floor(total / 86400);
-  const hours = Math.floor((total % 86400) / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
-  const clock = [hours, minutes, seconds]
-    .map((value) => String(value).padStart(2, "0"))
-    .join(":");
-  return days ? (locale === "en" ? `${days}d ${clock}` : `${days}日 ${clock}`) : clock;
-}
-
-function formatJst(date: Date, withSeconds = false, locale: Locale = "ja") {
-  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "ja-JP", {
-    timeZone: "Asia/Tokyo",
-    month: "numeric",
-    day: "numeric",
-    weekday: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: withSeconds ? "2-digit" : undefined,
-    hour12: false,
-  }).format(date);
 }
 
 function formatClanTime(
@@ -621,9 +561,7 @@ export default function HomeClient({
   initialNowMs: number;
 }) {
   const en = locale === "en";
-  const spawnEvents = useMemo(() => locale === "en"
-    ? SPAWN_EVENTS.map((event) => ({ ...event, ...EN_SPAWN_COPY[event.id] }))
-    : SPAWN_EVENTS, [locale]);
+  const spawnEvents = useMemo(() => localizedSpawnEvents(locale), [locale]);
   const dailyTasks = useMemo(() => localizedRoutines(DAILY_TASKS, EN_DAILY_COPY, locale), [locale]);
   const weeklyTasks = useMemo(() => localizedRoutines(WEEKLY_TASKS, EN_WEEKLY_COPY, locale), [locale]);
   const limitedEvents = LIMITED_EVENTS;
@@ -1689,6 +1627,7 @@ export default function HomeClient({
                 ? (en ? `Showing JST schedules available at Lv${level}.` : `Lv${level}で参加できる予定をJSTで表示しています。`)
                 : (en ? "No level set — showing all schedules in JST." : "レベル未設定のため、すべての予定をJSTで表示しています。")}
               {favoriteSpawnIds.length ? (en ? ` ${favoriteSpawnIds.length} spawn alert target${favoriteSpawnIds.length === 1 ? "" : "s"}.` : ` 出現通知対象${favoriteSpawnIds.length}件。`) : ""}
+              {" "}<Link href={en ? "/en/schedule" : "/schedule"}>{en ? "View the full timetable" : "定例時刻を一覧で見る"}</Link>
             </p>
           </div>
           <div className={`information-status${pendingUpdateIsOverdue ? " stale" : ""}`}>

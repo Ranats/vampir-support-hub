@@ -46,6 +46,26 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(pageSource, /公式詳細を見る/);
   assert.match(pageSource, /href=\{en \? "\/en\/clan\/create" : "\/clan\/create"\}/);
   assert.match(pageSource, /共有ポータルを作成/);
+  assert.match(pageSource, /href=\{en \? "\/en\/schedule" : "\/schedule"\}/);
+});
+
+test("keeps the standalone spawn schedule backed by shared verified content", async () => {
+  const [schedulePage, spawnSchedule, gameContent] = await Promise.all([
+    readFile(new URL("../app/SchedulePageClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/spawn-schedule.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/game-content.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(schedulePage, /GAME_CONTENT_SOURCES/);
+  assert.match(schedulePage, /SPAWN_EVENTS/);
+  assert.match(schedulePage, /formatSpawnVerifiedAt/);
+  assert.match(schedulePage, /in-game schedule and official notices are authoritative/);
+  assert.match(schedulePage, /ゲーム内時刻表と公式告知を正本/);
+  assert.match(spawnSchedule, /import \{ SPAWN_EVENTS, type SpawnEvent \} from "\.\/game-content"/);
+  assert.match(spawnSchedule, /localizedSpawnEvents/);
+  assert.match(spawnSchedule, /upcomingSpawnOccurrences/);
+  assert.match(gameContent, /id: "world-noon"/);
+  assert.match(gameContent, /id: "gehenna-13"/);
 });
 
 test("renders finished Japanese site metadata", async () => {

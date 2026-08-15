@@ -128,7 +128,7 @@ export default function PolicyPage() {
           <section className="policy-card">
             <h2>アクセス解析・広告</h2>
             <p>
-              日本語・英語の公開トップページと方針ページでは、Cloudflare Web Analyticsを使用しています。
+              日本語・英語の公開トップページ、出現時刻ページ、方針ページでは、Cloudflare Web Analyticsを使用しています。
               ページビュー、訪問、参照元、国、端末種別、ブラウザ、OS、ページ読み込み性能、
               Core Web Vitalsを集計し、計測に必要な情報をCloudflareへ送信します。
             </p>

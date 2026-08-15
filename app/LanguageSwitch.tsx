@@ -14,7 +14,7 @@ export default function LanguageSwitch({
   page,
 }: {
   locale: Locale;
-  page: "home" | "policy";
+  page: "home" | "policy" | "schedule";
 }) {
   useEffect(() => {
     const savedLocale = parseLocalePreference(

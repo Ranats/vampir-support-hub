@@ -20,16 +20,19 @@ test("accepts only supported device-local language preferences", () => {
   assert.equal(parseLocalePreference(null), null);
 });
 
-test("maps home and policy links without changing route semantics", () => {
+test("maps home, policy, and schedule links without changing route semantics", () => {
   assert.equal(localePath("ja", "home"), "/");
   assert.equal(localePath("ja", "policy"), "/policy");
   assert.equal(localePath("en", "home"), "/en");
   assert.equal(localePath("en", "policy"), "/en/policy");
+  assert.equal(localePath("ja", "schedule"), "/schedule");
+  assert.equal(localePath("en", "schedule"), "/en/schedule");
 });
 
 test("restores an English preference from the Japanese entry routes", () => {
   assert.equal(preferredEnglishPath("en", "home"), "/en");
   assert.equal(preferredEnglishPath("en", "policy"), "/en/policy");
+  assert.equal(preferredEnglishPath("en", "schedule"), "/en/schedule");
   assert.equal(preferredEnglishPath("ja", "home"), null);
   assert.equal(preferredEnglishPath("broken", "home"), null);
 });
