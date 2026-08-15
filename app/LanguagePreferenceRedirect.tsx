@@ -6,7 +6,7 @@ import { LANGUAGE_KEY, preferredEnglishPath } from "./localization";
 export default function LanguagePreferenceRedirect({
   page,
 }: {
-  page: "home" | "policy";
+  page: "home" | "policy" | "schedule";
 }) {
   useEffect(() => {
     const preferredPath = preferredEnglishPath(

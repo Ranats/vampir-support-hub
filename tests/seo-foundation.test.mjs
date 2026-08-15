@@ -78,6 +78,27 @@ test("serves robots and sitemap for the canonical domain", async () => {
   assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/policy<\/loc>/i);
   assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/en<\/loc>/i);
   assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/en\/policy<\/loc>/i);
+  assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/schedule<\/loc>/i);
+  assert.match(sitemap, /<loc>https:\/\/vampir\.cilabworks\.com\/en\/schedule<\/loc>/i);
+});
+
+test("publishes localized indexable spawn schedule pages", async () => {
+  for (const [path, canonical, alternate, expectedText] of [
+    ["/schedule", "/schedule", "/en/schedule", "VAMPIR ワールドボス・ゲヘナ出現時間"],
+    ["/en/schedule", "/en/schedule", "/schedule", "VAMPIR World Boss and Gehenna Schedule"],
+  ]) {
+    const response = await request(path, { headers: { accept: "text/html" } });
+    const html = await response.text();
+    assert.equal(response.status, 200);
+    assert.match(html, new RegExp(`rel="canonical"[^>]*href="https://vampir\\.cilabworks\\.com${canonical}"`, "i"));
+    assert.match(html, new RegExp(`href="https://vampir\\.cilabworks\\.com${alternate}"`, "i"));
+    assert.match(html, new RegExp(expectedText));
+    assert.match(html, /World Boss|ワールドボス/);
+    assert.match(html, /game schedule|ゲーム内時刻表/);
+    assert.doesNotMatch(html, /property="og:image"/i);
+    assert.doesNotMatch(html, /name="twitter:image"/i);
+    assertSingleCloudflareWebAnalyticsScript(html);
+  }
 });
 
 test("publishes English canonical, language alternates, and text-only social metadata", async () => {
@@ -104,7 +125,7 @@ test("publishes the localized English policy", async () => {
   assert.match(html, /Shared clan portals/);
   assert.match(html, /Viewer and administrator links use separate secret keys/);
   assert.match(html, /verification hashes are stored in the database/);
-  assert.match(html, /We use Cloudflare Web Analytics on the Japanese and English public home and policy pages/);
+  assert.match(html, /We use Cloudflare Web Analytics on the Japanese and English public home, spawn-schedule, and policy pages/);
   assert.match(html, /page views, visits, referrers, country, device type, browser, operating system, page-load performance, and Core Web Vitals/);
   assert.match(html, /Information required for measurement is sent to Cloudflare/);
   assert.match(html, /does not receive your game account, device-local daily, weekly, or event-mission checklist progress, level, notification settings/);

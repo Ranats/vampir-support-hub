@@ -15,6 +15,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.3,
     },
     {
+      url: `${SITE_URL}/schedule`,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
       url: `${SITE_URL}/en`,
       changeFrequency: "daily",
       priority: 0.8,
@@ -23,6 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${SITE_URL}/en/policy`,
       changeFrequency: "monthly",
       priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/en/schedule`,
+      changeFrequency: "daily",
+      priority: 0.7,
     },
   ];
 }

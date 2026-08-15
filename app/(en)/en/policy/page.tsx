@@ -94,7 +94,7 @@ export default function EnglishPolicyPage() {
 
           <section className="policy-card">
             <h2>Analytics and advertising</h2>
-            <p>We use Cloudflare Web Analytics on the Japanese and English public home and policy pages. It aggregates page views, visits, referrers, country, device type, browser, operating system, page-load performance, and Core Web Vitals. Information required for measurement is sent to Cloudflare.</p>
+            <p>We use Cloudflare Web Analytics on the Japanese and English public home, spawn-schedule, and policy pages. It aggregates page views, visits, referrers, country, device type, browser, operating system, page-load performance, and Core Web Vitals. Information required for measurement is sent to Cloudflare.</p>
             <p>Cloudflare Web Analytics does not receive your game account, device-local daily, weekly, or event-mission checklist progress, level, notification settings, personal clan plans, or clan portal viewer or administrator keys. Shared clan portal routes (<code>/clan/*</code> and <code>/en/clan/*</code>) do not include the analytics tag. We currently do not install advertising tags or affiliate-tracking tags.</p>
             <p>If other analytics or advertising is introduced in the future, we will add its purpose and handling to this page first. Sponsorships and advertisements will be clearly distinguished from normal site guidance.</p>
           </section>
