@@ -24,8 +24,8 @@ test("wires the focused clan settings flow and event detail links", async () => 
   assert.match(settingsSource, /<ClanScheduleSettings[\s\S]*?standalone/);
   assert.match(clanSettingsSource, /standalone \? null : <span>4<\/span>/);
 
-  assert.equal(gameContentSource.match(/id: "[^"]+", campaignId:/g)?.length, 13);
-  assert.equal(gameContentSource.match(/detailsUrl: "https:\/\/forum\.netmarble\.com\/vampir_jp\/view\/20\//g)?.length, 13);
+  assert.equal(gameContentSource.match(/id: "[^"]+", campaignId:/g)?.length, 22);
+  assert.equal(gameContentSource.match(/detailsUrl: "https:\/\/forum\.netmarble\.com\/vampir_jp\/view\/20\//g)?.length, 22);
   assert.match(pageSource, /className={`event-progress-card panel/);
   assert.match(pageSource, /イベント・ミッション進捗/);
   assert.match(pageSource, /次にやること/);

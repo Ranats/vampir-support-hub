@@ -82,7 +82,8 @@ export type GameContentDefinition = {
 
 const BASE_VERIFIED_AT = "2026-07-30T00:00:00+09:00";
 const EVENT_VERIFIED_AT = "2026-08-14T00:00:00+09:00";
-export const LAST_CONTENT_UPDATE_CHECKED_AT = "2026-08-14T12:30:00+09:00";
+const RED_MOON_FESTA_VERIFIED_AT = "2026-08-19T12:45:00+09:00";
+export const LAST_CONTENT_UPDATE_CHECKED_AT = "2026-08-19T12:45:00+09:00";
 export const UPDATE_PENDING_REVIEW_AFTER_DAYS = 14;
 
 export const GAME_CONTENT_SOURCES = [
@@ -91,7 +92,16 @@ export const GAME_CONTENT_SOURCES = [
   { id: "clan-official", url: "https://guide.netmarble.com/thered/110", authority: "official", label: { ja: "クラン機能 公式ガイド（韓国語）", en: "Official clan feature guide (Korean)" } },
   { id: "gehenna", url: "https://gamewith.jp/vampir/569771", authority: "supplementary", label: { ja: "ゲヘナ時刻", en: "Gehenna schedule (Japanese)" } },
   { id: "events", url: "https://gamewith.jp/vampir/567177", authority: "supplementary", label: { ja: "イベント一覧（補足）", en: "Event list (Japanese, supplementary)" } },
-  { id: "event-overview", url: "https://forum.netmarble.com/vampir_jp/view/20/233", authority: "official", label: { ja: "開催中イベント 公式一覧", en: "Official active-event list" } },
+  { id: "event-overview", url: "https://forum.netmarble.com/vampir_jp/view/20/270", authority: "official", label: { ja: "開催中イベント 公式一覧", en: "Official active-event list" } },
+  { id: "event-red-moon-boss", url: "https://forum.netmarble.com/vampir_jp/view/20/259", authority: "official", label: { ja: "レッドムーンフェスタのボス出現", en: "Red Moon Festa boss appearances" } },
+  { id: "event-red-moon-boss-mission", url: "https://forum.netmarble.com/vampir_jp/view/20/260", authority: "official", label: { ja: "レッドムーンフェスタ ボスミッション", en: "Red Moon Festa boss mission" } },
+  { id: "event-recombine-login", url: "https://forum.netmarble.com/vampir_jp/view/20/261", authority: "official", label: { ja: "再合成チケットログインイベント", en: "Recombination Ticket Login Event" } },
+  { id: "event-dungeon", url: "https://forum.netmarble.com/vampir_jp/view/20/262", authority: "official", label: { ja: "レッドムーンフェスタ イベントダンジョン", en: "Red Moon Festa Event Dungeon" } },
+  { id: "event-dungeon-mission", url: "https://forum.netmarble.com/vampir_jp/view/20/264", authority: "official", label: { ja: "イベントダンジョンミッション", en: "Event Dungeon Mission" } },
+  { id: "event-diamond-grail", url: "https://forum.netmarble.com/vampir_jp/view/20/265", authority: "official", label: { ja: "ダイヤ聖杯イベント", en: "Diamond Grail Event" } },
+  { id: "event-enhancement-ranking", url: "https://forum.netmarble.com/vampir_jp/view/20/266", authority: "official", label: { ja: "装備強化ランキング", en: "Equipment Enhancement Ranking" } },
+  { id: "event-artifact-payback", url: "https://forum.netmarble.com/vampir_jp/view/20/267", authority: "official", label: { ja: "アーティファクト強化ペイバック", en: "Artifact Enhancement Payback" } },
+  { id: "event-daily-login-reward", url: "https://forum.netmarble.com/vampir_jp/view/20/268", authority: "official", label: { ja: "毎日ログイン報酬", en: "Daily Login Rewards" } },
   { id: "event-sigil", url: "https://forum.netmarble.com/vampir_jp/view/20/227", authority: "official", label: { ja: "シギルのレッドムーン闇取引シーズン", en: "Sigil Red Moon Dark Trade Season" } },
   { id: "event-sigil-support", url: "https://forum.netmarble.com/vampir_jp/view/20/228", authority: "official", label: { ja: "シギルのレッドムーン闇取引支援", en: "Sigil Red Moon Dark Trade Support" } },
   { id: "event-bloodline", url: "https://forum.netmarble.com/vampir_jp/view/20/229", authority: "official", label: { ja: "血界進化ペイバック", en: "Bloodline Evolution Payback" } },
@@ -139,6 +149,11 @@ const eventEnd0819 = at("2026-08-18T19:59:00.000Z");
 const eventEnd0826 = at("2026-08-25T19:59:00.000Z");
 const eventEnd0826Collection = at("2026-08-25T22:59:00.000Z");
 const eventEnd0916 = at("2026-09-15T19:59:00.000Z");
+const eventEnd0902 = at("2026-09-01T19:59:00.000Z");
+const eventEnd0909 = at("2026-09-08T19:59:00.000Z");
+const eventEnd0916Collection = at("2026-09-15T22:59:00.000Z");
+const eventEnd0826Midnight = at("2026-08-25T15:00:00.000Z");
+const eventEnd0830 = at("2026-08-29T19:59:00.000Z");
 
 function missionCount(
   id: string,
@@ -354,6 +369,97 @@ export const LIMITED_EVENTS = [
     detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/201", milestones: [{ id: "event-end", label: "ミッション・報酬受取終了", labelEn: "Missions and reward claims end", deadline: at("2026-11-17T19:59:00.000Z") }],
     objectives: [{ id: "level", title: "キャラクターレベル", titleEn: "Character level", action: "Lv36・40・44・48・52・55・58・61・64・67・70・75で報酬を受け取る", actionEn: "Claim rewards at Lv36, 40, 44, 48, 52, 55, 58, 61, 64, 67, 70, and 75", kind: "count", target: 75, unit: "Lv", unitEn: "Lv", cadence: "once" }],
     sourceIds: ["event-100-day", "event-overview"], verifiedAt: EVENT_VERIFIED_AT,
+  },
+  {
+    id: "red-moon-festa-boss", campaignId: "red-moon-festa-boss-2026-08", title: "レッドムーンフェスタのボス出現", titleEn: "Red Moon Festa Boss Appearances",
+    summary: "毎日11:50と19:50に出現するバルドゥンの参加を記録します。", summaryEn: "Track participation in Bardeun appearances at 11:50 and 19:50 each day.", deadline: eventEnd0916,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/259", milestones: [{ id: "boss-end", label: "ボス出現終了", labelEn: "Boss appearances end", deadline: eventEnd0916 }],
+    objectives: [
+      { id: "bardeun-1150", title: "11:50 バルドゥン", titleEn: "11:50 Bardeun", action: "出現を確認して参加する", actionEn: "Check the appearance and participate", kind: "check", cadence: "daily" },
+      { id: "bardeun-1950", title: "19:50 バルドゥン", titleEn: "19:50 Bardeun", action: "出現を確認して参加する", actionEn: "Check the appearance and participate", kind: "check", cadence: "daily" },
+    ], sourceIds: ["event-red-moon-boss", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "red-moon-festa-boss-mission", campaignId: "red-moon-festa-boss-mission-2026-08", title: "レッドムーンフェスタ ボスミッション", titleEn: "Red Moon Festa Boss Mission",
+    summary: "参加報酬ボックスの使用数を累積で記録します。", summaryEn: "Track cumulative participation reward boxes used.", deadline: eventEnd0916,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/260", milestones: [{ id: "mission-end", label: "ミッション・報酬受取終了", labelEn: "Missions and reward claims end", deadline: eventEnd0916 }],
+    objectives: [{ id: "participation-boxes", title: "参加報酬ボックスを使用", titleEn: "Participation reward boxes used", action: "2・4・6・8・10・12・14・16・18・20回の報酬を順に受け取る", actionEn: "Claim rewards at 2, 4, 6, 8, 10, 12, 14, 16, 18, and 20", kind: "count", target: 20, unit: "回", unitEn: " times", cadence: "once" }],
+    sourceIds: ["event-red-moon-boss-mission", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "recombine-ticket-login", campaignId: "recombine-ticket-login-2026-08", title: "再合成チケットログインイベント", titleEn: "Recombination Ticket Login Event",
+    summary: "毎日05:00 JSTに切り替わるログイン報酬を14日分記録し、チケット使用期限も確認します。", summaryEn: "Track 14 daily login rewards resetting at 05:00 JST and check the ticket-use deadline.", deadline: eventEnd0916Collection,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/261", milestones: [
+      { id: "login-end", label: "ログインイベント終了", labelEn: "Login event ends", deadline: eventEnd0916 },
+      { id: "ticket-use-end", label: "再合成チケット使用終了", labelEn: "Recombination ticket use ends", deadline: eventEnd0916Collection },
+    ],
+    objectives: [
+      { id: "login-days", title: "ログイン報酬", titleEn: "Login rewards", action: "毎日05:00 JSTの切替後に受け取り、14日分を記録する", actionEn: "Claim after each 05:00 JST reset and record all 14 days", kind: "count", target: 14, unit: "日", unitEn: " days", cadence: "once" },
+      { id: "use-ticket", title: "再合成チケットを使用", titleEn: "Use recombination tickets", action: "使用期限までにチケットを使う", actionEn: "Use tickets before the deadline", kind: "check", cadence: "once" },
+    ], sourceIds: ["event-recombine-login", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "red-moon-festa-dungeon", campaignId: "red-moon-festa-dungeon-2026-08", title: "レッドムーンフェスタ イベントダンジョン", titleEn: "Red Moon Festa Event Dungeon",
+    summary: "毎日のダンジョン利用と印章製作・交換の進行を記録します。", summaryEn: "Track daily dungeon use and Sigil crafting and exchange progress.", deadline: eventEnd0909,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/262", milestones: [
+      { id: "dungeon-end", label: "イベントダンジョン終了", labelEn: "Event dungeon ends", deadline: eventEnd0902 },
+      { id: "trade-end", label: "交換所・印章製作終了", labelEn: "Exchange and Sigil crafting end", deadline: eventEnd0909 },
+    ],
+    objectives: [
+      { id: "daily-dungeon", title: "イベントダンジョン", titleEn: "Event Dungeon", action: "1日基本10分の利用分を確認する", actionEn: "Check the daily base 10-minute allowance", kind: "check", cadence: "daily" },
+      { id: "craft-sigils", title: "印章を製作", titleEn: "Sigils crafted", action: "印章製作を最大15段階まで記録する", actionEn: "Track Sigil crafting through 15 stages", kind: "count", target: 15, unit: "段階", unitEn: " stages", cadence: "once" },
+      { id: "exchange-materials", title: "交換・素材消化", titleEn: "Exchange and spend materials", action: "交換所と所持素材の消化を確認する", actionEn: "Check exchanges and use of held materials", kind: "check", cadence: "once" },
+    ], sourceIds: ["event-dungeon", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "event-dungeon-mission", campaignId: "event-dungeon-mission-2026-08", title: "イベントダンジョンミッション", titleEn: "Event Dungeon Mission",
+    summary: "ワールドボス討伐と対象ダンジョンの累積討伐数を記録します。", summaryEn: "Track cumulative World Boss and eligible dungeon defeats.", deadline: eventEnd0902,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/264", milestones: [{ id: "mission-end", label: "ミッション・報酬受取終了", labelEn: "Missions and reward claims end", deadline: eventEnd0902 }],
+    objectives: [
+      { id: "world-bosses", title: "ワールドボス討伐", titleEn: "World Bosses defeated", action: "3・6・9・12・15・18回の報酬を順に受け取る", actionEn: "Claim rewards at 3, 6, 9, 12, 15, and 18", kind: "count", target: 18, unit: "回", unitEn: " times", cadence: "once" },
+      { id: "creation", title: "創造の深淵討伐", titleEn: "Abyss of Creation defeats", action: "3,000・6,000体の報酬を順に受け取る", actionEn: "Claim rewards at 3,000 and 6,000", kind: "count", target: 6000, unit: "体", unitEn: " monsters", cadence: "once" },
+      { id: "faded", title: "褪せた遺産討伐", titleEn: "Faded Legacy defeats", action: "3,000・6,000体の報酬を順に受け取る", actionEn: "Claim rewards at 3,000 and 6,000", kind: "count", target: 6000, unit: "体", unitEn: " monsters", cadence: "once" },
+    ], sourceIds: ["event-dungeon-mission", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "diamond-grail", campaignId: "diamond-grail-2026-08", title: "ダイヤ聖杯イベント", titleEn: "Diamond Grail Event",
+    summary: "対象ダイヤ使用量の20%が聖杯に累積します。累積ボーナスの受け取りには1,100円の有料商品購入が必要です。", summaryEn: "20% of eligible Diamond spending accumulates in the Grail. Claiming the accumulated bonus requires purchasing the ¥1,100 product.", deadline: eventEnd0909,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/265", milestones: [
+      { id: "counting-end", label: "ダイヤ使用量集計終了", labelEn: "Diamond spending count ends", deadline: eventEnd0902 },
+      { id: "banner-end", label: "商品・バナー終了", labelEn: "Products and banner end", deadline: eventEnd0909 },
+    ], objectives: [{ id: "check-progress", title: "対象ダイヤ使用量を確認", titleEn: "Check eligible Diamond spending", action: "20%累積と最大10,000ダイヤのボーナス進行を確認し、購入は任意で判断する", actionEn: "Check 20% cumulative progress toward the 10,000-Diamond maximum bonus; purchasing is optional", kind: "check", cadence: "once" }],
+    sourceIds: ["event-diamond-grail", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "equipment-enhancement-ranking", campaignId: "equipment-enhancement-ranking-2026-08", title: "装備強化ランキング", titleEn: "Equipment Enhancement Ranking",
+    summary: "イベント期間中に使ったゴールドとトリニティを累積で記録し、順位と報酬を確認します。", summaryEn: "Track cumulative Gold and Trinity spent during the event, then check rank and rewards.", deadline: eventEnd0909,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/266", milestones: [
+      { id: "counting-end", label: "集計・基本ミッション終了", labelEn: "Ranking count and base missions end", deadline: eventEnd0902 },
+      { id: "ranking-end", label: "順位掲示終了", labelEn: "Rank display ends", deadline: eventEnd0909 },
+    ], objectives: [
+      { id: "gold", title: "ゴールド使用", titleEn: "Gold spent", action: "1,000,000・3,000,000・5,000,000ゴールドの報酬を順に受け取る", actionEn: "Claim rewards at 1,000,000, 3,000,000, and 5,000,000 Gold", kind: "count", target: 5000000, unit: "ゴールド", unitEn: " Gold", cadence: "once" },
+      { id: "trinity", title: "トリニティ使用", titleEn: "Trinity spent", action: "500・1,000・2,000個の報酬を順に受け取る", actionEn: "Claim rewards at 500, 1,000, and 2,000", kind: "count", target: 2000, unit: "個", unitEn: " Trinity", cadence: "once" },
+      { id: "check-ranking", title: "順位・報酬を確認", titleEn: "Check rank and rewards", action: "順位掲示と報酬内容を確認する", actionEn: "Check the rank display and reward details", kind: "check", cadence: "once" },
+    ], sourceIds: ["event-enhancement-ranking", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "artifact-enhancement-payback", campaignId: "artifact-enhancement-payback-2026-08", title: "アーティファクト強化ペイバック", titleEn: "Artifact Enhancement Payback",
+    summary: "アーティファクト強化石の累積使用数を記録します。", summaryEn: "Track cumulative Artifact Enhancement Stones spent.", deadline: eventEnd0902,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/267", milestones: [{ id: "event-end", label: "ミッション・報酬受取終了", labelEn: "Missions and reward claims end", deadline: eventEnd0902 }],
+    objectives: [{ id: "stones", title: "アーティファクト強化石を使用", titleEn: "Artifact Enhancement Stones spent", action: "500個ごとに最大5,000個までの報酬を順に受け取る", actionEn: "Claim rewards every 500 stones, up to 5,000", kind: "count", target: 5000, unit: "個", unitEn: " stones", cadence: "once" }],
+    sourceIds: ["event-artifact-payback", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
+  },
+  {
+    id: "daily-login-rewards", campaignId: "daily-login-rewards-2026-08", title: "毎日ログイン報酬", titleEn: "Daily Login Rewards",
+    summary: "5日分のログイン報酬を記録し、メール削除日と経験値復旧チケット使用期限を確認します。", summaryEn: "Track five login rewards and check the mail deletion date and Experience Recovery Ticket use deadline.", deadline: eventEnd0830,
+    detailsUrl: "https://forum.netmarble.com/vampir_jp/view/20/268", milestones: [
+      { id: "delivery-end", label: "ログイン報酬配布終了", labelEn: "Login reward delivery ends", deadline: eventEnd0826Midnight },
+      { id: "mail-delete", label: "未受取メール削除", labelEn: "Unclaimed mail is deleted", deadline: eventEnd0826 },
+      { id: "ticket-use-end", label: "経験値復旧チケット使用終了", labelEn: "Experience Recovery Ticket use ends", deadline: eventEnd0830 },
+    ], objectives: [
+      { id: "login-days", title: "ログイン報酬", titleEn: "Login rewards", action: "5日分のログイン報酬を受け取ったら記録する", actionEn: "Record each of the five claimed login rewards", kind: "count", target: 5, unit: "日", unitEn: " days", cadence: "once" },
+      { id: "use-ticket", title: "経験値復旧チケットを使用", titleEn: "Use Experience Recovery Tickets", action: "使用期限までにチケットを使う", actionEn: "Use tickets before the deadline", kind: "check", cadence: "once" },
+    ], sourceIds: ["event-daily-login-reward", "event-overview"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT,
   },
 ] as const satisfies readonly LimitedEvent[];
 
