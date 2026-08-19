@@ -8,9 +8,11 @@ const JST_OFFSET = 9 * 60 * 60 * 1000;
 type SpawnEventId = (typeof SPAWN_EVENTS)[number]["id"];
 
 const EN_SPAWN_COPY: Record<SpawnEventId, Pick<SpawnEvent, "title" | "label">> = {
+  "event-boss-bardeun-day": { title: "Event Boss Bardeun", label: "Daily · through Sep 16, 04:59 JST" },
   "world-noon": { title: "World Boss", label: "Daily" },
   "gehenna-13": { title: "Gehenna ★1 & ★2", label: "Daily" },
   "gehenna-17": { title: "Gehenna ★1", label: "Daily" },
+  "event-boss-bardeun-night": { title: "Event Boss Bardeun", label: "Daily · through Sep 16, 04:59 JST" },
   "world-night": { title: "World Boss", label: "Daily" },
   "gehenna-21": { title: "Gehenna ★1 & ★2", label: "Daily" },
   "gehenna-sat-22": { title: "Gehenna ★3", label: "Saturday" },
@@ -47,6 +49,7 @@ export function upcomingSpawnOccurrences(
       if (event.days && !event.days.includes(cursor.getUTCDay())) continue;
       if (event.minLevel && event.minLevel > level) continue;
       const at = makeJstDate(cursor.getUTCFullYear(), cursor.getUTCMonth(), cursor.getUTCDate(), event.hour, event.minute);
+      if (event.endsAt !== undefined && at.getTime() >= Date.parse(event.endsAt)) continue;
       if (at.getTime() >= now.getTime() - 30_000) items.push({ ...event, at });
     }
   }

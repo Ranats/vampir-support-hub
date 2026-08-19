@@ -66,6 +66,10 @@ test("keeps the standalone spawn schedule backed by shared verified content", as
   assert.match(spawnSchedule, /upcomingSpawnOccurrences/);
   assert.match(gameContent, /id: "world-noon"/);
   assert.match(gameContent, /id: "gehenna-13"/);
+  assert.match(gameContent, /id: "event-boss-bardeun-day"/);
+  assert.match(gameContent, /id: "event-boss-bardeun-night"/);
+  assert.match(gameContent, /endsAt: "2026-09-15T19:59:00\.000Z"/);
+  assert.match(gameContent, /sourceIds: \["event-red-moon-boss"\]/);
 });
 
 test("renders finished Japanese site metadata", async () => {

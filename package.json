@@ -10,7 +10,7 @@
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vite",
     "build": "bash scripts/build-verified.sh",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "npm run build && node --experimental-strip-types --test tests/game-content.test.mjs && node --import ./scripts/register-cloudflare-loader.mjs --test tests/rendered-html.test.mjs tests/seo-foundation.test.mjs tests/localization.test.mjs tests/clan-portal.test.mjs tests/progress-cycle.test.mjs tests/today-tasks.test.mjs tests/routine-customization.test.mjs tests/notification-settings.test.mjs tests/clan-time-zone.test.mjs tests/clan-schedule.test.mjs tests/event-progress.test.mjs tests/event-order.test.mjs tests/personal-backup.test.mjs tests/pwa-assets.test.mjs tests/storage-transaction.test.mjs tests/traffic-phase.test.mjs",
+    "test": "npm run build && node --experimental-strip-types --test tests/game-content.test.mjs tests/spawn-schedule.test.mjs && node --import ./scripts/register-cloudflare-loader.mjs --test tests/rendered-html.test.mjs tests/seo-foundation.test.mjs tests/localization.test.mjs tests/clan-portal.test.mjs tests/progress-cycle.test.mjs tests/today-tasks.test.mjs tests/routine-customization.test.mjs tests/notification-settings.test.mjs tests/clan-time-zone.test.mjs tests/clan-schedule.test.mjs tests/event-progress.test.mjs tests/event-order.test.mjs tests/personal-backup.test.mjs tests/pwa-assets.test.mjs tests/storage-transaction.test.mjs tests/traffic-phase.test.mjs",
     "traffic:phase": "node scripts/traffic-phase.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
