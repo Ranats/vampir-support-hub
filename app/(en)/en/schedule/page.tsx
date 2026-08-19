@@ -5,22 +5,22 @@ import { currentRequestTimeMs } from "../../../request-time";
 import SchedulePageClient from "../../../SchedulePageClient";
 
 export const metadata: Metadata = {
-  title: "VAMPIR World Boss and Gehenna Schedule | Next Spawn in JST",
-  description: "See the next listed VAMPIR World Boss and Gehenna spawn, regular JST times, and level requirements. Always follow the in-game schedule and official notices.",
+  title: "VAMPIR Event Boss, World Boss and Gehenna Schedule",
+  description: "See upcoming VAMPIR Event Boss, World Boss, and Gehenna spawns, including confirmed Event Boss times for Japan/Korea and Taiwan/Hong Kong/Macau.",
   alternates: { canonical: "/en/schedule", languages: { ja: "/schedule", en: "/en/schedule" } },
   openGraph: {
     type: "website",
     url: "/en/schedule",
     locale: "en_US",
     alternateLocale: ["ja_JP"],
-    title: "VAMPIR World Boss and Gehenna Schedule",
-    description: "See the next listed spawn and the regular World Boss and Gehenna timetable in JST.",
+    title: "VAMPIR Event Boss, World Boss and Gehenna Schedule",
+    description: "See regional Event Boss times and upcoming World Boss and Gehenna spawns.",
     images: [],
   },
   twitter: {
     card: "summary",
-    title: "VAMPIR World Boss and Gehenna Schedule",
-    description: "See the next listed spawn and the regular World Boss and Gehenna timetable in JST.",
+    title: "VAMPIR Event Boss, World Boss and Gehenna Schedule",
+    description: "See regional Event Boss times and upcoming World Boss and Gehenna spawns.",
     images: [],
   },
 };

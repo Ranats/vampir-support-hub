@@ -7,11 +7,21 @@ import { GAME_CONTENT_SOURCES, SPAWN_EVENTS } from "./game-content";
 import type { Locale } from "./localization";
 import {
   formatSpawnCountdown,
-  formatSpawnJst,
   formatSpawnVerifiedAt,
   localizedSpawnEvents,
   upcomingSpawnOccurrences,
 } from "./spawn-schedule";
+import {
+  DEFAULT_SPAWN_SERVER_REGION,
+  SPAWN_SERVER_REGION_KEY,
+  formatSpawnServerClock,
+  formatSpawnServerTime,
+  parseSpawnServerRegion,
+  spawnScheduleLabel,
+  spawnServerRegionSettings,
+  spawnTimeZoneLabel,
+} from "./spawn-server-region";
+import type { SpawnServerRegion } from "./game-content";
 
 const spawnSourceIds = new Set<string>(SPAWN_EVENTS.flatMap((event) => event.sourceIds));
 const spawnSources = GAME_CONTENT_SOURCES.filter((source) => spawnSourceIds.has(source.id));
@@ -26,6 +36,9 @@ export default function SchedulePageClient({
   initialNowMs: number;
 }) {
   const [now, setNow] = useState(() => new Date(initialNowMs));
+  const [spawnServerRegion, setSpawnServerRegion] = useState<SpawnServerRegion>(
+    DEFAULT_SPAWN_SERVER_REGION,
+  );
   const en = locale === "en";
   const events = useMemo(() => localizedSpawnEvents(locale), [locale]);
   const upcoming = useMemo(() => upcomingSpawnOccurrences(events, now), [events, now]);
@@ -35,6 +48,32 @@ export default function SchedulePageClient({
     const timer = window.setInterval(() => setNow(new Date()), 1_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const hydrationTimer = window.setTimeout(() => {
+      setSpawnServerRegion(parseSpawnServerRegion(
+        window.localStorage.getItem(SPAWN_SERVER_REGION_KEY),
+      ));
+    }, 0);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === SPAWN_SERVER_REGION_KEY) {
+        setSpawnServerRegion(parseSpawnServerRegion(event.newValue));
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.clearTimeout(hydrationTimer);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  function updateSpawnServerRegion(region: SpawnServerRegion) {
+    setSpawnServerRegion(region);
+    window.localStorage.setItem(
+      SPAWN_SERVER_REGION_KEY,
+      JSON.stringify(spawnServerRegionSettings(region)),
+    );
+  }
 
   return (
     <main className="schedule-search-page">
@@ -50,9 +89,20 @@ export default function SchedulePageClient({
       </header>
 
       <section className="schedule-search-hero" aria-labelledby="schedule-page-title">
-        <p className="eyebrow">VAMPIR SPAWN SCHEDULE · JST</p>
-        <h1 id="schedule-page-title">{en ? "VAMPIR World Boss and Gehenna Schedule" : "VAMPIR ワールドボス・ゲヘナ出現時間"}</h1>
-        <p>{en ? "Check the next listed spawn and the regular JST timetable at a glance." : "次の出現予定と、JSTの定例時刻をすぐ確認できます。"}</p>
+        <p className="eyebrow">VAMPIR SPAWN SCHEDULE</p>
+        <h1 id="schedule-page-title">{en ? "VAMPIR Event Boss, World Boss, and Gehenna Schedule" : "VAMPIR イベントボス・ワールドボス・ゲヘナ出現時間"}</h1>
+        <p className="schedule-search-intro">{en ? "Check the next listed spawn and the published timetable at a glance." : "次の出現予定と、確認済みの出現時刻をすぐ確認できます。"}</p>
+        <label className="schedule-region-select">
+          <span>{en ? "Event boss server region" : "イベントボスのサーバー地域"}</span>
+          <select
+            value={spawnServerRegion}
+            onChange={(event) => updateSpawnServerRegion(event.target.value as SpawnServerRegion)}
+          >
+            <option value="japan-korea">{en ? "Japan / Korea (11:50, 19:50)" : "日本・韓国（11:50／19:50）"}</option>
+            <option value="taiwan-hong-kong-macau">{en ? "Taiwan / Hong Kong / Macau (10:50, 18:50)" : "台湾・香港・マカオ（10:50／18:50）"}</option>
+          </select>
+          <small>{en ? "Only confirmed event-boss times change. Other schedules remain in JST." : "地域別時刻が確認できたイベントボスだけを切り替えます。その他はJSTです。"}</small>
+        </label>
       </section>
 
       {next ? (
@@ -60,7 +110,7 @@ export default function SchedulePageClient({
           <div>
             <p className="eyebrow">{en ? "NEXT LISTED SPAWN" : "次の出現予定"}</p>
             <h2 id="next-spawn-title">{next.title}</h2>
-            <p>{formatSpawnJst(next.at, false, locale)} JST · {next.label}{next.minLevel ? ` · Lv${next.minLevel}+` : ""}</p>
+            <p>{formatSpawnServerTime(next.at, next, spawnServerRegion, false, locale)} {spawnTimeZoneLabel(next, spawnServerRegion, locale)} · {spawnScheduleLabel(next, spawnServerRegion, locale)}{next.minLevel ? ` · Lv${next.minLevel}+` : ""}</p>
           </div>
           <strong aria-label={en ? `Starts in ${formatSpawnCountdown(next.at, now, locale)}` : `開始まで ${formatSpawnCountdown(next.at, now, locale)}`}>{formatSpawnCountdown(next.at, now, locale)}</strong>
         </section>
@@ -70,15 +120,15 @@ export default function SchedulePageClient({
         <div className="section-heading">
           <div>
             <p className="eyebrow">TIMETABLE</p>
-            <h2 id="timetable-title">{en ? "Regular spawn times" : "定例の出現時刻"}</h2>
+            <h2 id="timetable-title">{en ? "Published spawn times" : "掲載中の出現時刻"}</h2>
           </div>
-          <p>{en ? "All times are Japan Standard Time (JST)." : "すべて日本標準時（JST）です。"}</p>
+          <p>{en ? "Event boss times use the selected server region. Other times remain in Japan Standard Time (JST)." : "イベントボスは選択したサーバー地域、その他は日本標準時（JST）です。"}</p>
         </div>
         <div className="schedule-search-list">
           {events.map((event) => (
             <article className="schedule-search-row" key={event.id}>
-              <time>{`${String(event.hour).padStart(2, "0")}:${String(event.minute).padStart(2, "0")}`} JST</time>
-              <div><strong>{event.title}</strong><small>{event.label}{event.minLevel ? ` · Lv${event.minLevel}+` : ""}</small></div>
+              <time>{formatSpawnServerClock(event, spawnServerRegion)}<small>{spawnTimeZoneLabel(event, spawnServerRegion, locale)}</small></time>
+              <div><strong>{event.title}</strong><small>{spawnScheduleLabel(event, spawnServerRegion, locale)}{event.minLevel ? ` · Lv${event.minLevel}+` : ""}</small></div>
             </article>
           ))}
         </div>

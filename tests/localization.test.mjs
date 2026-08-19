@@ -64,10 +64,10 @@ test("localizes clan time-zone controls and policy data boundaries", async () =>
 
   assert.match(settingsSource, /クラン予定のタイムゾーン/);
   assert.match(settingsSource, /Clan schedule time zone/);
-  assert.match(settingsSource, /公式予定と日次・週次リセットはJSTのまま/);
-  assert.match(settingsSource, /Official schedules and daily\/weekly resets remain in JST/);
+  assert.match(settingsSource, /この設定で公式予定や日次・週次リセットは変わりません/);
+  assert.match(settingsSource, /This setting does not change official schedules or daily\/weekly resets/);
   assert.match(japanesePolicy, /クラン名、曜日・時刻、クラン予定のタイムゾーン/);
   assert.match(englishPolicy, /clan name, weekday, time, and clan schedule time zone/);
-  assert.match(japanesePolicy, /公式の出現・イベント予定と日次・週次リセットはJSTのまま/);
-  assert.match(englishPolicy, /Official spawn and event schedules and daily or weekly resets remain in JST/);
+  assert.match(japanesePolicy, /公式に地域別時刻を確認できたイベントボス/);
+  assert.match(englishPolicy, /confirmed regional schedule/);
 });

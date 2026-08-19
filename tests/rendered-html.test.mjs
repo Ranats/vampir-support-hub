@@ -50,26 +50,32 @@ test("wires the focused clan settings flow and event detail links", async () => 
 });
 
 test("keeps the standalone spawn schedule backed by shared verified content", async () => {
-  const [schedulePage, spawnSchedule, gameContent] = await Promise.all([
+  const [schedulePage, spawnSchedule, spawnServerRegion, gameContent] = await Promise.all([
     readFile(new URL("../app/SchedulePageClient.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/spawn-schedule.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/spawn-server-region.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/game-content.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(schedulePage, /GAME_CONTENT_SOURCES/);
   assert.match(schedulePage, /SPAWN_EVENTS/);
   assert.match(schedulePage, /formatSpawnVerifiedAt/);
+  assert.match(schedulePage, /イベントボスのサーバー地域/);
+  assert.match(schedulePage, /台湾・香港・マカオ（10:50／18:50）/);
   assert.match(schedulePage, /in-game schedule and official notices are authoritative/);
   assert.match(schedulePage, /ゲーム内時刻表と公式告知を正本/);
   assert.match(spawnSchedule, /import \{ SPAWN_EVENTS, type SpawnEvent \} from "\.\/game-content"/);
   assert.match(spawnSchedule, /localizedSpawnEvents/);
   assert.match(spawnSchedule, /upcomingSpawnOccurrences/);
+  assert.match(spawnServerRegion, /vampir-spawn-server-region-v1/);
+  assert.match(spawnServerRegion, /Asia\/Taipei/);
   assert.match(gameContent, /id: "world-noon"/);
   assert.match(gameContent, /id: "gehenna-13"/);
   assert.match(gameContent, /id: "event-boss-bardeun-day"/);
   assert.match(gameContent, /id: "event-boss-bardeun-night"/);
   assert.match(gameContent, /endsAt: "2026-09-15T19:59:00\.000Z"/);
   assert.match(gameContent, /sourceIds: \["event-red-moon-boss"\]/);
+  assert.match(gameContent, /"taiwan-hong-kong-macau": \{ hour: 10, minute: 50 \}/);
 });
 
 test("renders finished Japanese site metadata", async () => {

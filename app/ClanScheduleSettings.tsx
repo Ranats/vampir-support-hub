@@ -94,11 +94,11 @@ export default function ClanScheduleSettings({
         <small>
           {shared
             ? (en
-                ? "Members see these weekly times in this clan time zone. Official schedules and resets remain in JST."
-                : "メンバーには、このタイムゾーンの毎週予定として表示します。公式予定とリセット時刻はJSTのままです。")
+                ? "Members see these weekly times in this clan time zone. This setting does not change official schedules or reset times."
+                : "メンバーには、このタイムゾーンの毎週予定として表示します。この設定で公式予定やリセット時刻は変わりません。")
             : (en
-                ? "This applies only to your user-entered clan plans. Official schedules and daily/weekly resets remain in JST."
-                : "ユーザー入力のクラン予定だけに適用します。公式予定と日次・週次リセットはJSTのままです。")}
+                ? "This applies only to your user-entered clan plans. This setting does not change official schedules or daily/weekly resets."
+                : "ユーザー入力のクラン予定だけに適用します。この設定で公式予定や日次・週次リセットは変わりません。")}
         </small>
       </div>
 

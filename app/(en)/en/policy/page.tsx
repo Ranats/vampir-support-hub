@@ -53,7 +53,7 @@ export default function EnglishPolicyPage() {
           <span className="eyebrow">SITE INFORMATION</span>
           <h1>Operations and Privacy Policy</h1>
           <p>This page explains the information this site provides and how it handles user data.</p>
-          <time dateTime="2026-08-14">Last updated: August 14, 2026</time>
+          <time dateTime="2026-08-19">Last updated: August 19, 2026</time>
         </div>
 
         <div className="policy-sections">
@@ -65,7 +65,7 @@ export default function EnglishPolicyPage() {
 
           <section className="policy-card">
             <h2>Data saved on your device</h2>
-            <p>Your level, daily, weekly, and event-mission checklist progress, personal tasks, display preferences, spawn alert targets, notification settings, language preference, notification deduplication records, personal clan plans and their time zone, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
+            <p>Your level, daily, weekly, and event-mission checklist progress, personal tasks, display preferences, Event Boss server region, spawn alert targets, notification settings, language preference, notification deduplication records, personal clan plans and their time zone, and clan portal viewer or administrator keys are saved in your browser&apos;s local storage.</p>
             <ul>
               <li>We do not connect to your game account or retrieve game data automatically.</li>
               <li>When you create or update a shared clan portal, its clan name, weekday, time, and clan schedule time zone are sent to the API. The corresponding secret key is sent for authentication when viewing or administering the portal.</li>
@@ -81,7 +81,7 @@ export default function EnglishPolicyPage() {
             <ul>
               <li>Viewer and administrator links use separate secret keys. Only their verification hashes are stored in the database.</li>
               <li>An administrator can change the shared schedule, rotate the viewer link, or delete the portal.</li>
-              <li>The selected time zone applies only to user-entered clan plans. Official spawn and event schedules and daily or weekly resets remain in JST.</li>
+              <li>The clan time zone applies only to user-entered plans. Official spawns remain in JST unless an Event Boss has a confirmed regional schedule, in which case the selected server region controls its displayed time. Daily and weekly resets remain in JST.</li>
               <li>To limit abusive bulk creation, the site derives a temporary verification key from the network address. The original address is not stored, and verification records older than two hours are removed during later portal creation.</li>
               <li>The shared schedule remains stored until an administrator deletes the portal.</li>
             </ul>
