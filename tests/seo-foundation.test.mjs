@@ -84,8 +84,8 @@ test("serves robots and sitemap for the canonical domain", async () => {
 
 test("publishes localized indexable spawn schedule pages", async () => {
   for (const [path, canonical, alternate, expectedText] of [
-    ["/schedule", "/schedule", "/en/schedule", "VAMPIR ワールドボス・ゲヘナ出現時間"],
-    ["/en/schedule", "/en/schedule", "/schedule", "VAMPIR World Boss and Gehenna Schedule"],
+    ["/schedule", "/schedule", "/en/schedule", "VAMPIR イベントボス・ワールドボス・ゲヘナ出現時間"],
+    ["/en/schedule", "/en/schedule", "/schedule", "VAMPIR Event Boss, World Boss and Gehenna Schedule"],
   ]) {
     const response = await request(path, { headers: { accept: "text/html" } });
     const html = await response.text();
@@ -148,7 +148,7 @@ test("publishes the operation and privacy policy", async () => {
   assert.match(html, /通知の重複防止記録/);
   assert.match(html, /個人用クラン予定とそのタイムゾーン、クラン共有ポータルの閲覧・管理キー/);
   assert.match(html, /個人用クラン予定の曜日・時刻・タイムゾーンは、共有ポータル作成フォームの初期値として使用します/);
-  assert.match(html, /公式の出現・イベント予定と日次・週次リセットはJSTのまま/);
+  assert.match(html, /公式に地域別時刻を確認できたイベントボス/);
   assert.match(html, /個人用リマインダー、完了状況、レベル、通知設定、ゲームアカウント情報は共有しません/);
   assert.match(html, /閲覧・管理操作時に対応する秘密キーを認証のためAPIへ送信します/);
   assert.match(html, /秘密キーそのものはデータベースへ保存せず、照合用のハッシュだけを保存します/);

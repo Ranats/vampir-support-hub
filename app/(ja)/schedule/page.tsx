@@ -6,22 +6,22 @@ import { currentRequestTimeMs } from "../../request-time";
 import SchedulePageClient from "../../SchedulePageClient";
 
 export const metadata: Metadata = {
-  title: "VAMPIR ワールドボス・ゲヘナ出現時間｜次の出現をJST表示",
-  description: "VAMPIRのワールドボスとゲヘナの次の出現予定、定例のJST時刻、参加レベルを確認できます。実際の時刻はゲーム内時刻表と公式告知を優先してください。",
+  title: "VAMPIR イベントボス・ワールドボス・ゲヘナ出現時間",
+  description: "VAMPIRのイベントボス、ワールドボス、ゲヘナの次の出現予定を確認。イベントボスは日本・韓国と台湾・香港・マカオの地域別時刻に対応しています。",
   alternates: { canonical: "/schedule", languages: { ja: "/schedule", en: "/en/schedule" } },
   openGraph: {
     type: "website",
     url: "/schedule",
     locale: "ja_JP",
     alternateLocale: ["en_US"],
-    title: "VAMPIR ワールドボス・ゲヘナ出現時間",
-    description: "次の出現予定と、ワールドボス・ゲヘナの定例JST時刻を確認できます。",
+    title: "VAMPIR イベントボス・ワールドボス・ゲヘナ出現時間",
+    description: "イベントボスの地域別時刻と、ワールドボス・ゲヘナの次の出現予定を確認できます。",
     images: [],
   },
   twitter: {
     card: "summary",
-    title: "VAMPIR ワールドボス・ゲヘナ出現時間",
-    description: "次の出現予定と、ワールドボス・ゲヘナの定例JST時刻を確認できます。",
+    title: "VAMPIR イベントボス・ワールドボス・ゲヘナ出現時間",
+    description: "イベントボスの地域別時刻と、ワールドボス・ゲヘナの次の出現予定を確認できます。",
     images: [],
   },
 };

@@ -1110,6 +1110,14 @@ summary:focus-visible {
   font-size: 13px;
 }
 
+.schedule-row time small,
+.schedule-search-row time small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 .schedule-row div,
 .event-row div {
   display: flex;
@@ -2465,6 +2473,49 @@ summary:focus-visible {
   margin-top: 16px;
 }
 
+.spawn-server-region-setting {
+  margin-top: 16px;
+  padding: 13px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.spawn-server-region-setting label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.spawn-server-region-setting label > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.spawn-server-region-setting strong {
+  font-size: 13px;
+}
+
+.spawn-server-region-setting small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.spawn-server-region-setting select,
+.schedule-region-select select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 34px 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+}
+
 .pwa-setting-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -3654,10 +3705,34 @@ summary:focus-visible {
   line-height: 1.12;
 }
 
-.schedule-search-hero > p:last-child,
+.schedule-search-intro,
 .schedule-search-section .section-heading > p {
   max-width: 640px;
   color: var(--muted);
+}
+
+.schedule-region-select {
+  display: grid;
+  max-width: 620px;
+  grid-template-columns: minmax(145px, 0.7fr) minmax(260px, 1.3fr);
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.schedule-region-select > span {
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.schedule-region-select > small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .schedule-next-card,
@@ -3781,5 +3856,10 @@ summary:focus-visible {
 
   .schedule-search-row time {
     min-width: 76px;
+  }
+
+  .schedule-region-select,
+  .spawn-server-region-setting label {
+    grid-template-columns: 1fr;
   }
 }

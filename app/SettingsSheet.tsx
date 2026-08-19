@@ -13,6 +13,7 @@ import type { NotificationSettings } from "./notification-settings";
 import type { Locale } from "./localization";
 import ClanScheduleSettings from "./ClanScheduleSettings";
 import type { ClanScheduleSettings as ClanScheduleSettingsValue } from "./clan-schedule";
+import type { SpawnServerRegion } from "./game-content";
 
 type DefaultRoutineSummary = {
   id: string;
@@ -30,6 +31,7 @@ type SettingsSheetProps = {
   customRoutines: readonly CustomRoutine[];
   clanSchedule: ClanScheduleSettingsValue;
   clanScheduleTimeZone: string;
+  spawnServerRegion: SpawnServerRegion;
   favoriteSpawnCount: number;
   clanReminderCount: number;
   notificationPermission: NotificationPermission | "unsupported";
@@ -52,6 +54,7 @@ type SettingsSheetProps = {
   onDeleteAllCustom: () => void;
   onUpdateClanSchedule: (settings: ClanScheduleSettingsValue) => void;
   onUpdateClanScheduleTimeZone: (timeZone: string) => void;
+  onUpdateSpawnServerRegion: (region: SpawnServerRegion) => void;
   onUpdateNotificationSettings: (settings: NotificationSettings) => void;
   onRequestNotificationPermission: () => Promise<void>;
   onTestNotification: () => Promise<void>;
@@ -70,6 +73,7 @@ export default function SettingsSheet({
   customRoutines,
   clanSchedule,
   clanScheduleTimeZone,
+  spawnServerRegion,
   favoriteSpawnCount,
   clanReminderCount,
   notificationPermission,
@@ -92,6 +96,7 @@ export default function SettingsSheet({
   onDeleteAllCustom,
   onUpdateClanSchedule,
   onUpdateClanScheduleTimeZone,
+  onUpdateSpawnServerRegion,
   onUpdateNotificationSettings,
   onRequestNotificationPermission,
   onTestNotification,
@@ -433,6 +438,22 @@ export default function SettingsSheet({
                   <p>{en ? "Get alerts for selected spawns and saved clan plans while this site is open." : "通知対象にした出現予定と登録したクラン予定を、サイトを開いている間にお知らせします。"}</p>
                 </div>
               </div>
+            </div>
+
+            <div className="spawn-server-region-setting">
+              <label>
+                <span>
+                  <strong>{en ? "Event boss server region" : "イベントボスのサーバー地域"}</strong>
+                  <small>{en ? "Changes only official event-boss times with a confirmed regional schedule. Other spawns remain in JST." : "地域別時刻が確認できたイベントボスだけを切り替えます。その他の出現予定はJSTのままです。"}</small>
+                </span>
+                <select
+                  value={spawnServerRegion}
+                  onChange={(event) => onUpdateSpawnServerRegion(event.target.value as SpawnServerRegion)}
+                >
+                  <option value="japan-korea">{en ? "Japan / Korea (11:50, 19:50)" : "日本・韓国（11:50／19:50）"}</option>
+                  <option value="taiwan-hong-kong-macau">{en ? "Taiwan / Hong Kong / Macau (10:50, 18:50)" : "台湾・香港・マカオ（10:50／18:50）"}</option>
+                </select>
+              </label>
             </div>
 
             <div className="pwa-settings-grid">

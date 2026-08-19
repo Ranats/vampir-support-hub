@@ -79,6 +79,7 @@ import {
   type Routine as GameRoutine,
   type EventObjective,
   type LimitedEvent,
+  type SpawnServerRegion,
 } from "./game-content";
 import {
   formatSpawnCountdown as formatCountdown,
@@ -86,6 +87,16 @@ import {
   localizedSpawnEvents,
   upcomingSpawnOccurrences as upcomingOccurrences,
 } from "./spawn-schedule";
+import {
+  DEFAULT_SPAWN_SERVER_REGION,
+  SPAWN_SERVER_REGION_KEY,
+  formatSpawnServerClock,
+  formatSpawnServerTime,
+  parseSpawnServerRegion,
+  spawnScheduleLabel,
+  spawnServerRegionSettings,
+  spawnTimeZoneLabel,
+} from "./spawn-server-region";
 import {
   EMPTY_EVENT_PROGRESS,
   EVENT_PROGRESS_KEY,
@@ -583,6 +594,9 @@ export default function HomeClient({
     DEFAULT_CLAN_SCHEDULE_SETTINGS,
   );
   const [clanScheduleTimeZone, setClanScheduleTimeZone] = useState(JAPAN_TIME_ZONE);
+  const [spawnServerRegion, setSpawnServerRegion] = useState<SpawnServerRegion>(
+    DEFAULT_SPAWN_SERVER_REGION,
+  );
   const [notificationSettings, setNotificationSettings] =
     useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [notificationPermission, setNotificationPermission] = useState<
@@ -708,6 +722,9 @@ export default function HomeClient({
       setNotificationSettings(parseNotificationSettings(
         window.localStorage.getItem(NOTIFICATION_SETTINGS_KEY),
       ));
+      setSpawnServerRegion(parseSpawnServerRegion(
+        window.localStorage.getItem(SPAWN_SERVER_REGION_KEY),
+      ));
       setNotificationPermission(
         "Notification" in window ? window.Notification.permission : "unsupported",
       );
@@ -803,6 +820,14 @@ export default function HomeClient({
       JSON.stringify(notificationSettings),
     );
   }, [hydrated, notificationSettings]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(
+      SPAWN_SERVER_REGION_KEY,
+      JSON.stringify(spawnServerRegionSettings(spawnServerRegion)),
+    );
+  }, [hydrated, spawnServerRegion]);
 
   useEffect(() => {
     const refreshClock = () => {
@@ -907,6 +932,8 @@ export default function HomeClient({
         setNotificationSettings((current) => (
           JSON.stringify(current) === JSON.stringify(nextSettings) ? current : nextSettings
         ));
+      } else if (event.key === SPAWN_SERVER_REGION_KEY) {
+        setSpawnServerRegion(parseSpawnServerRegion(event.newValue));
       }
     };
     window.addEventListener("storage", handleStorage);
@@ -938,8 +965,8 @@ export default function HomeClient({
         startsAt: event.at,
         title: event.title,
         body: en
-          ? `Scheduled for ${formatJst(event.at, false, locale)} JST. Always follow the in-game schedule.`
-          : `${formatJst(event.at)} JST開始予定。ゲーム内時刻表を優先してください。`,
+          ? `Scheduled for ${formatSpawnServerTime(event.at, event, spawnServerRegion, false, locale)} ${spawnTimeZoneLabel(event, spawnServerRegion, locale)}. Always follow the in-game schedule.`
+          : `${formatSpawnServerTime(event.at, event, spawnServerRegion)} ${spawnTimeZoneLabel(event, spawnServerRegion, locale)}開始予定。ゲーム内時刻表を優先してください。`,
         url: en ? "/en#schedule" : "/#schedule",
       }));
     const clanCandidates: ReminderCandidate[] = nextClanOccurrences(
@@ -1027,6 +1054,7 @@ export default function HomeClient({
     en,
     locale,
     spawnEvents,
+    spawnServerRegion,
     weeklyDone,
   ]);
 
@@ -1340,16 +1368,16 @@ export default function HomeClient({
                 <>
                   <div className="next-title-row">
                     <div>
-                      <span>{next.label}</span>
+                      <span>{spawnScheduleLabel(next, spawnServerRegion, locale)} · {spawnTimeZoneLabel(next, spawnServerRegion, locale)}</span>
                       <h2>{next.title}</h2>
                     </div>
                     <div className="next-actions">
-                      <strong>{String(next.hour).padStart(2, "0")}:{String(next.minute).padStart(2, "0")}</strong>
+                      <strong>{formatSpawnServerClock(next, spawnServerRegion)}</strong>
                       <button
                         className={`favorite-button${favoriteSpawnIds.includes(next.id) ? " active" : ""}`}
                         type="button"
                         aria-pressed={favoriteSpawnIds.includes(next.id)}
-                        aria-label={en ? `${favoriteSpawnIds.includes(next.id) ? "Remove" : "Add"} the ${next.title} spawn at ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")} ${favoriteSpawnIds.includes(next.id) ? "from" : "to"} alert targets` : `${next.title} ${String(next.hour).padStart(2, "0")}:${String(next.minute).padStart(2, "0")}を通知対象${favoriteSpawnIds.includes(next.id) ? "から外す" : "に追加"}`}
+                        aria-label={en ? `${favoriteSpawnIds.includes(next.id) ? "Remove" : "Add"} the ${next.title} spawn at ${formatSpawnServerClock(next, spawnServerRegion)} ${favoriteSpawnIds.includes(next.id) ? "from" : "to"} alert targets` : `${next.title} ${formatSpawnServerClock(next, spawnServerRegion)}を通知対象${favoriteSpawnIds.includes(next.id) ? "から外す" : "に追加"}`}
                         onClick={() => toggleFavoriteSpawn(next.id)}
                       >
                         <span aria-hidden="true">{favoriteSpawnIds.includes(next.id) ? "🔔" : "🔕"}</span>
@@ -1624,8 +1652,8 @@ export default function HomeClient({
             </div>
             <p>
               {level
-                ? (en ? `Showing JST schedules available at Lv${level}.` : `Lv${level}で参加できる予定をJSTで表示しています。`)
-                : (en ? "No level set — showing all schedules in JST." : "レベル未設定のため、すべての予定をJSTで表示しています。")}
+                ? (en ? `Showing schedules available at Lv${level}. Event boss times use your selected server region; other schedules remain in JST.` : `Lv${level}で参加できる予定を表示。イベントボスは選択地域、その他はJSTです。`)
+                : (en ? "Showing all schedules. Event boss times use your selected server region; other schedules remain in JST." : "すべての予定を表示。イベントボスは選択地域、その他はJSTです。")}
               {favoriteSpawnIds.length ? (en ? ` ${favoriteSpawnIds.length} spawn alert target${favoriteSpawnIds.length === 1 ? "" : "s"}.` : ` 出現通知対象${favoriteSpawnIds.length}件。`) : ""}
               {" "}<Link href={en ? "/en/schedule" : "/schedule"}>{en ? "View the full timetable" : "定例時刻を一覧で見る"}</Link>
             </p>
@@ -1646,14 +1674,14 @@ export default function HomeClient({
           <div className="schedule-list panel">
             {upcoming.map((event) => (
               <article className="schedule-row" key={`${event.id}-${event.at.toISOString()}`}>
-                <time dateTime={event.at.toISOString()}>{formatJst(event.at, false, locale)}</time>
-                <div><strong>{event.title}</strong><small>{event.label}{event.minLevel ? `${en ? " · " : "・"}Lv${event.minLevel}+` : ""}</small></div>
+                <time dateTime={event.at.toISOString()}>{formatSpawnServerTime(event.at, event, spawnServerRegion, false, locale)}<small>{spawnTimeZoneLabel(event, spawnServerRegion, locale)}</small></time>
+                <div><strong>{event.title}</strong><small>{spawnScheduleLabel(event, spawnServerRegion, locale)}{event.minLevel ? `${en ? " · " : "・"}Lv${event.minLevel}+` : ""}</small></div>
                 <b>{formatCountdown(event.at, now, locale)}</b>
                 <button
                   className={`schedule-favorite${favoriteSpawnIds.includes(event.id) ? " active" : ""}`}
                   type="button"
                   aria-pressed={favoriteSpawnIds.includes(event.id)}
-                  aria-label={en ? `${favoriteSpawnIds.includes(event.id) ? "Remove" : "Add"} ${event.title} at ${formatJst(event.at, false, locale)} ${favoriteSpawnIds.includes(event.id) ? "from" : "to"} alert targets` : `${event.title} ${formatJst(event.at)}を通知対象${favoriteSpawnIds.includes(event.id) ? "から外す" : "に追加"}`}
+                  aria-label={en ? `${favoriteSpawnIds.includes(event.id) ? "Remove" : "Add"} ${event.title} at ${formatSpawnServerTime(event.at, event, spawnServerRegion, false, locale)} ${favoriteSpawnIds.includes(event.id) ? "from" : "to"} alert targets` : `${event.title} ${formatSpawnServerTime(event.at, event, spawnServerRegion)}を通知対象${favoriteSpawnIds.includes(event.id) ? "から外す" : "に追加"}`}
                   onClick={() => toggleFavoriteSpawn(event.id)}
                 >
                   <span aria-hidden="true">{favoriteSpawnIds.includes(event.id) ? "🔔" : "🔕"}</span>
@@ -1779,6 +1807,7 @@ export default function HomeClient({
           customRoutines={customRoutines}
           clanSchedule={clanSchedule}
           clanScheduleTimeZone={clanScheduleTimeZone}
+          spawnServerRegion={spawnServerRegion}
           favoriteSpawnCount={favoriteSpawnIds.length}
           clanReminderCount={clanReminderCount}
           notificationPermission={notificationPermission}
@@ -1801,6 +1830,7 @@ export default function HomeClient({
           onDeleteAllCustom={deleteAllCustomRoutines}
           onUpdateClanSchedule={setClanSchedule}
           onUpdateClanScheduleTimeZone={setClanScheduleTimeZone}
+          onUpdateSpawnServerRegion={setSpawnServerRegion}
           onUpdateNotificationSettings={updateNotificationSettings}
           onRequestNotificationPermission={requestNotificationPermission}
           onTestNotification={showTestNotification}

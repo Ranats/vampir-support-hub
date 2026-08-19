@@ -126,6 +126,14 @@ test("sources are explicitly classified and every published item is dated and so
   assert.deepEqual(SPAWN_EVENTS[0].sourceIds, ["event-red-moon-boss"]);
   assert.equal(SPAWN_EVENTS[0].verifiedAt, "2026-08-19T12:45:00+09:00");
   assert.equal(SPAWN_EVENTS[0].endsAt, "2026-09-15T19:59:00.000Z");
+  assert.deepEqual(SPAWN_EVENTS[0].regionalTimes, {
+    "japan-korea": { hour: 11, minute: 50 },
+    "taiwan-hong-kong-macau": { hour: 10, minute: 50 },
+  });
+  assert.deepEqual(SPAWN_EVENTS[4].regionalTimes, {
+    "japan-korea": { hour: 19, minute: 50 },
+    "taiwan-hong-kong-macau": { hour: 18, minute: 50 },
+  });
   assert.deepEqual(SPAWN_EVENTS[1].sourceIds, ["routines"]);
   for (const item of [...SPAWN_EVENTS, ...DAILY_TASKS, ...WEEKLY_TASKS]) {
     assert.ok(item.sourceIds.length > 0);
@@ -180,6 +188,9 @@ for (const [name, mutate] of [
   ["invalid times", (content) => { content.spawnEvents[0].hour = 24; }],
   ["invalid spawn end dates", (content) => { content.spawnEvents[0].endsAt = "2026-09-16"; }],
   ["spawn end dates before verification", (content) => { content.spawnEvents[0].endsAt = "2026-08-19T12:44:59+09:00"; }],
+  ["invalid regional times", (content) => { content.spawnEvents[0].regionalTimes["taiwan-hong-kong-macau"].hour = 24; }],
+  ["regional JST mismatches", (content) => { content.spawnEvents[0].regionalTimes["japan-korea"].minute = 49; }],
+  ["different regional instants", (content) => { content.spawnEvents[0].regionalTimes["taiwan-hong-kong-macau"].minute = 49; }],
   ["invalid levels", (content) => { content.dailyTasks[1].minLevel = 0; }],
   ["invalid priorities", (content) => { content.dailyTasks[0].priority = 6; }],
   ["invalid deadlines", (content) => { content.limitedEvents[0].deadline = new Date("invalid"); }],
