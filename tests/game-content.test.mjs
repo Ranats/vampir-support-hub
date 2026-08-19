@@ -31,13 +31,15 @@ function copyContent() {
 }
 
 test("game content retains the published IDs, counts, times, and deadlines", () => {
-  assert.deepEqual(SPAWN_EVENTS.map(({ id, hour, minute, days, minLevel }) => ({ id, hour, minute, days, minLevel })), [
-    { id: "world-noon", hour: 12, minute: 0, days: undefined, minLevel: undefined },
-    { id: "gehenna-13", hour: 13, minute: 0, days: undefined, minLevel: 52 },
-    { id: "gehenna-17", hour: 17, minute: 0, days: undefined, minLevel: 52 },
-    { id: "world-night", hour: 20, minute: 0, days: undefined, minLevel: undefined },
-    { id: "gehenna-21", hour: 21, minute: 0, days: undefined, minLevel: 52 },
-    { id: "gehenna-sat-22", hour: 22, minute: 0, days: [6], minLevel: 64 },
+  assert.deepEqual(SPAWN_EVENTS.map(({ id, hour, minute, days, minLevel, endsAt }) => ({ id, hour, minute, days, minLevel, endsAt })), [
+    { id: "event-boss-bardeun-day", hour: 11, minute: 50, days: undefined, minLevel: undefined, endsAt: "2026-09-15T19:59:00.000Z" },
+    { id: "world-noon", hour: 12, minute: 0, days: undefined, minLevel: undefined, endsAt: undefined },
+    { id: "gehenna-13", hour: 13, minute: 0, days: undefined, minLevel: 52, endsAt: undefined },
+    { id: "gehenna-17", hour: 17, minute: 0, days: undefined, minLevel: 52, endsAt: undefined },
+    { id: "event-boss-bardeun-night", hour: 19, minute: 50, days: undefined, minLevel: undefined, endsAt: "2026-09-15T19:59:00.000Z" },
+    { id: "world-night", hour: 20, minute: 0, days: undefined, minLevel: undefined, endsAt: undefined },
+    { id: "gehenna-21", hour: 21, minute: 0, days: undefined, minLevel: 52, endsAt: undefined },
+    { id: "gehenna-sat-22", hour: 22, minute: 0, days: [6], minLevel: 64, endsAt: undefined },
   ]);
   assert.deepEqual(DAILY_TASKS.map((task) => task.id), ["daily-quest", "creation-abyss", "faded-legacy", "death-recovery", "gold-shop"]);
   assert.deepEqual(WEEKLY_TASKS.map((task) => task.id), ["epic-dungeon", "ancient-workshop", "dark-trade", "clan-mission", "clan-guard", "farm-diamond", "gehenna-weekly"]);
@@ -66,7 +68,7 @@ test("game content retains the published IDs, counts, times, and deadlines", () 
     ["daily-login-rewards", "2026-08-29T19:59:00.000Z"],
   ]);
   assert.equal(oldestGameContentVerifiedAt(), "2026-07-30T00:00:00+09:00");
-  assert.equal(SPAWN_EVENTS[1].title, "ゲヘナ ★1・★2");
+  assert.equal(SPAWN_EVENTS[2].title, "ゲヘナ ★1・★2");
   assert.equal(DAILY_TASKS[0].note, "オルガの恩寵がある場合は12件");
   assert.equal(DAILY_TASKS[2].title, "褪せた遺産 1時間");
   assert.equal(WEEKLY_TASKS[3].title, "クラン任務を確認");
@@ -121,10 +123,13 @@ test("sources are explicitly classified and every published item is dated and so
     ["gehenna", "supplementary"], ["events", "supplementary"],
   ]);
   assert.ok(GAME_CONTENT.sources.slice(5).every(({ authority }) => authority === "official"));
-  assert.deepEqual(SPAWN_EVENTS[0].sourceIds, ["routines"]);
+  assert.deepEqual(SPAWN_EVENTS[0].sourceIds, ["event-red-moon-boss"]);
+  assert.equal(SPAWN_EVENTS[0].verifiedAt, "2026-08-19T12:45:00+09:00");
+  assert.equal(SPAWN_EVENTS[0].endsAt, "2026-09-15T19:59:00.000Z");
+  assert.deepEqual(SPAWN_EVENTS[1].sourceIds, ["routines"]);
   for (const item of [...SPAWN_EVENTS, ...DAILY_TASKS, ...WEEKLY_TASKS]) {
     assert.ok(item.sourceIds.length > 0);
-    assert.equal(item.verifiedAt, "2026-07-30T00:00:00+09:00");
+    assert.equal(item.verifiedAt, item.id.startsWith("event-boss-bardeun") ? "2026-08-19T12:45:00+09:00" : "2026-07-30T00:00:00+09:00");
   }
   for (const event of LIMITED_EVENTS) {
     assert.ok(event.sourceIds.length > 0);
@@ -173,6 +178,8 @@ for (const [name, mutate] of [
   ["rolled-over hours", (content) => { content.dailyTasks[0].verifiedAt = "2026-01-01T24:00:00+09:00"; }],
   ["invalid weekdays", (content) => { content.spawnEvents[5].days = [7]; }],
   ["invalid times", (content) => { content.spawnEvents[0].hour = 24; }],
+  ["invalid spawn end dates", (content) => { content.spawnEvents[0].endsAt = "2026-09-16"; }],
+  ["spawn end dates before verification", (content) => { content.spawnEvents[0].endsAt = "2026-08-19T12:44:59+09:00"; }],
   ["invalid levels", (content) => { content.dailyTasks[1].minLevel = 0; }],
   ["invalid priorities", (content) => { content.dailyTasks[0].priority = 6; }],
   ["invalid deadlines", (content) => { content.limitedEvents[0].deadline = new Date("invalid"); }],

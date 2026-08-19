@@ -18,6 +18,7 @@ export type SpawnEvent = {
   label: string;
   sourceIds: readonly string[];
   verifiedAt: string;
+  endsAt?: string;
   updateRequiredAt?: string;
 };
 
@@ -118,9 +119,11 @@ export const GAME_CONTENT_SOURCES = [
 ] as const satisfies readonly GameContentSource[];
 
 export const SPAWN_EVENTS = [
+  { id: "event-boss-bardeun-day", title: "イベントボス バルドゥン", hour: 11, minute: 50, label: "毎日・9/16 04:59まで", sourceIds: ["event-red-moon-boss"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT, endsAt: "2026-09-15T19:59:00.000Z" },
   { id: "world-noon", title: "ワールドボス", hour: 12, minute: 0, label: "毎日", sourceIds: ["routines"], verifiedAt: BASE_VERIFIED_AT },
   { id: "gehenna-13", title: "ゲヘナ ★1・★2", hour: 13, minute: 0, minLevel: 52, label: "毎日", sourceIds: ["gehenna"], verifiedAt: BASE_VERIFIED_AT },
   { id: "gehenna-17", title: "ゲヘナ ★1", hour: 17, minute: 0, minLevel: 52, label: "毎日", sourceIds: ["gehenna"], verifiedAt: BASE_VERIFIED_AT },
+  { id: "event-boss-bardeun-night", title: "イベントボス バルドゥン", hour: 19, minute: 50, label: "毎日・9/16 04:59まで", sourceIds: ["event-red-moon-boss"], verifiedAt: RED_MOON_FESTA_VERIFIED_AT, endsAt: "2026-09-15T19:59:00.000Z" },
   { id: "world-night", title: "ワールドボス", hour: 20, minute: 0, label: "毎日", sourceIds: ["routines"], verifiedAt: BASE_VERIFIED_AT },
   { id: "gehenna-21", title: "ゲヘナ ★1・★2", hour: 21, minute: 0, minLevel: 52, label: "毎日", sourceIds: ["gehenna"], verifiedAt: BASE_VERIFIED_AT },
   { id: "gehenna-sat-22", title: "ゲヘナ ★3", hour: 22, minute: 0, days: [6], minLevel: 64, label: "土曜", sourceIds: ["gehenna"], verifiedAt: BASE_VERIFIED_AT },
@@ -543,6 +546,10 @@ export function validateGameContent(content: GameContentDefinition) {
       assert(new Set(event.days).size === event.days.length, `duplicate weekdays for ${event.id}`);
     }
     if (event.minLevel !== undefined) assert(Number.isInteger(event.minLevel) && event.minLevel >= 1 && event.minLevel <= 200, `invalid level for ${event.id}`);
+    if (event.endsAt !== undefined) {
+      assert(isValidVerifiedAt(event.endsAt), `invalid endsAt for ${event.id}`);
+      assert(Date.parse(event.endsAt) > Date.parse(event.verifiedAt), `endsAt must follow verifiedAt for ${event.id}`);
+    }
   }
   for (const task of [...content.dailyTasks, ...content.weeklyTasks]) {
     validateItem(task);
